@@ -1,0 +1,297 @@
+package dev.djefrey.colorwheel.compile;
+
+import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
+import dev.djefrey.colorwheel.ClrwlShaderSources;
+import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
+import dev.engine_room.flywheel.backend.MaterialShaderIndices;
+import dev.engine_room.flywheel.backend.compile.FlwPrograms;
+import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
+import dev.engine_room.flywheel.backend.compile.core.Compilation;
+import dev.engine_room.flywheel.backend.gl.GlCompat;
+import dev.engine_room.flywheel.backend.glsl.ShaderSources;
+import dev.engine_room.flywheel.backend.glsl.SourceComponent;
+import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
+import dev.engine_room.flywheel.backend.glsl.generate.GlslExpr;
+import dev.engine_room.flywheel.lib.util.ResourceUtil;
+import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
+import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.minecraft.client.Minecraft;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+
+public class ClrwlPipelineCompiler
+{
+	private final ClrwlShaderSources sources;
+	private final ClrwlPipeline pipeline;
+
+	public static UberShaderComponent FOG;
+	public static UberShaderComponent CUTOUT;
+
+	public ClrwlPipelineCompiler(ClrwlShaderSources sources, ClrwlPipeline pipeline)
+	{
+		this.sources = sources;
+		this.pipeline = pipeline;
+	}
+
+//	private String generateVertexSource(InstanceType<?> instanceType, ContextShader contextShader, Material material, PipelineCompiler.OitMode oit, ShaderPack pack, IrisShaderComponent irisShader)
+//	{
+//		var instanceName = ResourceUtil.toDebugFileNameNoExtension(instanceType.vertexShader());
+//		var materialName = ResourceUtil.toDebugFileNameNoExtension(material.shaders().vertexSource());
+//		var contextName = contextShader.nameLowerCase();
+//
+//		var name = "pipeline/" + pipeline.compilerMarker() + "/" + instanceName + "/" + materialName + "_" + contextName + ".vert";
+//		var ctx = new Compilation();
+//
+//		ctx.version(GlCompat.MAX_GLSL_VERSION);
+//
+//		extensions.forEach(ctx::requireExtension);
+//
+//		if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !extensions.contains("GL_ARB_gpu_shader5")) {
+//			// Only define fma if it wouldn't be declared by gpu shader 5
+//			ctx.define("fma(a, b, c) ((a) * (b) + (c))");
+//		}
+//
+//		contextShader.onCompile(ctx);
+//		BackendConfig.INSTANCE.lightSmoothness().onCompile(ctx);
+//		expand(sources.get(API_IMPL_VERT), ctx::appendComponent);
+//		expand(new InstanceStructComponent(instanceType), ctx::appendComponent);
+//		expand(sources.get(instanceType.vertexShader()), ctx::appendComponent);
+//		expand(sources.get(material.shaders().vertexSource()), ctx::appendComponent);
+//		vertexComponents.forEach(c -> expand(c, ctx::appendComponent));
+//		expand(sources.get(ClrwlVertex.LAYOUT_SHADER), ctx::appendComponent);
+//		expand(pipeline.assembler().assemble(instanceType), ctx::appendComponent);
+//		expand(sources.get(IRIS_COMPAT_VERT), ctx::appendComponent);
+//		expand(irisShader, ctx::appendComponent);
+//		expand(sources.get(pipeline.vertexMain()), ctx::appendComponent);
+//
+//		String source = ctx.iriscompat$getSource();
+//		source = JcppProcessor.glslPreprocessSource(source, List.of());
+//
+//		dumpSources(name, source);
+//
+//		return source;
+//	}
+//
+//	private String generateFragmentSource(InstanceType<?> instanceType, ContextShader contextShader, Material material, PipelineCompiler.OitMode oit, ShaderPack pack, IrisShaderComponent irisShader)
+//	{
+//		var materialName = ResourceUtil.toDebugFileNameNoExtension(material.shaders().vertexSource());
+//		var contextName = contextShader.nameLowerCase();
+//		var light = ResourceUtil.toDebugFileNameNoExtension(material.light().source());
+//		var cutout = ResourceUtil.toDebugFileNameNoExtension(material.cutout().source());
+//
+//		var name = "pipeline/" + pipeline.compilerMarker() + "/" + materialName + "/" + light + "_" + contextName + "_" + cutout + "_" + oit.name + ".frag";
+//		var ctx = new Compilation();
+//
+//		ctx.version(GlCompat.MAX_GLSL_VERSION);
+//
+//		extensions.forEach(ctx::requireExtension);
+//		ctx.enableExtension("GL_ARB_conservative_depth");
+//
+//		if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !extensions.contains("GL_ARB_gpu_shader5")) {
+//			// Only define fma if it wouldn't be declared by gpu shader 5
+//			ctx.define("fma(a, b, c) ((a) * (b) + (c))");
+//		}
+//
+//		contextShader.onCompile(ctx);
+//		BackendConfig.INSTANCE.lightSmoothness().onCompile(ctx);
+//
+//		if (material.cutout() != CutoutShaders.OFF)
+//		{
+//			ctx.define("_FLW_USE_DISCARD");
+//		}
+//
+//		if (oit != PipelineCompiler.OitMode.OFF)
+//		{
+//			ctx.define("_FLW_OIT");
+//			ctx.define(oit.define);
+//		}
+//
+//		if (CUTOUT == null && material.cutout() != CutoutShaders.OFF)
+//		{
+//			createCutoutComponent();
+//		}
+//
+//		if (FOG == null)
+//		{
+//			createFogComponent();
+//		}
+//
+//		expand(sources.get(API_IMPL_FRAG), ctx::appendComponent);
+//		expand(sources.get(material.shaders().fragmentSource()), ctx::appendComponent);
+//		fragmentComponents.forEach(c -> expand(c, ctx::appendComponent));
+//		expand(FOG, ctx::appendComponent);
+//		expand(sources.get(material.light().source()), ctx::appendComponent);
+//		expand(material.cutout() != CutoutShaders.OFF ? CUTOUT : sources.get(CutoutShaders.OFF.source()), ctx::appendComponent);
+//		expand(sources.get(IRIS_COMPAT_FRAG), ctx::appendComponent);
+//		expand(irisShader, ctx::appendComponent);
+//		expand(sources.get(pipeline.fragmentMain()), ctx::appendComponent);
+//
+//		String source = ctx.iriscompat$getSource();
+//		source = JcppProcessor.glslPreprocessSource(source, List.of());
+//
+//		dumpSources(name, source);
+//
+//		return source;
+//	}
+
+	public static void deleteAll()
+	{
+		createFogComponent();
+		createCutoutComponent();
+	}
+
+	public ClrwlProgram get(ClrwlShaderKey key)
+	{
+		// This will index the fog and cutout shaders
+		ClrwlMaterialShaderIndices.fogSources().index(key.material().fog().source());
+		ClrwlMaterialShaderIndices.cutoutSources().index(key.material().cutout().source());
+
+		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
+
+		if (worldPipeline instanceof IrisRenderingPipeline irisPipeline)
+		{
+			ProgramSet programSet = key.pack().getProgramSet(key.dimension());
+			boolean isShadow = key.isShadow();
+
+			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
+			var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().shaders().vertexSource());
+			var contextName = key.context().nameLowerCase();
+
+			String name;
+			ProgramSource sources;
+
+			if (!isShadow)
+			{
+				name = String.format("flw_gbuffers_%s_%s_%s", instanceName, materialName, contextName);
+				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();
+			}
+			else
+			{
+				name = String.format("flw_shadows_%s_%s_%s", instanceName, materialName, contextName);
+				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadows().orElseThrow();
+			}
+
+			var shaderPath = key.getPath();
+			var vertex = compileStage(pipeline.vertex(), key, irisPipeline, sources);
+			var fragment = compileStage(pipeline.fragment(), key, irisPipeline, sources);
+
+			dumpSources("pipeline/vert/" + shaderPath + ".vsh", vertex);
+			dumpSources("pipeline/frag/" + shaderPath + ".fsh", fragment);
+
+			var customSource = new ProgramSource(name,
+					vertex, null, null, null, fragment,
+					programSet,
+					((ProgramSourceAccessor) sources).colorwheel$getShaderProperties(),
+					((ProgramSourceAccessor) sources).colorwheel$getBlendModeOverride());
+
+			return ClrwlProgram.createProgram(name, isShadow, customSource, irisPipeline.getCustomUniforms(), irisPipeline);
+		}
+
+		return null;
+	}
+
+	private String compileStage(ClrwlPipelineStage<ClrwlShaderKey> stage, ClrwlShaderKey key, IrisRenderingPipeline irisPipeline, ProgramSource irisSources)
+	{
+		var compile = new ClrwlCompilation(irisPipeline, irisSources, sources);
+
+		compile.version(GlCompat.MAX_GLSL_VERSION);
+
+		for (var ext : pipeline.extensions())
+		{
+			compile.requireExtension(ext);
+		}
+
+		for (var ext : stage.extensions())
+		{
+			compile.enableExtension(ext);
+		}
+
+		for (var defines : stage.defines())
+		{
+			compile.define(defines);
+		}
+
+		stage.compile().accept(key, compile);
+
+		for (var fetcher : stage.fetchers())
+		{
+			expand(fetcher.apply(key, compile), compile::appendComponent);
+		}
+
+		return compile.getShaderCode();
+	}
+
+	private static void expand(SourceComponent rootSource, Consumer<SourceComponent> out)
+	{
+		var included = new LinkedHashSet<SourceComponent>(); // use hash set to deduplicate. linked to preserve order
+
+		recursiveDepthFirstInclude(included, rootSource);
+		included.add(rootSource);
+
+		included.forEach(out);
+	}
+
+	private static void recursiveDepthFirstInclude(Set<SourceComponent> included, SourceComponent component)
+	{
+		for (var include : component.included())
+		{
+			recursiveDepthFirstInclude(included, include);
+		}
+
+		included.addAll(component.included());
+	}
+
+	public static void createFogComponent()
+	{
+		FOG = UberShaderComponent.builder(ResourceUtil.rl("fog"))
+				.materialSources(MaterialShaderIndices.fogSources()
+						.all())
+				.adapt(FnSignature.create()
+						.returnType("vec4")
+						.name("flw_fogFilter")
+						.arg("vec4", "color")
+						.build(), GlslExpr.variable("color"))
+				.switchOn(GlslExpr.variable("_flw_uberFogIndex"))
+				.build(FlwPrograms.SOURCES);
+	}
+
+	private static void createCutoutComponent()
+	{
+		CUTOUT = UberShaderComponent.builder(ResourceUtil.rl("cutout"))
+				.materialSources(MaterialShaderIndices.cutoutSources()
+						.all())
+				.adapt(FnSignature.create()
+						.returnType("bool")
+						.name("flw_discardPredicate")
+						.arg("vec4", "color")
+						.build(), GlslExpr.boolLiteral(false))
+				.switchOn(GlslExpr.variable("_flw_uberCutoutIndex"))
+				.build(FlwPrograms.SOURCES);
+	}
+
+	private static void dumpSources(String fileName, String source)
+	{
+		if (!Compilation.DUMP_SHADER_SOURCE)
+		{
+			return;
+		}
+
+		File file = new File(new File(Minecraft.getInstance().gameDirectory, "colorwheel_sources"), fileName);
+		// mkdirs of the parent so we don't create a directory named by the leaf file we want to write
+		file.getParentFile()
+				.mkdirs();
+		try (FileWriter writer = new FileWriter(file)) {
+			writer.write(source);
+		} catch (Exception e) {
+			FlwPrograms.LOGGER.error("Could not dump source.", e);
+		}
+	}
+}

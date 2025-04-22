@@ -1,0 +1,42 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+#issueTrackerURL = ""
+license ="LGPL-3.0-only"
+
+[[mods]]
+modId = "colorwheel"
+version = "${version}"
+displayName = "Colorwheel"
+authors = "djefrey"
+description = '''
+Allows you to use Iris Shaders with Flywheel
+'''
+#logoFile = ""
+
+[[dependencies.colorwheel]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.colorwheel]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.colorwheel]]
+modId = "flywheel"
+mandatory = true
+versionRange = "[1.0.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.colorwheel]]
+modId = "oculus"
+mandatory = true
+versionRange = "[1.7.0,)"
+ordering = "NONE"
+side = "BOTH"
