@@ -65,60 +65,12 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(_flw_aTexCoord, 0.0, 1.0)");
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(_flw_aLight, 0.0, 1.0)");
 
-//				mat4 flw_view;
-//				mat4 flw_viewInverse;
-//				mat4 flw_viewPrev;
-//				mat4 flw_projection;
-//				mat4 flw_projectionInverse;
-//				mat4 flw_projectionPrev;
-//				mat4 flw_viewProjection;
-//				mat4 flw_viewProjectionInverse;
-//				mat4 flw_viewProjectionPrev;
-
-					// gbufferModelView, gbufferModelViewInverse
-					// gbufferPreviousModelView
-
-
-//				root.replaceReferenceExpressions(transformer, "gbufferModelView", "flw_view");
-//				root.replaceReferenceExpressions(transformer, "gbufferModelViewInverse", "flw_viewInverse");
-//				root.replaceReferenceExpressions(transformer, "gbufferPreviousModelView", "flw_viewPrev");
-
-					// shadowModelView, shadowModelViewInverse, shadowProjection, shadowProjectionInverse
-
-				root.replaceReferenceExpressions(transformer, "gbufferProjection", "flw_projection");
-				root.replaceReferenceExpressions(transformer, "gbufferProjectionInverse", "flw_projectionInverse");
-				root.replaceReferenceExpressions(transformer, "gbufferPreviousProjection", "flw_projectionPrev");
-
-				root.replaceReferenceExpressions(transformer, "gl_ProjectionMatrix", "flw_projection");
-				root.replaceReferenceExpressions(transformer, "gl_ProjectionMatrixInverse", "flw_projectionInverse");
-				root.replaceReferenceExpressions(transformer, "gl_ProjectionMatrixPrev", "flw_projectionPrev");
-
-				root.replaceReferenceExpressions(transformer, "gl_NormalMatrix", "clrwl_normalMatrix");
-//				root.replaceReferenceExpressions(transformer, "shadowModelView", "clrwl_shadowView");
-//				root.replaceReferenceExpressions(transformer, "shadowModelViewInverse", "clrwl_shadowViewInverse");
-//				root.replaceReferenceExpressions(transformer, "shadowProjection", "clrwl_shadowProj");
-//				root.replaceReferenceExpressions(transformer, "shadowProjectionInverse", "clrwl_shadowProjInverse");
-//
-				root.replaceReferenceExpressions(transformer, "near", "_flw_cullData.znear");
-				root.replaceReferenceExpressions(transformer, "far", "_flw_cullData.zfar");
+//				root.replaceReferenceExpressions(transformer, "gl_NormalMatrix", "clrwl_normal");
 
 				root.replaceReferenceExpressions(transformer, "blockEntityId", "2147483647");
 				root.replaceReferenceExpressions(transformer, "entityId", "2147483647");
 
-//				vec4 flw_fogColor;
-//				vec2 flw_fogRange;
-//				int flw_fogShape;
-//				root.rename("fogColor", "flw_fogColor");
-//				root.rename("far", "flw_fogRange");
-//				root.rename("fogShape", "flw_fogShape");
-
-					// TODO: custom shader => store matrices and positions (gl_ModelViewMatrix, gl_Vertex, gl_Vertex * i.pose, gl_Vertex [* _modelMatrix])
-
-//				if (root.identifierIndex.has("ftransform"))
-//				{
-//					tree.parseAndInjectNode(transformer, ASTInjectionPoint.BEFORE_FUNCTIONS,
-//							"vec4 ftransform() { return flw_viewProjection * _flw_modelMatrix * vec4(_flw_aPos, 1.0); }");
-//				}
+				// TODO: remove duplicated uniforms
 
 				CommonTransformer.transform(transformer, tree, root, parameters, false);
 

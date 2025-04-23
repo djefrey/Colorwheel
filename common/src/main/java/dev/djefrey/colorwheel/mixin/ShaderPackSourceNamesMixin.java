@@ -22,6 +22,6 @@ public abstract class ShaderPackSourceNamesMixin
 	private static void injectPotentialStats(CallbackInfoReturnable<ImmutableList<String>> cir, ImmutableList.Builder<String> builder)
 	{
 		callAddStarts(builder, "flw_gbuffers");
-		callAddStarts(builder, "flw_shadows");
+		callAddStarts(builder, "flw_shadow");
 	}
 }

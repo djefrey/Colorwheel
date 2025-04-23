@@ -71,7 +71,7 @@ public class ClrwlCompilation
 
     public void appendComponent(SourceComponent component)
     {
-        sources.append("\n#// ----- ")
+        sources.append("\n// ----- ")
                 .append(component.name())
                 .append(" -----\n");
 

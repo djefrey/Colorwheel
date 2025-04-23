@@ -31,12 +31,12 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 	@Unique
 	@Nullable
-	private ProgramSource flw_shadows;
+	private ProgramSource flw_shadow;
 
 	public void colorwheel$setupFlwPrograms(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, ShaderProperties shaderProperties)
 	{
 		this.flw_gbuffers = callReadProgramSource(directory, sourceProvider, "flw_gbuffers", (ProgramSet) (Object) this, shaderProperties, BlendModeOverride.OFF, false);
-		this.flw_shadows  = callReadProgramSource(directory, sourceProvider, "flw_shadows",  (ProgramSet) (Object) this, shaderProperties, BlendModeOverride.OFF, false);
+		this.flw_shadow   = callReadProgramSource(directory, sourceProvider, "flw_shadow",  (ProgramSet) (Object) this, shaderProperties, BlendModeOverride.OFF, false);
 	}
 
 	public Optional<ProgramSource> colorwheel$getFlwGbuffers()
@@ -49,13 +49,13 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
         return flw_gbuffers.requireValid();
 	}
 
-	public Optional<ProgramSource> colorwheel$getFlwShadows()
+	public Optional<ProgramSource> colorwheel$getFlwShadow()
 	{
-		if (flw_shadows == null)
+		if (flw_shadow == null)
 		{
-			return colorwheel$getFlwGbuffers();
+			return Optional.empty();
 		}
 
-		return flw_shadows.requireValid().or(this::colorwheel$getFlwGbuffers);
+		return flw_shadow.requireValid();
 	}
 }

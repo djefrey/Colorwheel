@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel.accessors;
 
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
-import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
@@ -17,5 +16,5 @@ public interface ProgramSetAccessor
 
 	void colorwheel$setupFlwPrograms(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, ShaderProperties shaderProperties);
 	Optional<ProgramSource> colorwheel$getFlwGbuffers();
-	Optional<ProgramSource> colorwheel$getFlwShadows();
+	Optional<ProgramSource> colorwheel$getFlwShadow();
 }

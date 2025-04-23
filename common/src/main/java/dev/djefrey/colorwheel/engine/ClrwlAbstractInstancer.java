@@ -1,0 +1,46 @@
+package dev.djefrey.colorwheel.engine;
+
+import dev.engine_room.flywheel.api.instance.Instance;
+import dev.engine_room.flywheel.api.instance.InstanceType;
+import dev.engine_room.flywheel.api.instance.Instancer;
+import dev.engine_room.flywheel.backend.engine.AbstractInstancer;
+import dev.engine_room.flywheel.backend.engine.DrawManager;
+import dev.engine_room.flywheel.backend.engine.InstanceHandleImpl;
+import dev.engine_room.flywheel.backend.engine.InstancerKey;
+import dev.engine_room.flywheel.backend.engine.embed.Environment;
+
+public abstract class ClrwlAbstractInstancer<I extends Instance> implements Instancer<I>
+{
+	public final InstanceType<I> type;
+	public final Environment environment;
+	public final Recreate<I> recreate;
+
+	protected ClrwlAbstractInstancer(InstancerKey<I> key, Recreate<I> recreate)
+	{
+		this.type = key.type();
+		this.environment = key.environment();
+		this.recreate = recreate;
+	}
+
+	public abstract ClrwlInstanceHandle.State<I> revealInstance(ClrwlInstanceHandle<I> handle, I instance);
+
+	public abstract int instanceCount();
+
+	public abstract void parallelUpdate();
+
+	public abstract void delete();
+
+	public abstract void clear();
+
+	@Override
+	public String toString() {
+		return "ClrwlAbstractInstancer[" + instanceCount() + ']';
+	}
+
+	public record Recreate<I extends Instance>(InstancerKey<I> key, ClrwlDrawManager<?> drawManager)
+	{
+		public ClrwlAbstractInstancer<I> recreate() {
+			return drawManager.getInstancer(key);
+		}
+	}
+}

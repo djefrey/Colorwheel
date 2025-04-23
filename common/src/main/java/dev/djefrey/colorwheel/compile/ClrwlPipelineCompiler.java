@@ -7,9 +7,7 @@ import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import dev.engine_room.flywheel.backend.MaterialShaderIndices;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
-import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
-import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslExpr;
@@ -175,16 +173,16 @@ public class ClrwlPipelineCompiler
 			}
 			else
 			{
-				name = String.format("flw_shadows_%s_%s_%s", instanceName, materialName, contextName);
-				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadows().orElseThrow();
+				name = String.format("flw_shadow_%s_%s_%s", instanceName, materialName, contextName);
+				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
 			}
 
 			var shaderPath = key.getPath();
 			var vertex = compileStage(pipeline.vertex(), key, irisPipeline, sources);
 			var fragment = compileStage(pipeline.fragment(), key, irisPipeline, sources);
 
-			dumpSources("pipeline/vert/" + shaderPath + ".vsh", vertex);
-			dumpSources("pipeline/frag/" + shaderPath + ".fsh", fragment);
+			dumpSources("/pipeline/vert/" + shaderPath + ".vsh", vertex);
+			dumpSources("/pipeline/frag/" + shaderPath + ".fsh", fragment);
 
 			var customSource = new ProgramSource(name,
 					vertex, null, null, null, fragment,
@@ -279,10 +277,10 @@ public class ClrwlPipelineCompiler
 
 	private static void dumpSources(String fileName, String source)
 	{
-		if (!Compilation.DUMP_SHADER_SOURCE)
-		{
-			return;
-		}
+//		if (!Compilation.DUMP_SHADER_SOURCE)
+//		{
+//			return;
+//		}
 
 		File file = new File(new File(Minecraft.getInstance().gameDirectory, "colorwheel_sources"), fileName);
 		// mkdirs of the parent so we don't create a directory named by the leaf file we want to write

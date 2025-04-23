@@ -1,5 +1,7 @@
 package dev.djefrey.colorwheel.instancing;
 
+import dev.djefrey.colorwheel.engine.ClrwlAbstractInstancer;
+import dev.djefrey.colorwheel.engine.ClrwlBaseInstancer;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceWriter;
 import dev.engine_room.flywheel.backend.engine.BaseInstancer;
@@ -14,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClrwlInstancedInstancer<I extends Instance> extends BaseInstancer<I> {
+public class ClrwlInstancedInstancer<I extends Instance> extends ClrwlBaseInstancer<I>
+{
 	private final int instanceStride;
 
 	private final InstanceWriter<I> writer;
@@ -23,7 +26,7 @@ public class ClrwlInstancedInstancer<I extends Instance> extends BaseInstancer<I
 
 	private final List<ClrwlInstancedDraw> draws = new ArrayList<>();
 
-	public ClrwlInstancedInstancer(InstancerKey<I> key, Recreate<I> recreate) {
+	public ClrwlInstancedInstancer(InstancerKey<I> key, ClrwlBaseInstancer.Recreate<I> recreate) {
 		super(key, recreate);
 		var layout = type.layout();
 		// Align to one texel in the texture buffer

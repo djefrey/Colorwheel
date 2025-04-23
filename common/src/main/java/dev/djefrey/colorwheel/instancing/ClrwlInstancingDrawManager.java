@@ -1,5 +1,7 @@
 package dev.djefrey.colorwheel.instancing;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.ClrwlMeshPool;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
@@ -7,15 +9,16 @@ import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
-import dev.djefrey.colorwheel.engine.ClrwlUniform;
+import dev.djefrey.colorwheel.engine.ClrwlAbstractInstancer;
+import dev.djefrey.colorwheel.engine.ClrwlDrawManager;
+import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;
+import dev.engine_room.flywheel.api.material.Transparency;
 import dev.engine_room.flywheel.backend.Samplers;
-import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.engine.*;
-import dev.engine_room.flywheel.backend.engine.embed.EnvironmentStorage;
 import dev.engine_room.flywheel.backend.engine.instancing.InstancedLight;
-import dev.engine_room.flywheel.backend.engine.uniform.Uniforms;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import net.irisshaders.iris.Iris;
@@ -32,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ClrwlInstancingDrawManager extends DrawManager<ClrwlInstancedInstancer<?>>
+public class ClrwlInstancingDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
 {
 	private static final Comparator<ClrwlInstancedDraw> DRAW_COMPARATOR = Comparator.comparing(ClrwlInstancedDraw::bias)
 			.thenComparing(ClrwlInstancedDraw::indexOfMeshInModel)
@@ -75,6 +78,12 @@ public class ClrwlInstancingDrawManager extends DrawManager<ClrwlInstancedInstan
 		var dimension = Iris.getCurrentDimension();
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
+		if (isShadow && ((ProgramSetAccessor) pack.getProgramSet(dimension)).colorwheel$getFlwShadow().isEmpty())
+		{
+			// No shadow shader, skip
+			return;
+		}
+
 		super.render(lightStorage, environmentStorage);
 
 		this.instancers.values()
@@ -111,8 +120,7 @@ public class ClrwlInstancingDrawManager extends DrawManager<ClrwlInstancedInstan
 			return;
 		}
 
-		Uniforms.bindAll();
-		ClrwlUniform.bind();
+		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
 		TextureBinder.bindLightAndOverlay();
 		light.bind();
@@ -169,7 +177,7 @@ public class ClrwlInstancingDrawManager extends DrawManager<ClrwlInstancedInstan
 			{
 				if (shadowFramebuffer == null)
 				{
-					ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadows().orElseThrow();
+					ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
 					shadowFramebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createShadowFramebuffer(source);
 				}
 
@@ -213,6 +221,13 @@ public class ClrwlInstancingDrawManager extends DrawManager<ClrwlInstancedInstan
 			environment.setupDraw(program.getProgram());
 			MaterialRenderState.setup(material);
 
+			// TODO: custom MaterialRenderState
+			if (material.transparency() == Transparency.ORDER_INDEPENDENT)
+			{
+				RenderSystem.enableBlend();
+				RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+			}
+
 			Samplers.INSTANCE_BUFFER.makeActive();
 
 			drawCall.render(instanceTexture);
@@ -255,8 +270,9 @@ public class ClrwlInstancingDrawManager extends DrawManager<ClrwlInstancedInstan
 	}
 
 	@Override
-	protected <I extends Instance> ClrwlInstancedInstancer<I> create(InstancerKey<I> key) {
-		return new ClrwlInstancedInstancer<>(key, new AbstractInstancer.Recreate<>(key, this));
+	protected <I extends Instance> ClrwlInstancedInstancer<I> create(InstancerKey<I> key)
+	{
+		return new ClrwlInstancedInstancer<>(key, new ClrwlAbstractInstancer.Recreate<>(key, this));
 	}
 
 	@Override

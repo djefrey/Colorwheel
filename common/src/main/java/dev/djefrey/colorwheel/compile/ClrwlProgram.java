@@ -2,7 +2,8 @@ package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Ints;
-import dev.djefrey.colorwheel.engine.ClrwlUniform;
+import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.Samplers;
 import dev.engine_room.flywheel.backend.engine.MaterialEncoder;
@@ -22,6 +23,7 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL31C;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL43C;
 
@@ -104,10 +106,6 @@ public class ClrwlProgram
 //		samplerBuilder.addExternalSampler(Samplers.COEFFICIENTS.number, "_flw_coefficients");
 //		samplerBuilder.addExternalSampler(Samplers.NOISE.number, "_flw_blueNoise");
 
-		var glProgram = new GlProgram(this.handle);
-		Uniforms.setUniformBlockBindings(glProgram);
-		ClrwlUniform.setUniformBlockBinding(glProgram);
-
 		customUniforms.assignTo(uniformBuilder);
 		pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
 				isShadowPass ? pipeline::getFlippedBeforeShadow : pipeline::getFlippedAfterPrepare,
@@ -124,6 +122,8 @@ public class ClrwlProgram
 		this.packedMaterialUniform = tryGetUniformLocation2("_flw_packedMaterial");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
+
+		ClrwlUniforms.setUniformBlockBinding(this);
 	}
 
 	private int tryGetUniformLocation2(CharSequence name) {
@@ -191,6 +191,19 @@ public class ClrwlProgram
 		{
 			setUniform(modelMatrixUniform, normal);
 		}
+	}
+
+	public void setUniformBlockBinding(String name, int binding)
+	{
+		int index = GL31C.glGetUniformBlockIndex(handle, name);
+
+		if (index == GL31C.GL_INVALID_INDEX)
+		{
+			Colorwheel.LOGGER.debug("No uniform block for {}", name);
+			return;
+		}
+
+		GL31C.glUniformBlockBinding(handle, index, binding);
 	}
 
 	public void free() {

@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.ShadowRenderContext;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.internal.FlwApiLink;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
@@ -33,13 +34,14 @@ public abstract class ShadowRenderingStateMixin
 
 			if (manager != null)
 			{
-				RenderContext ctx = RenderContextImpl.create(
+				RenderContext ctx = ShadowRenderContext.create(
 						Minecraft.getInstance().levelRenderer,
 						level,
 						Minecraft.getInstance().renderBuffers(),
 						modelView,
 						ShadowRenderer.PROJECTION,
 						camera,
+						(float) cameraX, (float) cameraY, (float) cameraZ,
 						tickDelta
 				);
 
