@@ -35,7 +35,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 	public void colorwheel$setupFlwPrograms(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, ShaderProperties shaderProperties)
 	{
-		this.flw_gbuffers = callReadProgramSource(directory, sourceProvider, "flw_gbuffers", (ProgramSet) (Object) this, shaderProperties, BlendModeOverride.OFF, false);
+		this.flw_gbuffers = callReadProgramSource(directory, sourceProvider, "flw_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
 		this.flw_shadow   = callReadProgramSource(directory, sourceProvider, "flw_shadow",  (ProgramSet) (Object) this, shaderProperties, BlendModeOverride.OFF, false);
 	}
 
