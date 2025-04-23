@@ -64,6 +64,8 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "gl_Color", "_flw_aColor");
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(_flw_aTexCoord, 0.0, 1.0)");
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(_flw_aLight, 0.0, 1.0)");
+				root.replaceReferenceExpressions(transformer, "at_tangent", "_flw_aTangent");
+				root.replaceReferenceExpressions(transformer, "mc_midTexCoord", "_flw_aMidTexCoord");
 
 //				root.replaceReferenceExpressions(transformer, "gl_NormalMatrix", "clrwl_normal");
 
