@@ -3,16 +3,13 @@ package dev.djefrey.colorwheel;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
-import dev.djefrey.colorwheel.instancing.ClrwlInstancingDrawManager;
+import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.engine_room.flywheel.api.backend.Backend;
-import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
-import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
-import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.slf4j.Logger;
@@ -25,7 +22,7 @@ public final class Colorwheel {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static final Backend IRIS_INSTANCING = SimpleBackend.builder()
-            .engineFactory(level -> new ClrwlEngine(level, new ClrwlInstancingDrawManager(ClrwlPrograms.get()), 256))
+            .engineFactory(level -> new ClrwlEngine(level, new ClrwlInstancedDrawManager(ClrwlPrograms.get()), 256))
             .priority(450)
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(rl("instancing"));

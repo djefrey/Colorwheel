@@ -2,13 +2,10 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.ShadowRenderContext;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
-import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
-import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
-import dev.djefrey.colorwheel.instancing.ClrwlInstancingDrawManager;
+import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.instance.Instance;
@@ -35,13 +32,13 @@ import java.util.List;
 
 public class ClrwlEngine implements Engine
 {
-	private final ClrwlInstancingDrawManager drawManager;
+	private final ClrwlInstancedDrawManager drawManager;
 	private final int sqrMaxOriginDistance;
 	private final EnvironmentStorage environmentStorage;
 	private final LightStorage lightStorage;
 	private BlockPos renderOrigin = BlockPos.ZERO;
 
-	public ClrwlEngine(LevelAccessor level, ClrwlInstancingDrawManager drawManager, int maxOriginDistance)
+	public ClrwlEngine(LevelAccessor level, ClrwlInstancedDrawManager drawManager, int maxOriginDistance)
 	{
 		this.drawManager = drawManager;
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;

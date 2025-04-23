@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ClrwlInstancingDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
+public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
 {
 	private static final Comparator<ClrwlInstancedDraw> DRAW_COMPARATOR = Comparator.comparing(ClrwlInstancedDraw::bias)
 			.thenComparing(ClrwlInstancedDraw::indexOfMeshInModel)
@@ -59,7 +59,7 @@ public class ClrwlInstancingDrawManager extends ClrwlDrawManager<ClrwlInstancedI
 	@Nullable
 	private GlFramebuffer shadowFramebuffer;
 
-	public ClrwlInstancingDrawManager(ClrwlPrograms programs) {
+	public ClrwlInstancedDrawManager(ClrwlPrograms programs) {
 		programs.acquire();
 		this.programs = programs;
 
