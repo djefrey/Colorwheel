@@ -56,8 +56,6 @@ public class ShaderPackMixin implements ShaderPackAccessor
 	{
 		this.colorwheel$packName = root.getFileName().toString();
 
-		finalEnvironmentDefines1.forEach(kv -> FlwPrograms.LOGGER.warn(kv.toString()));
-
 		this.colorwheel$environmentDefines = ImmutableList.copyOf(finalEnvironmentDefines1);
 		Function<AbsolutePackPath, String> sourceProviderNoPreprocess = (path) ->
 		{
