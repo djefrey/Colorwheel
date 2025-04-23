@@ -3,6 +3,7 @@ package dev.djefrey.colorwheel.compile;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Ints;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.Samplers;
@@ -160,8 +161,8 @@ public class ClrwlProgram
 			override.apply();
 		}
 
-		int packedFogAndCutout = MaterialEncoder.packUberShader(material);
-		int packedMaterialProperties = MaterialEncoder.packProperties(material);
+		int packedFogAndCutout = ClrwlMaterialEncoder.packUberShader(material);
+		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
 
 		setUniform(vertexOffsetUniform, vertexOffset);
 		setUniform(packedMaterialUniform, packedFogAndCutout, packedMaterialProperties);

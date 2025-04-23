@@ -37,9 +37,9 @@ public class ClrwlPipelines
             .minVersion(GlCompat.MAX_GLSL_VERSION)
             .onSetup((b) ->
             {
-                if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V330) < 0)
+                for (String ext : ClrwlPrograms.EXTENSIONS)
                 {
-                    b.requireExtension("GL_ARB_shader_bit_encoding");
+                    b.requireExtension(ext);
                 }
             })
             .vertex(ClrwlPipeline.stage()

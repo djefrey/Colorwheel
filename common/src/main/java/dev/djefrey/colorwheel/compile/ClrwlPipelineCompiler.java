@@ -21,7 +21,9 @@ import net.minecraft.client.Minecraft;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -39,119 +41,26 @@ public class ClrwlPipelineCompiler
 		this.pipeline = pipeline;
 	}
 
-//	private String generateVertexSource(InstanceType<?> instanceType, ContextShader contextShader, Material material, PipelineCompiler.OitMode oit, ShaderPack pack, IrisShaderComponent irisShader)
-//	{
-//		var instanceName = ResourceUtil.toDebugFileNameNoExtension(instanceType.vertexShader());
-//		var materialName = ResourceUtil.toDebugFileNameNoExtension(material.shaders().vertexSource());
-//		var contextName = contextShader.nameLowerCase();
-//
-//		var name = "pipeline/" + pipeline.compilerMarker() + "/" + instanceName + "/" + materialName + "_" + contextName + ".vert";
-//		var ctx = new Compilation();
-//
-//		ctx.version(GlCompat.MAX_GLSL_VERSION);
-//
-//		extensions.forEach(ctx::requireExtension);
-//
-//		if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !extensions.contains("GL_ARB_gpu_shader5")) {
-//			// Only define fma if it wouldn't be declared by gpu shader 5
-//			ctx.define("fma(a, b, c) ((a) * (b) + (c))");
-//		}
-//
-//		contextShader.onCompile(ctx);
-//		BackendConfig.INSTANCE.lightSmoothness().onCompile(ctx);
-//		expand(sources.get(API_IMPL_VERT), ctx::appendComponent);
-//		expand(new InstanceStructComponent(instanceType), ctx::appendComponent);
-//		expand(sources.get(instanceType.vertexShader()), ctx::appendComponent);
-//		expand(sources.get(material.shaders().vertexSource()), ctx::appendComponent);
-//		vertexComponents.forEach(c -> expand(c, ctx::appendComponent));
-//		expand(sources.get(ClrwlVertex.LAYOUT_SHADER), ctx::appendComponent);
-//		expand(pipeline.assembler().assemble(instanceType), ctx::appendComponent);
-//		expand(sources.get(IRIS_COMPAT_VERT), ctx::appendComponent);
-//		expand(irisShader, ctx::appendComponent);
-//		expand(sources.get(pipeline.vertexMain()), ctx::appendComponent);
-//
-//		String source = ctx.iriscompat$getSource();
-//		source = JcppProcessor.glslPreprocessSource(source, List.of());
-//
-//		dumpSources(name, source);
-//
-//		return source;
-//	}
-//
-//	private String generateFragmentSource(InstanceType<?> instanceType, ContextShader contextShader, Material material, PipelineCompiler.OitMode oit, ShaderPack pack, IrisShaderComponent irisShader)
-//	{
-//		var materialName = ResourceUtil.toDebugFileNameNoExtension(material.shaders().vertexSource());
-//		var contextName = contextShader.nameLowerCase();
-//		var light = ResourceUtil.toDebugFileNameNoExtension(material.light().source());
-//		var cutout = ResourceUtil.toDebugFileNameNoExtension(material.cutout().source());
-//
-//		var name = "pipeline/" + pipeline.compilerMarker() + "/" + materialName + "/" + light + "_" + contextName + "_" + cutout + "_" + oit.name + ".frag";
-//		var ctx = new Compilation();
-//
-//		ctx.version(GlCompat.MAX_GLSL_VERSION);
-//
-//		extensions.forEach(ctx::requireExtension);
-//		ctx.enableExtension("GL_ARB_conservative_depth");
-//
-//		if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !extensions.contains("GL_ARB_gpu_shader5")) {
-//			// Only define fma if it wouldn't be declared by gpu shader 5
-//			ctx.define("fma(a, b, c) ((a) * (b) + (c))");
-//		}
-//
-//		contextShader.onCompile(ctx);
-//		BackendConfig.INSTANCE.lightSmoothness().onCompile(ctx);
-//
-//		if (material.cutout() != CutoutShaders.OFF)
-//		{
-//			ctx.define("_FLW_USE_DISCARD");
-//		}
-//
-//		if (oit != PipelineCompiler.OitMode.OFF)
-//		{
-//			ctx.define("_FLW_OIT");
-//			ctx.define(oit.define);
-//		}
-//
-//		if (CUTOUT == null && material.cutout() != CutoutShaders.OFF)
-//		{
-//			createCutoutComponent();
-//		}
-//
-//		if (FOG == null)
-//		{
-//			createFogComponent();
-//		}
-//
-//		expand(sources.get(API_IMPL_FRAG), ctx::appendComponent);
-//		expand(sources.get(material.shaders().fragmentSource()), ctx::appendComponent);
-//		fragmentComponents.forEach(c -> expand(c, ctx::appendComponent));
-//		expand(FOG, ctx::appendComponent);
-//		expand(sources.get(material.light().source()), ctx::appendComponent);
-//		expand(material.cutout() != CutoutShaders.OFF ? CUTOUT : sources.get(CutoutShaders.OFF.source()), ctx::appendComponent);
-//		expand(sources.get(IRIS_COMPAT_FRAG), ctx::appendComponent);
-//		expand(irisShader, ctx::appendComponent);
-//		expand(sources.get(pipeline.fragmentMain()), ctx::appendComponent);
-//
-//		String source = ctx.iriscompat$getSource();
-//		source = JcppProcessor.glslPreprocessSource(source, List.of());
-//
-//		dumpSources(name, source);
-//
-//		return source;
-//	}
-
 	public static void deleteAll()
 	{
 		createFogComponent();
 		createCutoutComponent();
 	}
 
+	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
+
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
 		// This will index the fog and cutout shaders
+		// Cac
 		ClrwlMaterialShaderIndices.fogSources().index(key.material().fog().source());
 		ClrwlMaterialShaderIndices.cutoutSources().index(key.material().cutout().source());
 
+		return programCache.computeIfAbsent(key, this::compile);
+	}
+
+	private ClrwlProgram compile(ClrwlShaderKey key)
+	{
 		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
 
 		if (worldPipeline instanceof IrisRenderingPipeline irisPipeline)
@@ -250,8 +159,7 @@ public class ClrwlPipelineCompiler
 	public static void createFogComponent()
 	{
 		FOG = UberShaderComponent.builder(ResourceUtil.rl("fog"))
-				.materialSources(MaterialShaderIndices.fogSources()
-						.all())
+				.materialSources(ClrwlMaterialShaderIndices.fogSources().all())
 				.adapt(FnSignature.create()
 						.returnType("vec4")
 						.name("flw_fogFilter")
@@ -264,8 +172,7 @@ public class ClrwlPipelineCompiler
 	private static void createCutoutComponent()
 	{
 		CUTOUT = UberShaderComponent.builder(ResourceUtil.rl("cutout"))
-				.materialSources(MaterialShaderIndices.cutoutSources()
-						.all())
+				.materialSources(ClrwlMaterialShaderIndices.cutoutSources().all())
 				.adapt(FnSignature.create()
 						.returnType("bool")
 						.name("flw_discardPredicate")

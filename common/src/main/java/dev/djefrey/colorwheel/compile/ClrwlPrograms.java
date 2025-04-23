@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ClrwlPrograms extends AtomicReferenceCounted {
-	private static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
+	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 
 	@Nullable
 	private static ClrwlPrograms instance;
@@ -71,27 +71,14 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 		setInstance(null);
 	}
 
-	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
-
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
-		return programCache.computeIfAbsent(key, k -> compiler.get(key));
-	}
-
-	public static void clearCache()
-	{
-		FlwPrograms.LOGGER.warn("Before clear: " + instance.programCache.size());
-
-		instance.programCache.values().forEach(ClrwlProgram::free);
-		instance.programCache.clear();
-
-		FlwPrograms.LOGGER.warn("After clear: " + instance.programCache.size());
+		return compiler.get(key);
 	}
 
 	@Override
 	protected void _delete()
 	{
-		programCache.values().forEach(ClrwlProgram::free);
-		programCache.clear();
+
 	}
 }
