@@ -5,7 +5,9 @@ import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
 import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.engine_room.flywheel.api.backend.Backend;
+import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
+import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.shaderpack.ShaderPack;
@@ -51,13 +53,14 @@ public final class Colorwheel {
 
     }
 
-    public static ClrwlShaderSources SOURCES;
+    public static ShaderSources SOURCES;
 
     public static void reload(ResourceManager manager)
     {
         ClrwlPrograms.setInstance(null);
 
-        SOURCES = new ClrwlShaderSources(manager);
+        // We cannot use FlwPrograms.SOURCES because it may not be initialized when this is executed
+        SOURCES = new ShaderSources(manager);
 
         ClrwlPrograms.reload(SOURCES);
     }

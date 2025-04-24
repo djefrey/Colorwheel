@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.ClrwlShaderSources;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
@@ -19,9 +18,9 @@ public class ClrwlCompilation
 
     private final IrisRenderingPipeline pipeline;
     private final ProgramSource irisSources;
-    private final ClrwlShaderSources sourceLoader;
+    private final ShaderSources sourceLoader;
 
-    public ClrwlCompilation(IrisRenderingPipeline pipeline, ProgramSource irisSources, ClrwlShaderSources sourceLoader)
+    public ClrwlCompilation(IrisRenderingPipeline pipeline, ProgramSource irisSources, ShaderSources sourceLoader)
     {
         this.pipeline = pipeline;
         this.irisSources = irisSources;
@@ -93,7 +92,7 @@ public class ClrwlCompilation
         return irisSources;
     }
 
-    public ClrwlShaderSources getLoader()
+    public ShaderSources getLoader()
     {
         return sourceLoader;
     }

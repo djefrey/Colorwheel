@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.ClrwlShaderSources;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import net.irisshaders.iris.helpers.StringPair;
@@ -48,7 +47,7 @@ public record ClrwlPipelineStage<K>(List<String> extensions,
             return this;
         }
 
-        public Builder<K> withLoader(BiFunction<K, ClrwlShaderSources, SourceComponent> fetch)
+        public Builder<K> withLoader(BiFunction<K, ShaderSources, SourceComponent> fetch)
         {
             return with((k, c) -> fetch.apply(k, c.getLoader()));
         }

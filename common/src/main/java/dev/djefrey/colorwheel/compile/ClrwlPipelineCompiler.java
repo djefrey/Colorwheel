@@ -1,13 +1,12 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
-import dev.djefrey.colorwheel.ClrwlShaderSources;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
-import dev.engine_room.flywheel.backend.MaterialShaderIndices;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
+import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslExpr;
@@ -29,13 +28,13 @@ import java.util.function.Consumer;
 
 public class ClrwlPipelineCompiler
 {
-	private final ClrwlShaderSources sources;
+	private final ShaderSources sources;
 	private final ClrwlPipeline pipeline;
 
 	public static UberShaderComponent FOG;
 	public static UberShaderComponent CUTOUT;
 
-	public ClrwlPipelineCompiler(ClrwlShaderSources sources, ClrwlPipeline pipeline)
+	public ClrwlPipelineCompiler(ShaderSources sources, ClrwlPipeline pipeline)
 	{
 		this.sources = sources;
 		this.pipeline = pipeline;

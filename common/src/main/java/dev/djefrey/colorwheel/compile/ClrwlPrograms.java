@@ -1,17 +1,13 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.ClrwlShaderSources;
-import dev.engine_room.flywheel.backend.compile.*;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.util.AtomicReferenceCounted;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ClrwlPrograms extends AtomicReferenceCounted {
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
@@ -35,7 +31,7 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 		return extensions.build();
 	}
 
-	public static void reload(ClrwlShaderSources sources)
+	public static void reload(ShaderSources sources)
 	{
 		if (!GlCompat.SUPPORTS_INSTANCING) {
 			return;
