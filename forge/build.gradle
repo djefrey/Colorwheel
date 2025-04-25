@@ -48,6 +48,12 @@ dependencies {
 
     modLocalRuntime "maven.modrinth:embeddium:${embeddium_version}"
     modLocalRuntime "maven.modrinth:oculus:${oculus_version}"
+
+    modImplementation("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
+    modImplementation("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}")
+    modImplementation("com.tterrag.registrate:Registrate:${registrate_forge_version}")
+    compileOnly("io.github.llamalad7:mixinextras-common:${mixin_extras_version}")
+    annotationProcessor(implementation(include("io.github.llamalad7:mixinextras-forge:${mixin_extras_version}")))
 }
 
 processResources {
