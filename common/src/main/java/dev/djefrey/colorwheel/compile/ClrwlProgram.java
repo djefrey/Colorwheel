@@ -7,9 +7,7 @@ import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.Samplers;
-import dev.engine_room.flywheel.backend.engine.MaterialEncoder;
 import dev.engine_room.flywheel.backend.engine.embed.EmbeddingUniforms;
-import dev.engine_room.flywheel.backend.engine.uniform.Uniforms;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
@@ -24,9 +22,7 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL31C;
-import org.lwjgl.opengl.GL32;
-import org.lwjgl.opengl.GL43C;
+import org.lwjgl.opengl.GL31;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -128,7 +124,7 @@ public class ClrwlProgram
 	}
 
 	private int tryGetUniformLocation2(CharSequence name) {
-		return GL32.glGetUniformLocation(this.handle, name);
+		return GL20.glGetUniformLocation(this.handle, name);
 	}
 
 	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ProgramSource source, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
@@ -196,35 +192,35 @@ public class ClrwlProgram
 
 	public void setUniformBlockBinding(String name, int binding)
 	{
-		int index = GL31C.glGetUniformBlockIndex(handle, name);
+		int index = GL31.glGetUniformBlockIndex(handle, name);
 
-		if (index == GL31C.GL_INVALID_INDEX)
+		if (index == GL31.GL_INVALID_INDEX)
 		{
 			Colorwheel.LOGGER.debug("No uniform block for {}", name);
 			return;
 		}
 
-		GL31C.glUniformBlockBinding(handle, index, binding);
+		GL31.glUniformBlockBinding(handle, index, binding);
 	}
 
 	public void free() {
-		GL43C.glDeleteProgram(this.handle);
+		GL31.glDeleteProgram(this.handle);
 	}
 
 	private void setUniform(int index, int i) {
-		GL43C.glUniform1i(this.handle, i);
+		GL31.glUniform1ui(index, i);
 	}
 
 	private void setUniform(int index, int x, int y) {
-		GL43C.glUniform2i(this.handle, x, y);
+		GL31.glUniform2ui(index, x, y);
 	}
 
 	private void setUniform(int index, Matrix3f mat) {
-		GL43C.glUniformMatrix3fv(this.handle, false, mat.get(new float[12]));
+		GL31.glUniformMatrix3fv(index, false, mat.get(new float[12]));
 	}
 
 	private void setUniform(int index, Matrix4f mat) {
-		GL43C.glUniformMatrix4fv(this.handle, false, mat.get(new float[16]));
+		GL31.glUniformMatrix4fv(index, false, mat.get(new float[16]));
 	}
 
 	public GlProgram getProgram() { return new GlProgram(this.handle); }
