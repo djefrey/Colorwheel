@@ -30,6 +30,11 @@ void main() {
     _flw_ids = uvec2(stableInstanceID, modelID);
     #endif
 
+    #ifdef FLW_EMBEDDED
+    flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
+    flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
+    #endif
+
     flw_vertexNormal = normalize(flw_vertexNormal);
     flw_distance = fogDistance(flw_vertexPos.xyz, flw_cameraPos, flw_fogShape);
 
