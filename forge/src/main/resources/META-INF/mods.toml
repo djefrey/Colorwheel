@@ -11,7 +11,7 @@ authors = "djefrey"
 description = '''
 Allows you to use Iris Shaders with Flywheel
 '''
-#logoFile = ""
+logoFile = "logo.png"
 
 [[dependencies.colorwheel]]
 modId = "forge"
