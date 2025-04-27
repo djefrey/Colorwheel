@@ -31,6 +31,8 @@ import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.level.LevelAccessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -53,13 +55,24 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final TextureBuffer instanceTexture;
 	private final InstancedLight light;
 
+	private final NamespacedId dimension;
+	private final IrisRenderingPipeline irisPipeline;
+	private final ShaderPack pack;
+	private final ProgramSet programSet;
+
 	@Nullable
 	private GlFramebuffer framebuffer;
 
 	@Nullable
 	private GlFramebuffer shadowFramebuffer;
 
-	public ClrwlInstancedDrawManager(ClrwlPrograms programs) {
+	public ClrwlInstancedDrawManager(NamespacedId dimension, IrisRenderingPipeline irisPipeline, ShaderPack pack, ClrwlPrograms programs)
+	{
+		this.dimension = dimension;
+		this.irisPipeline = irisPipeline;
+		this.pack = pack;
+		this.programSet = pack.getProgramSet(dimension);
+
 		programs.acquire();
 		this.programs = programs;
 
@@ -74,11 +87,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	@Override
 	public void render(LightStorage lightStorage, EnvironmentStorage environmentStorage)
 	{
-		var pack = Iris.getCurrentPack().orElseThrow();
-		var dimension = Iris.getCurrentDimension();
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
-		if (isShadow && ((ProgramSetAccessor) pack.getProgramSet(dimension)).colorwheel$getFlwShadow().isEmpty())
+		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().isEmpty())
 		{
 			// No shadow shader, skip
 			return;
@@ -113,7 +124,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
-		var framebuffer = getCurrentFramebuffer(pack.getProgramSet(dimension), isShadow);
+		var framebuffer = getCurrentFramebuffer(isShadow);
 
 		if (framebuffer == null)
 		{
@@ -127,7 +138,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		framebuffer.bind();
 
-		submitDraws(pack, dimension, isShadow);
+		submitDraws(isShadow);
 
 		// NOTE: oit cannot work currently as OitFramework DOES NOT target Iris Framebuffers
 //		if (!oitDraws.isEmpty()) {
@@ -157,47 +168,46 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		TextureBinder.resetLightAndOverlay();
 	}
 
-	private GlFramebuffer getCurrentFramebuffer(ProgramSet programSet, boolean isShadow)
+	private GlFramebuffer getCurrentFramebuffer(boolean isShadow)
 	{
-		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
-
-		if (worldPipeline instanceof IrisRenderingPipeline irisPipeline)
+		if (!isShadow)
 		{
-			if (!isShadow)
+			if (((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$consumeFramebufferChanged() && framebuffer != null)
 			{
-				if (framebuffer == null)
-				{
-					ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();
-					framebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createGbuffersFramebuffer(source);
-				}
-
-				return framebuffer;
+				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyColorFramebuffer(framebuffer);
+				framebuffer = null;
 			}
-			else
+
+			if (framebuffer == null)
 			{
-				if (shadowFramebuffer == null)
-				{
-					ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
-					shadowFramebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createShadowFramebuffer(source);
-				}
-
-				return shadowFramebuffer;
+				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();
+				framebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createGbuffersFramebuffer(source);
 			}
+
+			return framebuffer;
 		}
+		else
+		{
+			if (shadowFramebuffer == null)
+			{
+				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
+				shadowFramebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createShadowFramebuffer(source);
+			}
 
-		return null;
+			return shadowFramebuffer;
+		}
 	}
 
 	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
 
-	private void submitDraws(ShaderPack pack, NamespacedId dimensionId, boolean isShadow)
+	private void submitDraws(boolean isShadow)
 	{
 		for (var drawCall : draws) {
 			var material = drawCall.material();
 			var groupKey = drawCall.groupKey;
 			var environment = groupKey.environment();
 
-			var key = new ClrwlShaderKey(groupKey.instanceType(), material, environment.contextShader(), pack, dimensionId, isShadow);
+			var key = new ClrwlShaderKey(groupKey.instanceType(), material, environment.contextShader(), pack, dimension, isShadow);
 
 			if (brokenShaders.contains(key))
 			{
@@ -256,13 +266,13 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		if (framebuffer != null)
 		{
-			framebuffer.destroy();
+			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyColorFramebuffer(framebuffer);
 			framebuffer = null;
 		}
 
 		if (shadowFramebuffer != null)
 		{
-			shadowFramebuffer.destroy();
+			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyShadowFramebuffer(shadowFramebuffer);
 			shadowFramebuffer = null;
 		}
 

@@ -6,13 +6,15 @@
   "client": [
   ],
   "mixins": [
+    "IrisMixin",
     "IrisRenderingPipelineMixin",
     "ProgramSetMixin",
     "ProgramSourceMixin",
     "ShaderPackMixin",
     "ShaderPackSourceNamesMixin",
     "ShadowRendererAccessor",
-    "ShadowRenderingStateMixin"
+    "ShadowRenderingStateMixin",
+    "ShadowRenderTargetsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

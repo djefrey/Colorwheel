@@ -24,7 +24,7 @@ public final class Colorwheel {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static final Backend IRIS_INSTANCING = SimpleBackend.builder()
-            .engineFactory(level -> new ClrwlEngine(level, new ClrwlInstancedDrawManager(ClrwlPrograms.get()), 256))
+            .engineFactory(level -> new ClrwlEngine(level, 256))
             .priority(450)
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(rl("instancing"));

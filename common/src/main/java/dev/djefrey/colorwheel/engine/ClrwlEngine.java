@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
@@ -20,7 +21,14 @@ import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.GlStateTracker;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
+import net.irisshaders.iris.shaderpack.ShaderPack;
+import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.client.Camera;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
@@ -28,22 +36,42 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClrwlEngine implements Engine
 {
+	public static Map<IrisRenderingPipeline, ClrwlEngine> ENGINES = new HashMap<>();
+
 	private final ClrwlInstancedDrawManager drawManager;
 	private final int sqrMaxOriginDistance;
 	private final EnvironmentStorage environmentStorage;
 	private final LightStorage lightStorage;
 	private BlockPos renderOrigin = BlockPos.ZERO;
 
-	public ClrwlEngine(LevelAccessor level, ClrwlInstancedDrawManager drawManager, int maxOriginDistance)
+	private final LevelAccessor level;
+	private final NamespacedId dimension;
+	private final IrisRenderingPipeline irisPipeline;
+	private final ShaderPack pack;
+
+	public ClrwlEngine(LevelAccessor level, int maxOriginDistance)
 	{
-		this.drawManager = drawManager;
+		ClientLevel clientLevel = (ClientLevel) level;
+		this.level = level;
+		this.dimension = new NamespacedId(clientLevel.dimension().location().getNamespace(),
+				clientLevel.dimension().location().getPath());
+
+		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().preparePipeline(dimension);
+		this.irisPipeline = (IrisRenderingPipeline) worldPipeline;
+		this.pack = Iris.getCurrentPack().orElseThrow();
+
+		this.drawManager = new ClrwlInstancedDrawManager(dimension, irisPipeline, pack, ClrwlPrograms.get());
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = new LightStorage(level);
+
+		ENGINES.put(irisPipeline, this);
 	}
 
 	@Override
@@ -121,6 +149,8 @@ public class ClrwlEngine implements Engine
 	@Override
 	public void delete()
 	{
+		ENGINES.remove(irisPipeline);
+
 		drawManager.delete();
 		lightStorage.delete();
 		environmentStorage.delete();
@@ -133,6 +163,8 @@ public class ClrwlEngine implements Engine
 	public LightStorage lightStorage() {
 		return lightStorage;
 	}
+
+	public LevelAccessor level() { return level; };
 
 	public <I extends Instance>Instancer<I> instancer(Environment environment, InstanceType<I> type, Model model, int bias)
 	{
