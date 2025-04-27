@@ -54,7 +54,7 @@ public class ShaderPackMixin implements ShaderPackAccessor
 			remap = false)
 	private void injectBeforeProgramSet(Path root, Map changedConfigs, ImmutableList environmentDefines, CallbackInfo ci, ArrayList envDefines1, ImmutableList.Builder starts, ImmutableList potentialFileNames, boolean[] hasDimensionIds, List dimensionIdCreator, IncludeGraph graph, List finalEnvironmentDefines, List invalidFlagList, List invalidFeatureFlags, List newEnvDefines, List optionalFeatureFlags, ProfileSet profiles, List disabledPrograms, IncludeProcessor includeProcessor, Iterable<StringPair> finalEnvironmentDefines1, int userOptionsChanged)
 	{
-		this.colorwheel$packName = root.getFileName().toString();
+		this.colorwheel$packName = root.getParent().getFileName().toString();
 
 		this.colorwheel$environmentDefines = ImmutableList.copyOf(finalEnvironmentDefines1);
 		Function<AbsolutePackPath, String> sourceProviderNoPreprocess = (path) ->
