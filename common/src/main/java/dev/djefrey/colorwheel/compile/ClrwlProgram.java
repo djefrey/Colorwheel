@@ -34,8 +34,6 @@ public class ClrwlProgram
 	private final CustomUniforms customUniforms;
 	private final ProgramSamplers samplers;
 	private final ProgramImages images;
-	private final BlendModeOverride blend;
-	private final BufferBlendOverride[] bufferBlendOverrides;
 
 	public final int vertexOffsetUniform;
 	public final int packedMaterialUniform;
@@ -57,12 +55,9 @@ public class ClrwlProgram
 //			Samplers.NOISE.number
 	);
 
-	private ClrwlProgram(String name, boolean isShadowPass, BlendModeOverride override, BufferBlendOverride[] bufferBlendOverrides, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	private ClrwlProgram(String name, boolean isShadowPass, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
 		this.handle = GL20.glCreateProgram();
-
-		this.blend = override;
-		this.bufferBlendOverrides = bufferBlendOverrides;
 
 		GL20.glBindAttribLocation(this.handle, 0, "_flw_aPos");
 		GL20.glBindAttribLocation(this.handle, 1, "_flw_aColor");
@@ -132,18 +127,7 @@ public class ClrwlProgram
 		String vertex = source.getVertexSource().orElseThrow(RuntimeException::new);
 		String fragment = source.getFragmentSource().orElseThrow(RuntimeException::new);
 
-		List<BufferBlendOverride> bufferOverrides = new ArrayList<>();
-
-		source.getDirectives().getBufferBlendOverrides().forEach(information -> {
-			int index = Ints.indexOf(source.getDirectives().getDrawBuffers(), information.index());
-			if (index > -1) {
-				bufferOverrides.add(new BufferBlendOverride(index, information.blendMode()));
-			}
-		});
-
 		return new ClrwlProgram(name, isShadowPass,
-							   source.getDirectives().getBlendModeOverride().orElse(null),
-							   bufferOverrides.toArray(BufferBlendOverride[]::new),
 							   vertex, fragment,
 							   customUniforms, pipeline);
 	}
@@ -151,11 +135,6 @@ public class ClrwlProgram
 	public void bind(int vertexOffset, Material material)
 	{
 		GL20.glUseProgram(this.handle);
-		if (blend != null) blend.apply();
-
-		for (BufferBlendOverride override : bufferBlendOverrides) {
-			override.apply();
-		}
 
 		int packedFogAndCutout = ClrwlMaterialEncoder.packUberShader(material);
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
@@ -174,7 +153,6 @@ public class ClrwlProgram
 		GL20.glUseProgram(0);
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
-		BlendModeOverride.restore();
 	}
 
 	public void setEmbeddedMatrices(Matrix4f model,  Matrix3f normal)
