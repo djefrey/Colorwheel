@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.compile.ClrwlPipeline;
 import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
+import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.api.material.FogShader;
 import dev.engine_room.flywheel.backend.compile.PipelineCompiler;
@@ -57,7 +58,14 @@ public final class ClrwlMaterialShaderIndices
 
             if (out == -1) {
                 add(source);
-                ClrwlPipelineCompiler.deleteAll();
+
+                ClrwlPrograms programs = ClrwlPrograms.get();
+
+                if (programs != null)
+                {
+                    programs.handleUberShaderUpdate();
+                }
+
                 return sources2Index.getInt(source);
             }
 

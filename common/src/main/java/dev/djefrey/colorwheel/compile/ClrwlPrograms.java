@@ -7,7 +7,10 @@ import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.util.AtomicReferenceCounted;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class ClrwlPrograms extends AtomicReferenceCounted {
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
@@ -54,6 +57,8 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 		instance = newInstance;
 	}
 
+	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
+
 	@Nullable
 	public static ClrwlPrograms get() {
 		return instance;
@@ -69,7 +74,13 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
-		return compiler.get(key);
+		return programCache.computeIfAbsent(key, this.compiler::get);
+	}
+
+	public void handleUberShaderUpdate()
+	{
+		programCache.clear();
+		ClrwlPipelineCompiler.refreshUberShaders();
 	}
 
 	@Override

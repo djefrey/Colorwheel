@@ -40,22 +40,19 @@ public class ClrwlPipelineCompiler
 		this.pipeline = pipeline;
 	}
 
-	public static void deleteAll()
+	public static void refreshUberShaders()
 	{
 		createFogComponent();
 		createCutoutComponent();
 	}
 
-	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
-
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
 		// This will index the fog and cutout shaders
-		// Cac
 		ClrwlMaterialShaderIndices.fogSources().index(key.material().fog().source());
 		ClrwlMaterialShaderIndices.cutoutSources().index(key.material().cutout().source());
 
-		return programCache.computeIfAbsent(key, this::compile);
+		return this.compile(key);
 	}
 
 	private ClrwlProgram compile(ClrwlShaderKey key)
