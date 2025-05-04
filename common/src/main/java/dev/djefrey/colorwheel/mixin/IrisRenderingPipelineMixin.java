@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
+import dev.djefrey.colorwheel.accessors.RenderTargetsAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRenderTargetsAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
@@ -56,6 +57,16 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 		ShadowRenderTargets targets = ((ShadowRendererAccessor) shadowRenderer).getTargets();
 
 		return targets.createShadowFramebuffer(ImmutableSet.of(), drawBuffers);
+	}
+
+	public RenderTargets colorwheel$getGbuffersRenderTargets()
+	{
+		return renderTargets;
+	}
+
+	public ShadowRenderTargets colorwheel$getShadowRenderTargets()
+	{
+		return ((ShadowRendererAccessor) shadowRenderer).getTargets();
 	}
 
 	@Unique

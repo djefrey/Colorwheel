@@ -2,9 +2,12 @@ package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Ints;
+import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.mixin.ProgramDirectivesMixin;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.Samplers;
 import dev.engine_room.flywheel.backend.engine.embed.EmbeddingUniforms;
@@ -18,11 +21,13 @@ import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
+import org.spongepowered.include.com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,23 +45,34 @@ public class ClrwlProgram
 	public final int modelMatrixUniform;
 	public final int normalMatrixUniform;
 
-	public static final ImmutableSet<Integer> RESERVED_TEXTURE_UNITS = ImmutableSet.of(
-			Samplers.DIFFUSE.number,
-			Samplers.OVERLAY.number,
-			Samplers.LIGHT.number,
-			Samplers.CRUMBLING.number,
-			Samplers.INSTANCE_BUFFER.number,
-			Samplers.LIGHT_LUT.number,
-			Samplers.LIGHT_SECTIONS.number
-
-			// OIT Samplers
-//			Samplers.DEPTH_RANGE.number,
-//			Samplers.COEFFICIENTS.number,
-//			Samplers.NOISE.number
-	);
-
-	private ClrwlProgram(String name, boolean isShadowPass, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public static ImmutableSet<Integer> getReservedTextureUnits(int oitCoeffCount)
 	{
+		List<Integer> res = new ArrayList<>();
+
+		res.add(ClrwlSamplers.DIFFUSE.number);
+		res.add(ClrwlSamplers.OVERLAY.number);
+		res.add(ClrwlSamplers.LIGHT.number);
+		res.add(ClrwlSamplers.CRUMBLING.number);
+		res.add(ClrwlSamplers.INSTANCE_BUFFER.number);
+		res.add(ClrwlSamplers.LIGHT_LUT.number);
+		res.add(ClrwlSamplers.LIGHT_SECTIONS.number);
+
+		// OIT Samplers
+		res.add(ClrwlSamplers.DEPTH_RANGE.number);
+		res.add(ClrwlSamplers.NOISE.number);
+
+		for (int i = 0; i < oitCoeffCount; i++)
+		{
+			res.add(ClrwlSamplers.getCoefficient(i).number);
+		}
+
+		return ImmutableSet.copyOf(res);
+	}
+
+	private ClrwlProgram(String name, boolean isShadowPass, ProgramDirectives directives, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	{
+		var oitCoeffs = ((ProgramDirectivesAccessor) directives).colorwheel$getOitCoefficients();
+
 		this.handle = GL20.glCreateProgram();
 
 		GL20.glBindAttribLocation(this.handle, 0, "_flw_aPos");
@@ -84,19 +100,23 @@ public class ClrwlProgram
 		}
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, this.handle);
-		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, ClrwlProgram.RESERVED_TEXTURE_UNITS);
+		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs.size()));
 		ProgramImages.Builder   imageBuilder   = ProgramImages.builder(this.handle);
 
-		samplerBuilder.addExternalSampler(Samplers.DIFFUSE.number, "flw_diffuseTex");
-		samplerBuilder.addExternalSampler(Samplers.OVERLAY.number, "flw_overlayTex");
-		samplerBuilder.addExternalSampler(Samplers.LIGHT.number, "flw_lightTex");
-		samplerBuilder.addExternalSampler(Samplers.CRUMBLING.number, "_flw_crumblingTex");
-		samplerBuilder.addExternalSampler(Samplers.INSTANCE_BUFFER.number, "_flw_instances");
-		samplerBuilder.addExternalSampler(Samplers.LIGHT_LUT.number, "_flw_lightLut");
-		samplerBuilder.addExternalSampler(Samplers.LIGHT_SECTIONS.number, "_flw_lightSections");
-//		samplerBuilder.addExternalSampler(Samplers.DEPTH_RANGE.number, "_flw_depthRange");
-//		samplerBuilder.addExternalSampler(Samplers.COEFFICIENTS.number, "_flw_coefficients");
-//		samplerBuilder.addExternalSampler(Samplers.NOISE.number, "_flw_blueNoise");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.DIFFUSE.number, "flw_diffuseTex");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.OVERLAY.number, "flw_overlayTex");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.LIGHT.number, "flw_lightTex");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.CRUMBLING.number, "_flw_crumblingTex");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.INSTANCE_BUFFER.number, "_flw_instances");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.LIGHT_LUT.number, "_flw_lightLut");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.LIGHT_SECTIONS.number, "_flw_lightSections");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.DEPTH_RANGE.number, "_flw_depthRange");
+		samplerBuilder.addExternalSampler(ClrwlSamplers.NOISE.number, "_flw_blueNoise");
+
+		for (int i = 0; i < oitCoeffs.size(); i++)
+		{
+			samplerBuilder.addExternalSampler(ClrwlSamplers.getCoefficient(i).number, "clrwl_coefficients" + i);
+		}
 
 		customUniforms.assignTo(uniformBuilder);
 		pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
@@ -128,6 +148,7 @@ public class ClrwlProgram
 		String fragment = source.getFragmentSource().orElseThrow(RuntimeException::new);
 
 		return new ClrwlProgram(name, isShadowPass,
+							   source.getDirectives(),
 							   vertex, fragment,
 							   customUniforms, pipeline);
 	}

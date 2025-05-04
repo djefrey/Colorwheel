@@ -13,7 +13,8 @@ public record ClrwlShaderKey(InstanceType<?> instanceType,
                              ContextShader context,
                              ShaderPack pack,
                              NamespacedId dimension,
-                             boolean isShadow)
+                             boolean isShadow,
+                             ClrwlPipelineCompiler.OitMode oit)
 {
     public String getPath()
     {
@@ -24,6 +25,6 @@ public record ClrwlShaderKey(InstanceType<?> instanceType,
         return ((ShaderPackAccessor) pack).colorwheel$getPackName()
                 + '/' + (isShadow ? "shadow" : "color")
                 + '/' + instanceName
-                + '/' + materialName + '_' + contextName;
+                + '/' + materialName + '_' + contextName + oit.name;
     }
 }

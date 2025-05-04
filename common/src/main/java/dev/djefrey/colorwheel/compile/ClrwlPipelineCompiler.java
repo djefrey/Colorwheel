@@ -67,18 +67,19 @@ public class ClrwlPipelineCompiler
 			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
 			var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().shaders().vertexSource());
 			var contextName = key.context().nameLowerCase();
+			var oitName = key.oit().name;
 
 			String name;
 			ProgramSource sources;
 
 			if (!isShadow)
 			{
-				name = String.format("flw_gbuffers_%s_%s_%s", instanceName, materialName, contextName);
+				name = String.format("flw_gbuffers_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
 				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();
 			}
 			else
 			{
-				name = String.format("flw_shadow_%s_%s_%s", instanceName, materialName, contextName);
+				name = String.format("flw_shadow_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
 				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
 			}
 
@@ -90,10 +91,11 @@ public class ClrwlPipelineCompiler
 			dumpSources("/pipeline/frag/" + shaderPath + ".fsh", fragment);
 
 			var customSource = new ProgramSource(name,
-					vertex, null, null, null, fragment,
-					programSet,
-					((ProgramSourceAccessor) sources).colorwheel$getShaderProperties(),
-					((ProgramSourceAccessor) sources).colorwheel$getBlendModeOverride());
+						vertex, null, null, null, fragment,
+						programSet,
+						((ProgramSourceAccessor) sources).colorwheel$getShaderProperties(),
+						((ProgramSourceAccessor) sources).colorwheel$getBlendModeOverride())
+					.withDirectiveOverride(sources.getDirectives());
 
 			return ClrwlProgram.createProgram(name, isShadow, customSource, irisPipeline.getCustomUniforms(), irisPipeline);
 		}
@@ -134,6 +136,11 @@ public class ClrwlPipelineCompiler
 
 	private static void expand(SourceComponent rootSource, Consumer<SourceComponent> out)
 	{
+		if (rootSource == null)
+		{
+			return;
+		}
+
 		var included = new LinkedHashSet<SourceComponent>(); // use hash set to deduplicate. linked to preserve order
 
 		recursiveDepthFirstInclude(included, rootSource);
@@ -193,6 +200,24 @@ public class ClrwlPipelineCompiler
 			writer.write(source);
 		} catch (Exception e) {
 			FlwPrograms.LOGGER.error("Could not dump source.", e);
+		}
+	}
+
+	public enum OitMode
+	{
+		OFF("", ""),
+		DEPTH_RANGE("CLRWL_DEPTH_RANGE", "_depth_range"),
+		GENERATE_COEFFICIENTS("CLRWL_COLLECT_COEFFS", "_generate_coefficients"),
+		EVALUATE("CLRWL_EVALUATE", "_resolve"),
+		;
+
+		public final String define;
+		public final String name;
+
+		OitMode(String define, String name)
+		{
+			this.define = define;
+			this.name = name;
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.engine_room.flywheel.backend.gl.shader.ShaderType;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 
 import java.util.ArrayList;
@@ -13,9 +14,14 @@ public record ClrwlPipeline(String id,
                             ClrwlPipelineStage<ClrwlShaderKey> vertex,
                             ClrwlPipelineStage<ClrwlShaderKey> fragment)
 {
-    public static ClrwlPipelineStage.Builder<ClrwlShaderKey> stage()
+    public static ClrwlPipelineStage.Builder<ClrwlShaderKey> vertexStage()
     {
-        return new ClrwlPipelineStage.Builder<>();
+        return new ClrwlPipelineStage.Builder<>(ShaderType.VERTEX);
+    }
+
+    public static ClrwlPipelineStage.Builder<ClrwlShaderKey> fragmentStage()
+    {
+        return new ClrwlPipelineStage.Builder<>(ShaderType.FRAGMENT);
     }
 
     public static Builder builder()

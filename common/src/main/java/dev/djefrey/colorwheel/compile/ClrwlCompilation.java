@@ -6,6 +6,7 @@ import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,11 @@ public class ClrwlCompilation
 
     public void appendComponent(SourceComponent component)
     {
+        if (component == null)
+        {
+            return;
+        }
+
         sources.append("\n// ----- ")
                 .append(component.name())
                 .append(" -----\n");
@@ -82,11 +88,13 @@ public class ClrwlCompilation
         return sources.toString();
     }
 
+    @Nullable
     public IrisRenderingPipeline getIrisPipeline()
     {
         return pipeline;
     }
 
+    @Nullable
     public ProgramSource getIrisSources()
     {
         return irisSources;

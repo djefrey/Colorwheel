@@ -4,12 +4,13 @@ import dev.djefrey.colorwheel.ClrwlVertex;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.IrisShaderComponent;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
+import dev.djefrey.colorwheel.compile.oit.*;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.component.BufferTextureInstanceComponent;
 import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponent;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
-import dev.engine_room.flywheel.backend.glsl.GlslVersion;
+import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.material.CutoutShaders;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
 import net.irisshaders.iris.helpers.StringPair;
@@ -30,7 +31,11 @@ public class ClrwlPipelines
     public static final ResourceLocation MAIN_VERT = Colorwheel.rl("internal/instancing/main.vert");
     public static final ResourceLocation MAIN_FRAG = Colorwheel.rl("internal/instancing/main.frag");
 
+    public static final ResourceLocation OIT_DEPTH_RANGE_FRAG = Colorwheel.rl("internal/oit/depth_range.frag");
+
     public static final ResourceLocation COMPONENTS_HEADER_FRAG = ResourceUtil.rl("internal/components_header.frag");
+
+    private static final ResourceLocation FULLSCREEN = ResourceUtil.rl("internal/fullscreen.vert");
 
     public static ClrwlPipeline INSTANCING = ClrwlPipeline.builder()
             .id("instancing")
@@ -42,10 +47,18 @@ public class ClrwlPipelines
                     b.requireExtension(ext);
                 }
             })
-            .vertex(ClrwlPipeline.stage()
+            .vertex(ClrwlPipeline.vertexStage()
                     .define("IS_FLYWHEEL")
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
                     .onCompile((k, c) -> setContextDefine(k.context(), c))
+                    .onCompile((k, c) ->
+                    {
+                        if (k.oit() != ClrwlPipelineCompiler.OitMode.OFF)
+                        {
+                            c.define("CLRWL_OIT");
+                            c.define(k.oit().define);
+                        }
+                    })
                     // TODO: Light smoothness
                     .withResource(API_IMPL_VERT)
                     .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
@@ -54,30 +67,23 @@ public class ClrwlPipelines
                     .withLoader(($, sources) -> sources.get(ClrwlVertex.LAYOUT_SHADER))
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_VERT))
                     .withComponent((k) -> new BufferTextureInstanceComponent(k.instanceType()))
-                    .with((k, c) ->
-                    {
-                        var pipeline = c.getIrisPipeline();
-                        var sources = c.getIrisSources();
-
-                        String vertexSource = sources.getVertexSource().orElseThrow();
-
-                        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-                        List<StringPair> defines = new ArrayList<>(irisDefines);
-                        defines.addAll(c.defines);
-
-                        String preprocessed = JcppProcessor.glslPreprocessSource(vertexSource, defines);
-                        String transformed = ClrwlTransformPatcher.patchVertex(preprocessed, pipeline.getTextureMap());
-
-                        return new IrisShaderComponent(sources.getName(), transformed);
-                    })
+                    .with(ClrwlPipelines::getIrisShaderVertexSource)
                     .withResource(MAIN_VERT)
                     .build())
-            .fragment(ClrwlPipeline.stage()
+            .fragment(ClrwlPipeline.fragmentStage()
                     .define("IS_FLYWHEEL")
                     .enableExtension("GL_ARB_conservative_depth")
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
                     .onCompile((k, c) -> setContextDefine(k.context(), c))
                     .onCompile((k, c) -> setCutoutDefine(k.material().cutout(), c))
+                    .onCompile((k, c) ->
+                    {
+                        if (k.oit() != ClrwlPipelineCompiler.OitMode.OFF)
+                        {
+                            c.define("CLRWL_OIT");
+                            c.define(k.oit().define);
+                        }
+                    })
                     // TODO: Light smoothness
                     .withResource(COMPONENTS_HEADER_FRAG)
                     .withResource(API_IMPL_FRAG)
@@ -89,23 +95,47 @@ public class ClrwlPipelines
                                         ? sources.get(CutoutShaders.OFF.source())
                                         : ClrwlPipelineCompiler.CUTOUT)
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_FRAG))
-                    .with((k, c) ->
+                    .withComponent((k) ->
                     {
-                        var pipeline = c.getIrisPipeline();
-                        var sources = c.getIrisSources();
+                        if (k.oit() == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
+                        {
+                            return new OitCoefficientsOutputComponent(k.pack(), k.dimension(), k.isShadow());
+                        }
+                        else if (k.oit() == ClrwlPipelineCompiler.OitMode.EVALUATE)
+                        {
+                            return new OitCoefficientsSamplersComponent(k.pack(), k.dimension(), k.isShadow());
+                        }
 
-                        String fragmentSource = sources.getFragmentSource().orElseThrow();
-
-                        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-                        List<StringPair> defines = new ArrayList<>(irisDefines);
-                        defines.addAll(c.defines);
-
-                        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
-                        String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, pipeline.getTextureMap());
-
-                        return new IrisShaderComponent(sources.getName(), transformed);
+                        return null;
                     })
+                    .with(ClrwlPipelines::getIrisShaderFragmentSource)
                     .withResource(MAIN_FRAG)
+                    .build())
+            .build();
+
+    public static ClrwlOitDepthPipeline OIT_DEPTH = ClrwlOitDepthPipeline.builder()
+            .id("oit_depth")
+            .minVersion(GlCompat.MAX_GLSL_VERSION)
+            .vertex(ClrwlOitDepthPipeline.vertexStage()
+                    .withResource(FULLSCREEN)
+                    .build()
+                )
+            .fragment(ClrwlOitDepthPipeline.fragmentStage()
+                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                    .withResource(OIT_DEPTH_RANGE_FRAG)
+                    .build())
+            .build();
+
+    public static ClrwlOitCompositePipeline OIT_COMPOSITE = ClrwlOitCompositePipeline.builder()
+            .id("oit_composite")
+            .minVersion(GlCompat.MAX_GLSL_VERSION)
+            .vertex(ClrwlOitCompositePipeline.vertexStage()
+                    .withResource(FULLSCREEN)
+                    .build()
+            )
+            .fragment(ClrwlOitCompositePipeline.fragmentStage()
+                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                    .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.renderTargets(), k.coefficients()))
                     .build())
             .build();
 
@@ -125,6 +155,53 @@ public class ClrwlPipelines
         {
             c.define("_FLW_USE_DISCARD");
         }
+    }
+
+    private static SourceComponent getIrisShaderVertexSource(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        var pipeline = c.getIrisPipeline();
+        var sources = c.getIrisSources();
+
+        String vertexSource = sources.getVertexSource().orElseThrow();
+
+        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
+        List<StringPair> defines = new ArrayList<>(irisDefines);
+        defines.addAll(c.defines);
+
+        String preprocessed = JcppProcessor.glslPreprocessSource(vertexSource, defines);
+        String transformed = ClrwlTransformPatcher.patchVertex(preprocessed, pipeline.getTextureMap());
+
+        return new IrisShaderComponent(sources.getName(), transformed);
+    }
+
+    private static SourceComponent getIrisShaderFragmentSource(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        switch (k.oit())
+        {
+            case OFF, GENERATE_COEFFICIENTS, EVALUATE ->
+            {
+                var pipeline = c.getIrisPipeline();
+                var sources = c.getIrisSources();
+
+                String fragmentSource = sources.getFragmentSource().orElseThrow();
+
+                List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
+                List<StringPair> defines = new ArrayList<>(irisDefines);
+                defines.addAll(c.defines);
+
+                String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
+                String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, pipeline.getTextureMap());
+
+                return new IrisShaderComponent(sources.getName(), transformed);
+            }
+
+            case DEPTH_RANGE ->
+            {
+                return c.getLoader().get(OIT_DEPTH_RANGE_FRAG);
+            }
+        }
+
+        throw new RuntimeException("OitMode " + k.oit() + " is not handled");
     }
 
     private ClrwlPipelines() {}

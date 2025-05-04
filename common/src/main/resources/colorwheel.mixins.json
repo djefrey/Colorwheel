@@ -8,8 +8,10 @@
   "mixins": [
     "IrisMixin",
     "IrisRenderingPipelineMixin",
+    "ProgramDirectivesMixin",
     "ProgramSetMixin",
     "ProgramSourceMixin",
+    "RenderTargetMixin",
     "ShaderPackMixin",
     "ShaderPackSourceNamesMixin",
     "ShadowRendererAccessor",

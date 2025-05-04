@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class ClrwlPrograms extends AtomicReferenceCounted {
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
@@ -19,10 +19,12 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 	private static ClrwlPrograms instance;
 
 	private final ClrwlPipelineCompiler compiler;
+	private final ClrwlOitPrograms oitPrograms;
 
-	private ClrwlPrograms(ClrwlPipelineCompiler compiler)
+	private ClrwlPrograms(ClrwlPipelineCompiler compiler, ClrwlOitPrograms oitPrograms)
 	{
 		this.compiler = compiler;
+		this.oitPrograms = oitPrograms;
 	}
 
 	private static List<String> getExtensions(GlslVersion glslVersion)
@@ -41,7 +43,9 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 		}
 
 		var compiler = new ClrwlPipelineCompiler(sources, ClrwlPipelines.INSTANCING);
-		ClrwlPrograms newInstance = new ClrwlPrograms(compiler);
+		var oit = new ClrwlOitPrograms(sources);
+
+		ClrwlPrograms newInstance = new ClrwlPrograms(compiler, oit);
 
 		setInstance(newInstance);
 	}
@@ -74,7 +78,20 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
-		return programCache.computeIfAbsent(key, this.compiler::get);
+		ClrwlProgram program = programCache.get(key);
+
+		if (program == null)
+		{
+			program = this.compiler.get(key);
+			programCache.put(key, program);
+		}
+
+		return program;
+	}
+
+	public ClrwlOitPrograms getOitPrograms()
+	{
+		return oitPrograms;
 	}
 
 	public void handleUberShaderUpdate()
