@@ -51,6 +51,13 @@ public class OitCompositeComponent implements SourceComponent
 
         var body = new GlslBlock();
 
+        body.add(GlslStmt.raw("float minDepth = -texelFetch(_flw_depthRange, ivec2(gl_FragCoord.xy), 0).r;"));
+
+        // Required otherwise depth buffer is corrupted
+        body.add(GlslStmt.raw("if (minDepth == _flw_cullData.zfar) { discard; }"));
+
+        body.add(GlslStmt.raw("gl_FragDepth = delinearize_depth(minDepth, _flw_cullData.znear, _flw_cullData.zfar);"));
+
         for (int i = 0; i < coeffCount; i++)
         {
             var name = "total_transmittance" + i;
@@ -69,9 +76,6 @@ public class OitCompositeComponent implements SourceComponent
             body.add(GlslStmt.raw("vec4 " + texelName + " = texelFetch(" + accumulate + ", ivec2(gl_FragCoord.xy), 0);"));
             body.add(GlslStmt.raw(out + " = vec4(" + texelName + ".rgb / " + texelName + ".a, 1. - " + totalName + ");"));
         }
-
-        body.add(GlslStmt.raw("float minDepth = -texelFetch(_flw_depthRange, ivec2(gl_FragCoord.xy), 0).r;"));
-        body.add(GlslStmt.raw("gl_FragDepth = delinearize_depth(minDepth, _flw_cullData.znear, _flw_cullData.zfar);"));
 
         builder.function()
                 .signature(FnSignature.create().returnType("void").name("main").build())
