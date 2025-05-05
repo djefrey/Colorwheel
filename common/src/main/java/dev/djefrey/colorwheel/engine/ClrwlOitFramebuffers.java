@@ -341,7 +341,7 @@ public class ClrwlOitFramebuffers
 
             for (int i = 0; i < drawBuffers.length; i++)
             {
-                actualTargets[i] = targets.getOrCreate(i);
+                actualTargets[i] = targets.getOrCreate(drawBuffers[i]);
             }
         }
         else
@@ -350,7 +350,7 @@ public class ClrwlOitFramebuffers
 
             for (int i = 0; i < drawBuffers.length; i++)
             {
-                actualTargets[i] = targets.getOrCreate(i);
+                actualTargets[i] = targets.getOrCreate(drawBuffers[i]);
             }
         }
 
@@ -391,8 +391,12 @@ public class ClrwlOitFramebuffers
             {
                 RenderTarget target = renderTargets[i];
                 int buffer = GL46.glCreateTextures(GL46.GL_TEXTURE_2D);
+                int textureFormat = target.getInternalFormat().getGlFormat();
+                int pixelFormat = ((RenderTargetAccessor) target).colorwheel$getPixelFormat().getGlFormat();
+                int typeFormat = ((RenderTargetAccessor) target).colorwheel$getPixelType().getGlFormat();
 
-                GL46.glTextureStorage2D(buffer, 1, target.getInternalFormat().getGlFormat(), target.getWidth(), target.getHeight());
+                GL46.glTextureStorage2D(buffer, 1, textureFormat, target.getWidth(), target.getHeight());
+                GL46.glTextureSubImage2D(buffer, 0, 0, 0, target.getWidth(), target.getHeight(), pixelFormat, typeFormat, 0);
                 accumulate[i] = buffer;
             }
 
