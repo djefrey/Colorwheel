@@ -328,6 +328,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		instancers.values()
 				.forEach(ClrwlInstancedInstancer::delete);
 
+		draws.clear();
+		oitDraws.clear();
+
 		allDraws.forEach(ClrwlInstancedDraw::delete);
 		allDraws.clear();
 
