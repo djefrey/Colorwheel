@@ -391,12 +391,11 @@ public class ClrwlOitFramebuffers
             {
                 RenderTarget target = renderTargets[i];
                 int buffer = GL46.glCreateTextures(GL46.GL_TEXTURE_2D);
-                int textureFormat = target.getInternalFormat().getGlFormat();
-                int pixelFormat = ((RenderTargetAccessor) target).colorwheel$getPixelFormat().getGlFormat();
-                int typeFormat = ((RenderTargetAccessor) target).colorwheel$getPixelType().getGlFormat();
 
-                GL46.glTextureStorage2D(buffer, 1, textureFormat, target.getWidth(), target.getHeight());
-                GL46.glTextureSubImage2D(buffer, 0, 0, 0, target.getWidth(), target.getHeight(), pixelFormat, typeFormat, 0);
+                // TODO: Allow shader dev to set format
+                // Secondary buffers may not require 16b floats
+
+                GL46.glTextureStorage2D(buffer, 1, GL32.GL_RGBA16F, target.getWidth(), target.getHeight());
                 accumulate[i] = buffer;
             }
 
@@ -432,12 +431,12 @@ public class ClrwlOitFramebuffers
             {
                 RenderTarget target = renderTargets[i];
                 int buffer = GL32.glGenTextures();
-                int textureFormat = target.getInternalFormat().getGlFormat();
-                int pixelFormat = ((RenderTargetAccessor) target).colorwheel$getPixelFormat().getGlFormat();
-                int typeFormat = ((RenderTargetAccessor) target).colorwheel$getPixelType().getGlFormat();
+
+                // TODO: Allow shader dev to set format
+                // Secondary buffers may not require 16b floats
 
                 GL32.glBindTexture(GL32.GL_TEXTURE_2D, buffer);
-                GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, textureFormat, target.getWidth(), target.getHeight(), 0, pixelFormat, typeFormat, 0);
+                GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGBA16F, target.getWidth(), target.getHeight(), 0, GL32.GL_RGBA, GL32.GL_BACK, 0);
 
                 GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_NEAREST);
                 GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_NEAREST);
