@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.ShadowRenderContext;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
@@ -128,10 +129,30 @@ public class ClrwlEngine implements Engine
 		try (var state = GlStateTracker.getRestoreState())
 		{
 			RenderSystem.replayQueue();
-			ClrwlUniforms.update(context);
 
-			environmentStorage.flush();
-			drawManager.render(lightStorage, environmentStorage);
+			if (context instanceof ShadowRenderContext shadowContext)
+			{
+				if (shadowContext.phase() == ShadowRenderContext.RenderPhase.SOLID)
+				{
+					ClrwlUniforms.update(context);
+					environmentStorage.flush();
+					drawManager.prepareFrame(lightStorage, environmentStorage);
+
+					drawManager.renderSolid();
+				}
+				else
+				{
+					drawManager.renderTranslucent();
+				}
+			}
+			else
+			{
+				ClrwlUniforms.update(context);
+				environmentStorage.flush();
+				drawManager.prepareFrame(lightStorage, environmentStorage);
+
+				drawManager.renderAll();
+			}
 		}
 		catch (Exception e)
 		{

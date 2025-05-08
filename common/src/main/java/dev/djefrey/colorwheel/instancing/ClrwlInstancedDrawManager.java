@@ -43,7 +43,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final List<ClrwlInstancedDraw> allDraws = new ArrayList<>();
 	private boolean needSort = false;
 
-	private final List<ClrwlInstancedDraw> draws = new ArrayList<>();
+	private final List<ClrwlInstancedDraw> solidDraws = new ArrayList<>();
+	private final List<ClrwlInstancedDraw> translucentDraws = new ArrayList<>();
 	private final List<ClrwlInstancedDraw> oitDraws = new ArrayList<>();
 
 	private final ClrwlPrograms programs;
@@ -89,45 +90,49 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	}
 
 	@Override
-	public void render(LightStorage lightStorage, EnvironmentStorage environmentStorage)
+	public void prepareFrame(LightStorage lightStorage, EnvironmentStorage environmentStorage)
 	{
-		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
-
-		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().isEmpty())
-		{
-			// No shadow shader, skip
-			return;
-		}
-
-		super.render(lightStorage, environmentStorage);
+		super.prepareFrame(lightStorage, environmentStorage);
 
 		this.instancers.values()
-				.removeIf(instancer -> {
-			if (instancer.instanceCount() == 0) {
-				instancer.delete();
-				return true;
-			} else {
-				instancer.updateBuffer();
-				return false;
-			}
-		});
+				.removeIf(instancer ->
+				{
+					if (instancer.instanceCount() == 0)
+					{
+						instancer.delete();
+						return true;
+					}
+					else
+					{
+						instancer.updateBuffer();
+						return false;
+					}
+				});
 
 		// Remove the draw calls for any instancers we deleted.
-		needSort |= draws.removeIf(ClrwlInstancedDraw::deleted);
+		needSort |= allDraws.removeIf(ClrwlInstancedDraw::deleted);
 
 		if (needSort)
 		{
 			allDraws.sort(DRAW_COMPARATOR);
 
-			draws.clear();
+			solidDraws.clear();
+			translucentDraws.clear();
 			oitDraws.clear();
 
-			for (var draw : allDraws) {
-				if (draw.material()
-						.transparency() == Transparency.ORDER_INDEPENDENT) {
+			for (var draw : allDraws)
+			{
+				if (draw.material().transparency() == Transparency.TRANSLUCENT)
+				{
+					translucentDraws.add(draw);
+				}
+				else if (draw.material().transparency() == Transparency.ORDER_INDEPENDENT)
+				{
 					oitDraws.add(draw);
-				} else {
-					draws.add(draw);
+				}
+				else
+				{
+					solidDraws.add(draw);
 				}
 			}
 
@@ -137,9 +142,27 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		meshPool.flush();
 
 		light.flush(lightStorage);
+	}
 
-		if (draws.isEmpty())
+	@Override
+	public void renderAll()
+	{
+		renderSolid();
+		renderTranslucent();
+	}
+
+	public void renderSolid()
+	{
+		if (solidDraws.isEmpty())
 		{
+			return;
+		}
+
+		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
+
+		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().isEmpty())
+		{
+			// No shadow shader, skip
 			return;
 		}
 
@@ -152,7 +175,37 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		framebuffer.bind();
 
-		submitDraws(isShadow);
+		submitDraws(solidDraws, isShadow);
+	}
+
+	public void renderTranslucent()
+	{
+		if (translucentDraws.isEmpty() && oitDraws.isEmpty())
+		{
+			return;
+		}
+
+		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
+
+		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().isEmpty())
+		{
+			// No shadow shader, skip
+			return;
+		}
+
+		var framebuffer = getCurrentFramebuffer(isShadow);
+
+		ClrwlUniforms.bind(isShadow);
+		vao.bindForDraw();
+		TextureBinder.bindLightAndOverlay();
+		light.bind();
+
+		if (!translucentDraws.isEmpty())
+		{
+			framebuffer.bind();
+
+			submitDraws(translucentDraws, isShadow);
+		}
 
 		if (!oitDraws.isEmpty())
 		{
@@ -233,7 +286,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			if (shadowOitFramebuffers == null)
 			{
 				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
-				oitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, source.getDirectives());
+				shadowOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, source.getDirectives());
 			}
 
 			return shadowOitFramebuffers;
@@ -242,9 +295,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
 
-	private void submitDraws(boolean isShadow)
+	private void submitDraws(List<ClrwlInstancedDraw> draws, boolean isShadow)
 	{
-		for (var drawCall : draws) {
+		for (var drawCall : draws)
+		{
 			var material = drawCall.material();
 			var groupKey = drawCall.groupKey;
 			var environment = groupKey.environment();
@@ -283,7 +337,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private void submitOitDraws(boolean isShadow, ClrwlPipelineCompiler.OitMode oit)
 	{
-		for (var drawCall : oitDraws) {
+		for (var drawCall : oitDraws)
+		{
 			var material = drawCall.material();
 			var groupKey = drawCall.groupKey;
 			var environment = groupKey.environment();
@@ -328,7 +383,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		instancers.values()
 				.forEach(ClrwlInstancedInstancer::delete);
 
-		draws.clear();
+		solidDraws.clear();
+		translucentDraws.clear();
 		oitDraws.clear();
 
 		allDraws.forEach(ClrwlInstancedDraw::delete);

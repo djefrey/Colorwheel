@@ -34,7 +34,7 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	/**
 	 * A list of instancers that have not yet been initialized.
 	 * <br>
-	 * All new instancers land here before having resources allocated in {@link #render}.
+	 * All new instancers land here before having resources allocated in {@link #prepareFrame}.
 	 */
 	protected final Queue<UninitializedInstancer<N, ?>> initializationQueue = new ConcurrentLinkedQueue<>();
 
@@ -54,7 +54,7 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 		return ForEachPlan.of(() -> new ArrayList<>(instancers.values()), ClrwlAbstractInstancer::parallelUpdate);
 	}
 
-	public void render(LightStorage lightStorage, EnvironmentStorage environmentStorage)
+	public void prepareFrame(LightStorage lightStorage, EnvironmentStorage environmentStorage)
 	{
 		// Thread safety: flush is called from the render thread after all visual updates have been made,
 		// so there are no:tm: threads we could be racing with.
@@ -68,6 +68,10 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 		}
 		initializationQueue.clear();
 	}
+
+	public abstract void renderAll();
+	public abstract void renderSolid();
+	public abstract void renderTranslucent();
 
 	public void onRenderOriginChanged()
 	{

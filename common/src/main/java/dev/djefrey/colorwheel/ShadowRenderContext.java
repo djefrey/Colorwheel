@@ -13,17 +13,23 @@ import org.joml.Matrix4fc;
 public record ShadowRenderContext(LevelRenderer renderer, ClientLevel level, RenderBuffers buffers, PoseStack stack,
                                   Matrix4fc projection, Matrix4fc viewProjection,
                                   Camera camera, float camX, float camY, float camZ,
-                                  float partialTick) implements RenderContext
+                                  float partialTick,  RenderPhase phase) implements RenderContext
 {
     public static ShadowRenderContext create(LevelRenderer renderer, ClientLevel level, RenderBuffers buffers,
                                              PoseStack stack, Matrix4f projection,
                                              Camera camera, float camX, float camY, float camZ,
-                                             float partialTick)
+                                             float partialTick, RenderPhase phase)
     {
         Matrix4f viewProjection = new Matrix4f(projection);
         viewProjection.mul(stack.last()
                 .pose());
 
-        return new ShadowRenderContext(renderer, level, buffers, stack, projection, viewProjection, camera, camX, camY, camZ, partialTick);
+        return new ShadowRenderContext(renderer, level, buffers, stack, projection, viewProjection, camera, camX, camY, camZ, partialTick, phase);
+    }
+
+    public enum RenderPhase
+    {
+        SOLID,
+        TRANSLUCENT
     }
 }

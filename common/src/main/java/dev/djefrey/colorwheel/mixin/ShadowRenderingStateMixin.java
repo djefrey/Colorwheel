@@ -42,7 +42,8 @@ public abstract class ShadowRenderingStateMixin
 						ShadowRenderer.PROJECTION,
 						camera,
 						(float) cameraX, (float) cameraY, (float) cameraZ,
-						tickDelta
+						tickDelta,
+						ShadowRenderContext.RenderPhase.SOLID
 				);
 
 				manager.renderDispatcher().afterEntities(ctx);

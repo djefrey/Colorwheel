@@ -14,7 +14,7 @@
     "RenderTargetMixin",
     "ShaderPackMixin",
     "ShaderPackSourceNamesMixin",
-    "ShadowRendererAccessor",
+    "ShadowRendererMixin",
     "ShadowRenderingStateMixin",
     "ShadowRenderTargetsMixin"
   ],

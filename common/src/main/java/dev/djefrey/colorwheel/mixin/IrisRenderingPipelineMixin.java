@@ -1,25 +1,18 @@
 package dev.djefrey.colorwheel.mixin;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.pipeline.RenderTarget;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
-import dev.djefrey.colorwheel.accessors.RenderTargetsAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRenderTargetsAccessor;
+import dev.djefrey.colorwheel.accessors.ShadowRendererAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
-import net.irisshaders.iris.gl.texture.DepthBufferFormat;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.targets.RenderTargets;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
-import org.joml.Vector3d;
-import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,7 +20,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(IrisRenderingPipeline.class)
 public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelineAccessor
