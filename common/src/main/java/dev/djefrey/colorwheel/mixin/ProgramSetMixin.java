@@ -22,7 +22,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,15 +45,15 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 	@Unique
 	@Nullable
-	private ProgramSource flw_gbuffers;
+	private ProgramSource clrwl_gbuffers;
 
 	@Unique
 	@Nullable
-	private ProgramSource flw_shadow;
+	private ProgramSource clrwl_shadow;
 
 	@Unique
 	@Nullable
-	private ProgramSource flw_damagedblock;
+	private ProgramSource clrwl_damagedblock;
 
 	@Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/include/AbsolutePackPath;Ljava/util/function/Function;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/shaderpack/ShaderPack;)V",
 			at = @At("RETURN"),
@@ -82,9 +81,9 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 			return builder.toString();
 		};
 
-		this.flw_gbuffers 	  = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
-		this.flw_shadow   	  = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_shadow",  (ProgramSet) (Object) this, shaderProperties, false);
-		this.flw_damagedblock = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_damagedblock",  (ProgramSet) (Object) this, shaderProperties, false);
+		this.clrwl_gbuffers = callReadProgramSource(directory, sourceProviderNoPreprocess, "clrwl_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
+		this.clrwl_shadow = callReadProgramSource(directory, sourceProviderNoPreprocess, "clrwl_shadow",  (ProgramSet) (Object) this, shaderProperties, false);
+		this.clrwl_damagedblock = callReadProgramSource(directory, sourceProviderNoPreprocess, "clrwl_damagedblock", (ProgramSet) (Object) this, shaderProperties, false);
 
 		colorwheel$locateClrwlDirectives();
 	}
@@ -94,9 +93,9 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	{
 		List<ProgramSource> clrwlPrograms = new ArrayList<>();
 
-		clrwlPrograms.add(this.flw_gbuffers);
-		clrwlPrograms.add(this.flw_shadow);
-		clrwlPrograms.add(this.flw_damagedblock);
+		clrwlPrograms.add(this.clrwl_gbuffers);
+		clrwlPrograms.add(this.clrwl_shadow);
+		clrwlPrograms.add(this.clrwl_damagedblock);
 
 		DispatchingDirectiveHolder packDirectiveHolder = new DispatchingDirectiveHolder();
 
@@ -119,34 +118,34 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 	}
 
-	public Optional<ProgramSource> colorwheel$getFlwGbuffers()
+	public Optional<ProgramSource> colorwheel$getClrwlGbuffers()
 	{
-		if (flw_gbuffers == null)
+		if (clrwl_gbuffers == null)
 		{
 			return Optional.empty();
 		}
 
-        return flw_gbuffers.requireValid();
+        return clrwl_gbuffers.requireValid();
 	}
 
-	public Optional<ProgramSource> colorwheel$getFlwShadow()
+	public Optional<ProgramSource> colorwheel$getClrwlShadow()
 	{
-		if (flw_shadow == null)
+		if (clrwl_shadow == null)
 		{
 			return Optional.empty();
 		}
 
-		return flw_shadow.requireValid();
+		return clrwl_shadow.requireValid();
 	}
 
 
-	public Optional<ProgramSource> colorwheel$getFlwDamagedblock()
+	public Optional<ProgramSource> colorwheel$getClrwlDamagedblock()
 	{
-		if (flw_damagedblock == null)
+		if (clrwl_damagedblock == null)
 		{
 			return Optional.empty();
 		}
 
-		return flw_damagedblock.requireValid();
+		return clrwl_damagedblock.requireValid();
 	}
 }

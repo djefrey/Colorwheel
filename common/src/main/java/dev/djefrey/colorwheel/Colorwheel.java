@@ -1,19 +1,14 @@
 package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
-import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.engine_room.flywheel.api.backend.Backend;
-import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
-import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +44,7 @@ public final class Colorwheel {
         }
 
         ProgramSet programSet = pack.get().getProgramSet(Iris.getCurrentDimension());
-        return ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().isPresent();
+        return ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().isPresent();
 
     }
 }

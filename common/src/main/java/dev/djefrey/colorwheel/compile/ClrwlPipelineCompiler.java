@@ -21,9 +21,7 @@ import net.minecraft.client.Minecraft;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -75,18 +73,18 @@ public class ClrwlPipelineCompiler
 
 			if (key.context() == ContextShader.CRUMBLING)
 			{
-				name = String.format("flw_damagedblock_%s_%s", instanceName, materialName);
-				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwDamagedblock().orElseThrow();
+				name = String.format("clrwl_damagedblock_%s_%s", instanceName, materialName);
+				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDamagedblock().orElseThrow();
 			}
 			else if (!isShadow)
 			{
-				name = String.format("flw_gbuffers_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
-				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();
+				name = String.format("clrwl_gbuffers_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
+				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().orElseThrow();
 			}
 			else
 			{
-				name = String.format("flw_shadow_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
-				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
+				name = String.format("clrwl_shadow_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
+				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().orElseThrow();
 			}
 
 			var shaderPath = key.getPath();

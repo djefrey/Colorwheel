@@ -162,7 +162,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
-		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().isEmpty())
+		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().isEmpty())
 		{
 			// No shadow shader, skip
 			return;
@@ -192,7 +192,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
-		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().isEmpty())
+		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().isEmpty())
 		{
 			// No shadow shader, skip
 			return;
@@ -254,7 +254,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			if (framebuffer == null)
 			{
-				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();
+				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().orElseThrow();
 				framebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createGbuffersFramebuffer(source);
 			}
 
@@ -264,7 +264,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		{
 			if (shadowFramebuffer == null)
 			{
-				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
+				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().orElseThrow();
 				shadowFramebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createShadowFramebuffer(source);
 			}
 
