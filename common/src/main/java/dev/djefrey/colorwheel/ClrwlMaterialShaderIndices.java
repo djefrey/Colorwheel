@@ -43,7 +43,8 @@ public final class ClrwlMaterialShaderIndices
         private final Object2IntMap<ResourceLocation> sources2Index;
         private final ObjectList<ResourceLocation> sources;
 
-        private Index() {
+        private Index()
+        {
             this.sources2Index = new Object2IntOpenHashMap<>();
             sources2Index.defaultReturnValue(-1);
             this.sources = new ObjectArrayList<>();
@@ -53,18 +54,15 @@ public final class ClrwlMaterialShaderIndices
             return sources.get(index);
         }
 
-        public int index(ResourceLocation source) {
+        public int index(ResourceLocation source)
+        {
             var out = sources2Index.getInt(source);
 
-            if (out == -1) {
+            if (out == -1)
+            {
                 add(source);
 
-                ClrwlPrograms programs = ClrwlPrograms.get();
-
-                if (programs != null)
-                {
-                    programs.handleUberShaderUpdate();
-                }
+                ClrwlPrograms.handleUberShaderUpdate();
 
                 return sources2Index.getInt(source);
             }

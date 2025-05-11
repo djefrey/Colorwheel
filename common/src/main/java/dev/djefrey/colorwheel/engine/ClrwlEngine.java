@@ -8,6 +8,7 @@ import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
+import dev.engine_room.flywheel.api.Flywheel;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.instance.Instance;
@@ -19,6 +20,7 @@ import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.api.visualization.VisualEmbedding;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.backend.FlwBackend;
+import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.GlStateTracker;
@@ -68,7 +70,9 @@ public class ClrwlEngine implements Engine
 		this.irisPipeline = (IrisRenderingPipeline) worldPipeline;
 		this.pack = Iris.getCurrentPack().orElseThrow();
 
-		this.drawManager = new ClrwlInstancedDrawManager(dimension, irisPipeline, pack, ClrwlPrograms.get());
+		ClrwlPrograms programs = ClrwlPrograms.build(FlwPrograms.SOURCES);
+
+		this.drawManager = new ClrwlInstancedDrawManager(dimension, irisPipeline, pack, programs);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = new LightStorage(level);

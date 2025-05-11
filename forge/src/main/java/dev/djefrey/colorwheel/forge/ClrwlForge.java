@@ -24,9 +24,6 @@ public final class ClrwlForge {
 
     private static void clientInit(IEventBus forgeEventBus, IEventBus modEventBus)
     {
-        modEventBus.addListener((RegisterClientReloadListenersEvent e) ->
-        {
-            e.registerReloadListener(ClrwlProgramsReloader.INSTANCE);
-        });
+
     }
 }

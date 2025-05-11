@@ -81,7 +81,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		this.pack = pack;
 		this.programSet = pack.getProgramSet(dimension);
 
-		programs.acquire();
 		this.programs = programs;
 
 		meshPool = new ClrwlMeshPool();
@@ -488,7 +487,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		meshPool.delete();
 		instanceTexture.delete();
-		programs.release();
+		programs.delete();
 		vao.delete();
 
 		light.delete();
@@ -546,8 +545,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	}
 
 	@Override
-	public void triggerFallback() {
-		ClrwlPrograms.kill();
+	public void triggerFallback()
+	{
 		Minecraft.getInstance().levelRenderer.allChanged();
 	}
 }

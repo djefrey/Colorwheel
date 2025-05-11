@@ -52,16 +52,4 @@ public final class Colorwheel {
         return ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().isPresent();
 
     }
-
-    public static ShaderSources SOURCES;
-
-    public static void reload(ResourceManager manager)
-    {
-        ClrwlPrograms.setInstance(null);
-
-        // We cannot use FlwPrograms.SOURCES because it may not be initialized when this is executed
-        SOURCES = new ShaderSources(manager);
-
-        ClrwlPrograms.reload(SOURCES);
-    }
 }

@@ -8,15 +8,16 @@ import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.util.AtomicReferenceCounted;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ClrwlPrograms extends AtomicReferenceCounted {
-	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
+public class ClrwlPrograms
+{
+	private static final List<ClrwlPrograms> PROGRAMS = new ArrayList<>();
 
-	@Nullable
-	private static ClrwlPrograms instance;
+	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 
 	private final ClrwlPipelineCompiler compiler;
 	private final ClrwlOitPrograms oitPrograms;
@@ -36,45 +37,24 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 		return extensions.build();
 	}
 
-	public static void reload(ShaderSources sources)
+	public static ClrwlPrograms build(ShaderSources sources)
 	{
-		if (!GlCompat.SUPPORTS_INSTANCING) {
-			return;
+		if (!GlCompat.SUPPORTS_INSTANCING)
+		{
+			return null;
 		}
 
 		var compiler = new ClrwlPipelineCompiler(sources, ClrwlPipelines.INSTANCING);
 		var oit = new ClrwlOitPrograms(sources);
 
-		ClrwlPrograms newInstance = new ClrwlPrograms(compiler, oit);
+		ClrwlPrograms programs = new ClrwlPrograms(compiler, oit);
 
-		setInstance(newInstance);
-	}
+		PROGRAMS.add(programs);
 
-	public static void setInstance(@Nullable ClrwlPrograms newInstance)
-	{
-		if (instance != null) {
-			instance.release();
-		}
-		if (newInstance != null) {
-			newInstance.acquire();
-		}
-		instance = newInstance;
+		return programs;
 	}
 
 	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
-
-	@Nullable
-	public static ClrwlPrograms get() {
-		return instance;
-	}
-
-	public static boolean allLoaded() {
-		return instance != null;
-	}
-
-	public static void kill() {
-		setInstance(null);
-	}
 
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
@@ -89,20 +69,23 @@ public class ClrwlPrograms extends AtomicReferenceCounted {
 		return program;
 	}
 
+	public void delete()
+	{
+		PROGRAMS.remove(this);
+	}
+
 	public ClrwlOitPrograms getOitPrograms()
 	{
 		return oitPrograms;
 	}
 
-	public void handleUberShaderUpdate()
+	public static void handleUberShaderUpdate()
 	{
-		programCache.clear();
+		for (var program : PROGRAMS)
+		{
+			program.programCache.clear();
+		}
+
 		ClrwlPipelineCompiler.refreshUberShaders();
-	}
-
-	@Override
-	protected void _delete()
-	{
-
 	}
 }
