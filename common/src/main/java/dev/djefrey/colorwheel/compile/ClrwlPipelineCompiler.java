@@ -6,6 +6,7 @@ import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
+import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
@@ -190,10 +191,10 @@ public class ClrwlPipelineCompiler
 
 	private static void dumpSources(String fileName, String source)
 	{
-//		if (!Compilation.DUMP_SHADER_SOURCE)
-//		{
-//			return;
-//		}
+		if (!Compilation.DUMP_SHADER_SOURCE)
+		{
+			return;
+		}
 
 		File file = new File(new File(Minecraft.getInstance().gameDirectory, "colorwheel_sources"), fileName);
 		// mkdirs of the parent so we don't create a directory named by the leaf file we want to write
