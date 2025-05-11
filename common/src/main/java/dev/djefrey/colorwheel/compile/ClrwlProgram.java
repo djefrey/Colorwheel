@@ -29,6 +29,8 @@ import java.util.Set;
 
 public class ClrwlProgram
 {
+	private final GlShader vertex;
+	private final GlShader fragment;
 	private final int handle;
 	private final ProgramUniforms uniforms;
 	private final CustomUniforms customUniforms;
@@ -67,9 +69,13 @@ public class ClrwlProgram
 
 	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
-		var oitCoeffs = ((PackDirectivesAccessor) directives).getCoefficientsRanks(isShadowPass).keySet();
+		this.vertex = new GlShader(ShaderType.VERTEX, name + ".vsh", vertex);
+		this.fragment = new GlShader(ShaderType.FRAGMENT, name + ".fsh", fragment);
 
 		this.handle = GL20.glCreateProgram();
+
+		GL20.glAttachShader(this.handle, this.vertex.getHandle());
+		GL20.glAttachShader(this.handle, this.fragment.getHandle());
 
 		GL20.glBindAttribLocation(this.handle, 0, "_flw_aPos");
 		GL20.glBindAttribLocation(this.handle, 1, "_flw_aColor");
@@ -80,20 +86,18 @@ public class ClrwlProgram
 		GL20.glBindAttribLocation(this.handle, 6, "_flw_aTangent");
 		GL20.glBindAttribLocation(this.handle, 7, "_flw_aMidTexCoord");
 
-		GlShader vert = new GlShader(ShaderType.VERTEX, name + ".vsh", vertex);
-		GL20.glAttachShader(this.handle, vert.getHandle());
-
-		GlShader frag = new GlShader(ShaderType.FRAGMENT, name + ".fsh", fragment);
-		GL20.glAttachShader(this.handle, frag.getHandle());
-
 		GL20.glLinkProgram(this.handle);
 
 		if (GL20.glGetProgrami(this.handle, GL20.GL_LINK_STATUS) != GL20.GL_TRUE)
 		{
 			var err = new RuntimeException("Shader link error in Colorwheel program: " + GL20.glGetProgramInfoLog(this.handle));
 			GL20.glDeleteProgram(this.handle);
+			this.vertex.destroy();
+			this.fragment.destroy();
 			throw err;
 		}
+
+		var oitCoeffs = ((PackDirectivesAccessor) directives).getCoefficientsRanks(isShadowPass).keySet();
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, this.handle);
 		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs));
@@ -200,8 +204,11 @@ public class ClrwlProgram
 		GL31.glUniformBlockBinding(handle, index, binding);
 	}
 
-	public void free() {
+	public void free()
+	{
 		GL31.glDeleteProgram(this.handle);
+		this.vertex.destroy();;
+		this.fragment.destroy();
 	}
 
 	private void setUniformS(int index, int i) {

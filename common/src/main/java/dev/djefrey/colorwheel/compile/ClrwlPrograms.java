@@ -69,8 +69,19 @@ public class ClrwlPrograms
 		return program;
 	}
 
+	private void deleteCache()
+	{
+		for (ClrwlProgram program : programCache.values())
+		{
+			program.free();
+		}
+
+		programCache.clear();
+	}
+
 	public void delete()
 	{
+		deleteCache();
 		PROGRAMS.remove(this);
 	}
 
@@ -83,7 +94,7 @@ public class ClrwlPrograms
 	{
 		for (var program : PROGRAMS)
 		{
-			program.programCache.clear();
+			program.deleteCache();
 		}
 
 		ClrwlPipelineCompiler.refreshUberShaders();
