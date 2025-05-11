@@ -103,6 +103,7 @@ void main() {
     #ifdef FLW_EMBEDDED
     flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
     flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
+    flw_vertexTangent = vec4(_flw_normalMatrix * flw_vertexTangent.xyz, flw_vertexTangent.w);
     #endif
 
     flw_vertexNormal = normalize(flw_vertexNormal);

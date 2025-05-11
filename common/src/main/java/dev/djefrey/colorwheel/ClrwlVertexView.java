@@ -98,6 +98,10 @@ public class ClrwlVertexView extends AbstractVertexView {
 		return DataPacker.unpackNormI8(MemoryUtil.memGetByte(ptr + index * STRIDE + 38));
 	}
 
+	public int packedTangent(int index) {
+		return MemoryUtil.memGetInt(ptr + index * STRIDE + 35);
+	}
+
 	public float midU(int index) {
 		return MemoryUtil.memGetFloat(MemoryUtil.memGetByte(ptr + index * STRIDE + 39));
 	}
@@ -178,6 +182,8 @@ public class ClrwlVertexView extends AbstractVertexView {
 	public void tangentZ(int index, float tangentZ) { MemoryUtil.memPutByte(ptr + index * STRIDE + 37, DataPacker.packNormI8(tangentZ)); }
 
 	public void tangentW(int index, float tangentW) { MemoryUtil.memPutByte(ptr + index * STRIDE + 38, DataPacker.packNormI8(tangentW)); }
+
+	public void packedTangent(int index, int packed) { MemoryUtil.memPutInt(ptr + index * STRIDE + 35, packed); }
 
 	public void midU(int index, float midU) { MemoryUtil.memPutFloat(ptr + index * STRIDE + 39, midU); }
 

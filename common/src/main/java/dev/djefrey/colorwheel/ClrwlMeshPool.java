@@ -8,7 +8,9 @@ import dev.engine_room.flywheel.backend.gl.buffer.GlBuffer;
 import dev.engine_room.flywheel.backend.gl.buffer.GlBufferUsage;
 import dev.engine_room.flywheel.backend.util.ReferenceCounted;
 import dev.engine_room.flywheel.lib.memory.MemoryBlock;
-import dev.engine_room.flywheel.lib.vertex.VertexView;
+import dev.engine_room.flywheel.lib.model.QuadMesh;
+import dev.engine_room.flywheel.lib.model.RetexturedMesh;
+import net.irisshaders.iris.vertices.NormalHelper;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
 
@@ -22,7 +24,7 @@ import java.util.Map;
 // - use of ColorwheelVertex instead of InternalVertex
 // - tangents and midTextCoord being computed on upload
 public class ClrwlMeshPool {
-	private final VertexView vertexView;
+	private final ClrwlVertexView vertexView;
 	private final Map<Mesh, PooledMesh> meshes = new HashMap<>();
 	private final List<PooledMesh> meshList = new ArrayList<>();
 	private final List<PooledMesh> recentlyAllocated = new ArrayList<>();
@@ -118,11 +120,21 @@ public class ClrwlMeshPool {
 			vertexView.vertexCount(mesh.vertexCount());
 			mesh.mesh.write(vertexView);
 
-			// TODO: compute tangents + midTextCoord from written data
-			// Use NormalHelper for tangents
+			Mesh baseMesh = mesh.mesh;
 
-			// Cannot determine Mesh type, could check if mesh.mesh is instance of QuadMesh
-			// However QuadMesh is in lib, so require external mod to prevent circular dependency
+			while (baseMesh instanceof RetexturedMesh retextured)
+			{
+				baseMesh = retextured.mesh();
+			}
+
+			if (baseMesh instanceof QuadMesh quad)
+			{
+				computeExtendedQuadData(quad, vertexView);
+			}
+			else
+			{
+				computeExtendedData(baseMesh, vertexView);
+			}
 
 			byteIndex += mesh.byteSize();
 			baseVertex += mesh.vertexCount();
@@ -131,6 +143,66 @@ public class ClrwlMeshPool {
 		vbo.upload(vertexBlock);
 
 		vertexBlock.free();
+	}
+
+	private void computeExtendedQuadData(QuadMesh mesh, ClrwlVertexView vertexView)
+	{
+		var quadCnt = mesh.vertexCount() / 4;
+
+		for (int i = 0; i < quadCnt; i++)
+		{
+			int base = i * 4;
+
+			float normalX = 0;
+			float normalY = 0;
+			float normalZ = 0;
+
+			float midU = 0;
+			float midV = 0;
+
+			for (int vId = 0; vId < 4; vId++)
+			{
+				int idx = base + vId;
+
+				normalX += vertexView.normalX(idx);
+				normalY += vertexView.normalY(idx);
+				normalZ += vertexView.normalZ(idx);
+
+				midU += vertexView.u(idx);
+				midV += vertexView.v(idx);
+			}
+
+			normalX /= 4.0F;
+			normalY /= 4.0F;
+			normalZ /= 4.0F;
+
+			midU /= 4.0F;
+			midV /= 4.0F;
+
+			int tangent = NormalHelper.computeTangent(normalX, normalY, normalZ,
+										vertexView.x(base + 0), vertexView.y(base + 0), vertexView.z(base + 0), vertexView.u(base + 0), vertexView.v(base + 0),
+										vertexView.x(base + 1), vertexView.y(base + 1), vertexView.z(base + 1), vertexView.u(base + 1), vertexView.v(base + 1),
+										vertexView.x(base + 2), vertexView.y(base + 2), vertexView.z(base + 2), vertexView.u(base + 2), vertexView.v(base + 2));
+
+			for (int vId = 0; vId < 4; vId++)
+			{
+				vertexView.packedTangent(base + vId, tangent);
+				vertexView.midU(base + vId, midU);
+				vertexView.midV(base + vId, midV);
+			}
+		}
+	}
+
+	private void computeExtendedData(Mesh mesh, ClrwlVertexView vertexView)
+	{
+		// TODO
+
+		for (int i = 0; i < mesh.vertexCount(); i++)
+		{
+			vertexView.packedTangent(i, 0);
+			vertexView.midU(i, 0);
+			vertexView.midV(i, 0);
+		}
 	}
 
 	public void bind(GlVertexArray vertexArray) {

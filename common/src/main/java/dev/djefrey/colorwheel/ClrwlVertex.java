@@ -5,7 +5,6 @@ import dev.engine_room.flywheel.api.layout.Layout;
 import dev.engine_room.flywheel.api.layout.LayoutBuilder;
 import dev.engine_room.flywheel.backend.LayoutAttributes;
 import dev.engine_room.flywheel.backend.gl.array.VertexAttribute;
-import dev.engine_room.flywheel.lib.vertex.VertexView;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -30,7 +29,7 @@ public final class ClrwlVertex {
 	private ClrwlVertex() {
 	}
 
-	public static VertexView createVertexView() {
+	public static ClrwlVertexView createVertexView() {
 		return new ClrwlVertexView();
 	}
 }
