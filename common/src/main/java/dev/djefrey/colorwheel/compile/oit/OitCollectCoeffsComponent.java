@@ -67,7 +67,7 @@ public class OitCollectCoeffsComponent implements SourceComponent
                 body.add(GlslStmt.raw(name + "[" + d +"] = vec4(0.);"));
             }
 
-            body.add(GlslStmt.raw("add_transmittance(" + name + ", " + transmittance + ", " + adjusted_depth + ", " + rank + ");"));
+            body.add(GlslStmt.raw("_clrwl_add_transmittance(" + name + ", " + transmittance + ", " + adjusted_depth + ", " + rank + ");"));
 
             for (int d = 0; d < depth; d++)
             {

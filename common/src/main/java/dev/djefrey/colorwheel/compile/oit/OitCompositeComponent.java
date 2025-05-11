@@ -32,7 +32,7 @@ public class OitCompositeComponent implements SourceComponent
         return List.of(
                 sources.get(Colorwheel.rl("internal/oit/wavelet.glsl")),
                 sources.get(Colorwheel.rl("internal/uniform/frame.glsl")),
-                sources.get(ResourceUtil.rl("internal/depth.glsl"))
+                sources.get(Colorwheel.rl("internal/depth.glsl"))
             );
     }
 
@@ -59,7 +59,7 @@ public class OitCompositeComponent implements SourceComponent
         // Required otherwise depth buffer is corrupted
         body.add(GlslStmt.raw("if (minDepth == _flw_cullData.zfar) { discard; }"));
 
-        body.add(GlslStmt.raw("gl_FragDepth = delinearize_depth(minDepth, _flw_cullData.znear, _flw_cullData.zfar);"));
+        body.add(GlslStmt.raw("gl_FragDepth = _clrwl_delinearize_depth(minDepth, _flw_cullData.znear, _flw_cullData.zfar);"));
 
         for (int k : sortedCoeffs)
         {
@@ -73,7 +73,7 @@ public class OitCompositeComponent implements SourceComponent
             var name = "total_transmittance" + k;
             var coeffName = "clrwl_coefficients" + k;
 
-            body.add(GlslStmt.raw("float " + name + " = total_transmittance(" + coeffName + ", " + rank + ");"));
+            body.add(GlslStmt.raw("float " + name + " = _clrwl_total_transmittance(" + coeffName + ", " + rank + ");"));
         }
 
         for (int k : sortedTranslucents)

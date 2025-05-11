@@ -1,6 +1,6 @@
 #include "colorwheel:internal/uniform/frame.glsl"
 #include "colorwheel:internal/oit/wavelet.glsl"
-#include "flywheel:internal/depth.glsl"
+#include "colorwheel:internal/depth.glsl"
 
 uniform sampler2D _flw_depthRange;
 
@@ -23,7 +23,7 @@ void main()
     // If transmittance an infinite depth is above the threshold, it doesn't ever become
     // zero, so we can bail out.
     //
-    float transmittance_at_far_depth = total_transmittance(clrwl_coefficients0, 3);
+    float transmittance_at_far_depth = _clrwl_total_transmittance(clrwl_coefficients0, 3);
     if (transmittance_at_far_depth > threshold) {
         discard;
     }
@@ -38,7 +38,7 @@ void main()
     //
     int steps = 6;
     for (int i = 0; i < steps; ++i) {
-        float transmittance = transmittance(clrwl_coefficients0, sample_depth, 3);
+        float transmittance = _clrwl_transmittance(clrwl_coefficients0, sample_depth, 3);
         if (transmittance <= threshold) {
             normalized_depth_at_zero_transmittance = sample_depth;
             sample_depth -= delta;
@@ -54,5 +54,5 @@ void main()
     // the currently bound depth buffer.
     //
     float eyeDepth = eye_depth_from_normalized_transparency_depth(normalized_depth_at_zero_transmittance);
-    gl_FragDepth = delinearize_depth(eyeDepth, _flw_cullData.znear, _flw_cullData.zfar);
+    gl_FragDepth = _clrwl_delinearize_depth(eyeDepth, _flw_cullData.znear, _flw_cullData.zfar);
 }

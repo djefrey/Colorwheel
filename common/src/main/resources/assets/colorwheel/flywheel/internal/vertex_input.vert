@@ -7,7 +7,7 @@ in vec3 _flw_aNormal;
 in vec4 _flw_aTangent;
 in vec2 _flw_aMidTexCoord;
 
-void _flw_layoutVertex() {
+void _clrwl_layoutVertex() {
     flw_vertexPos = vec4(_flw_aPos, 1.0);
     flw_vertexColor = _flw_aColor;
     flw_vertexTexCoord = _flw_aTexCoord;

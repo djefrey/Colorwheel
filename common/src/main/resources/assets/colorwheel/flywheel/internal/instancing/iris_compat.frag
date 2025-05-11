@@ -1,5 +1,5 @@
 #include "flywheel:internal/instancing/light.glsl"
-#include "flywheel:internal/depth.glsl"
+#include "colorwheel:internal/depth.glsl"
 #include "colorwheel:internal/oit/wavelet.glsl"
 
 #ifdef _FLW_CRUMBLING
@@ -27,7 +27,7 @@ float _clrwl_tented_blue_noise(float normalizedDepth)
 
 float _clrwl_linear_depth()
 {
-    return linearize_depth(gl_FragCoord.z, _flw_cullData.znear, _flw_cullData.zfar);
+    return _clrwl_linearize_depth(gl_FragCoord.z, _flw_cullData.znear, _flw_cullData.zfar);
 }
 
 #ifdef CLRWL_EVALUATE

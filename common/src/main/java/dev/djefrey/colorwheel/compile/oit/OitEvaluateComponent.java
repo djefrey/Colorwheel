@@ -61,7 +61,7 @@ public class OitEvaluateComponent implements SourceComponent
             body.add(GlslStmt.raw("float " + depth + " = flw_depth;"));
             // Don't do the depth adjustment if this fragment is opaque.
             body.add(GlslStmt.raw("if (" + transmittance + " > 1e-5) { " + depth + " -= depth_adjustment; }"));
-            body.add(GlslStmt.raw("float " + correctedTransmittance + " = signal_corrected_transmittance(" + coeffs + ", " + depth + ", " + transmittance + ", " + rank + ");"));
+            body.add(GlslStmt.raw("float " + correctedTransmittance + " = _clrwl_signal_corrected_transmittance(" + coeffs + ", " + depth + ", " + transmittance + ", " + rank + ");"));
             body.add(GlslStmt.raw(outName + ".rgb *= " + outName + ".a;"));
             body.add(GlslStmt.raw(outName + " *= " + correctedTransmittance + ";"));
         }

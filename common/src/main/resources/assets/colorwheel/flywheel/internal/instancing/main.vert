@@ -5,12 +5,12 @@
 #ifdef _FLW_CRUMBLING
 out vec2 _flw_crumblingTexCoord;
 
-const int DOWN = 0;
-const int UP = 1;
-const int NORTH = 2;
-const int SOUTH = 3;
-const int WEST = 4;
-const int EAST = 5;
+const int _CLRWL_DOWN = 0;
+const int _CLRWL_UP = 1;
+const int _CLRWL_NORTH = 2;
+const int _CLRWL_SOUTH = 3;
+const int _CLRWL_WEST = 4;
+const int _CLRWL_EAST = 5;
 
 // based on net.minecraftforge.client.ForgeHooksClient.getNearestStable
 int _clrwl_getNearestFacing(vec3 normal) {
@@ -27,27 +27,27 @@ int _clrwl_getNearestFacing(vec3 normal) {
 
     if (-alignment.y > maxAlignment) {
         maxAlignment = -alignment.y;
-        face = DOWN;
+        face = _CLRWL_DOWN;
     }
     if (alignment.y > maxAlignment) {
         maxAlignment = alignment.y;
-        face = UP;
+        face = _CLRWL_UP;
     }
     if (-alignment.z > maxAlignment) {
         maxAlignment = -alignment.z;
-        face = NORTH;
+        face = _CLRWL_NORTH;
     }
     if (alignment.z > maxAlignment) {
         maxAlignment = alignment.z;
-        face = SOUTH;
+        face = _CLRWL_SOUTH;
     }
     if (-alignment.x > maxAlignment) {
         maxAlignment = -alignment.x;
-        face = WEST;
+        face = _CLRWL_WEST;
     }
     if (alignment.x > maxAlignment) {
         maxAlignment = alignment.x;
-        face = EAST;
+        face = _CLRWL_EAST;
     }
 
     return face;
@@ -55,12 +55,12 @@ int _clrwl_getNearestFacing(vec3 normal) {
 
 vec2 _clrwl_getCrumblingTexCoord() {
     switch (_clrwl_getNearestFacing(flw_vertexNormal)) {
-        case DOWN: return vec2(flw_vertexPos.x, -flw_vertexPos.z);
-        case UP: return vec2(flw_vertexPos.x, flw_vertexPos.z);
-        case NORTH: return vec2(-flw_vertexPos.x, -flw_vertexPos.y);
-        case SOUTH: return vec2(flw_vertexPos.x, -flw_vertexPos.y);
-        case WEST: return vec2(-flw_vertexPos.z, -flw_vertexPos.y);
-        case EAST: return vec2(flw_vertexPos.z, -flw_vertexPos.y);
+        case _CLRWL_DOWN: return vec2(flw_vertexPos.x, -flw_vertexPos.z);
+        case _CLRWL_UP: return vec2(flw_vertexPos.x, flw_vertexPos.z);
+        case _CLRWL_NORTH: return vec2(-flw_vertexPos.x, -flw_vertexPos.y);
+        case _CLRWL_SOUTH: return vec2(flw_vertexPos.x, -flw_vertexPos.y);
+        case _CLRWL_WEST: return vec2(-flw_vertexPos.z, -flw_vertexPos.y);
+        case _CLRWL_EAST: return vec2(flw_vertexPos.z, -flw_vertexPos.y);
     }
 
     // default to north
@@ -88,7 +88,7 @@ void main() {
     mat3 _flw_normalMatrix = _flw_normalMatrixUniform;
     #endif
 
-    _flw_layoutVertex();
+    _clrwl_layoutVertex();
     flw_instanceVertex(instance);
     flw_materialVertex();
 
