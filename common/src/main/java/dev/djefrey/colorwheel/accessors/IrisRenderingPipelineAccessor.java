@@ -14,6 +14,6 @@ public interface IrisRenderingPipelineAccessor
 	ShadowRenderTargets colorwheel$getShadowRenderTargets();
 
 	boolean colorwheel$consumeFramebufferChanged();
-	void colorwheel$destroyColorFramebuffer(GlFramebuffer framebuffer);
+	void colorwheel$destroyGbuffersFramebuffer(GlFramebuffer framebuffer);
 	void colorwheel$destroyShadowFramebuffer(GlFramebuffer framebuffer);
 }

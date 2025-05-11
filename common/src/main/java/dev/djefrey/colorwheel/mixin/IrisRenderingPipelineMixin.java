@@ -83,7 +83,7 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 		}
 	}
 
-	public void colorwheel$destroyColorFramebuffer(GlFramebuffer framebuffer)
+	public void colorwheel$destroyGbuffersFramebuffer(GlFramebuffer framebuffer)
 	{
 		renderTargets.destroyFramebuffer(framebuffer);
 	}

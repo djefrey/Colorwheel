@@ -65,9 +65,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final ProgramSet programSet;
 
 	@Nullable
-	private GlFramebuffer framebuffer;
+	private GlFramebuffer gbuffersFramebuffer;
 	@Nullable
-	private ClrwlOitFramebuffers oitFramebuffers;
+	private ClrwlOitFramebuffers gbuffersOitFramebuffers;
 
 	@Nullable
 	private GlFramebuffer shadowFramebuffer;
@@ -246,19 +246,19 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	{
 		if (!isShadow)
 		{
-			if (((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$consumeFramebufferChanged() && framebuffer != null)
+			if (((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$consumeFramebufferChanged() && gbuffersFramebuffer != null)
 			{
-				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyColorFramebuffer(framebuffer);
-				framebuffer = null;
+				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersFramebuffer);
+				gbuffersFramebuffer = null;
 			}
 
-			if (framebuffer == null)
+			if (gbuffersFramebuffer == null)
 			{
 				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().orElseThrow();
-				framebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createGbuffersFramebuffer(source);
+				gbuffersFramebuffer = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createGbuffersFramebuffer(source);
 			}
 
-			return framebuffer;
+			return gbuffersFramebuffer;
 		}
 		else
 		{
@@ -278,12 +278,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		if (!isShadow)
 		{
-			if (oitFramebuffers == null)
+			if (gbuffersOitFramebuffers == null)
 			{
-				oitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
+				gbuffersOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
 			}
 
-			return oitFramebuffers;
+			return gbuffersOitFramebuffers;
 		}
 		else
 		{
@@ -492,10 +492,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		light.delete();
 
-		if (framebuffer != null)
+		if (gbuffersFramebuffer != null)
 		{
-			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyColorFramebuffer(framebuffer);
-			framebuffer = null;
+			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersFramebuffer);
+			gbuffersFramebuffer = null;
 		}
 
 		if (shadowFramebuffer != null)
@@ -504,10 +504,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			shadowFramebuffer = null;
 		}
 
-		if (oitFramebuffers != null)
+		if (gbuffersOitFramebuffers != null)
 		{
-			oitFramebuffers.delete();
-			oitFramebuffers = null;
+			gbuffersOitFramebuffers.delete();
+			gbuffersOitFramebuffers = null;
 		}
 
 		if (shadowOitFramebuffers != null)
