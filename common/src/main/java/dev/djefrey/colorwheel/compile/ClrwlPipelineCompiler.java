@@ -3,6 +3,7 @@ package dev.djefrey.colorwheel.compile;
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
+import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
@@ -72,7 +73,12 @@ public class ClrwlPipelineCompiler
 			String name;
 			ProgramSource sources;
 
-			if (!isShadow)
+			if (key.context() == ContextShader.CRUMBLING)
+			{
+				name = String.format("flw_damagedblock_%s_%s", instanceName, materialName);
+				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwDamagedblock().orElseThrow();
+			}
+			else if (!isShadow)
 			{
 				name = String.format("flw_gbuffers_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
 				sources = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();

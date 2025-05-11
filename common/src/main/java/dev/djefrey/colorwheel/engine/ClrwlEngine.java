@@ -18,6 +18,7 @@ import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.api.visualization.VisualEmbedding;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
+import dev.engine_room.flywheel.backend.FlwBackend;
 import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.GlStateTracker;
@@ -162,9 +163,17 @@ public class ClrwlEngine implements Engine
 	}
 
 	@Override
-	public void renderCrumbling(RenderContext renderContext, List<CrumblingBlock> list)
+	public void renderCrumbling(RenderContext renderContext, List<CrumblingBlock> crumblingBlocks)
 	{
-		// TODO
+		try (var state = GlStateTracker.getRestoreState())
+		{
+			drawManager.renderCrumbling(crumblingBlocks);
+		}
+		catch (Exception e)
+		{
+			Colorwheel.LOGGER.error("Falling back", e);
+			drawManager.triggerFallback();
+		}
 	}
 
 	@Override

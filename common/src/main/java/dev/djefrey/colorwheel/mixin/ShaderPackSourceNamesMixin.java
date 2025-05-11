@@ -23,5 +23,6 @@ public abstract class ShaderPackSourceNamesMixin
 	{
 		callAddStarts(builder, "flw_gbuffers");
 		callAddStarts(builder, "flw_shadow");
+		callAddStarts(builder, "flw_damagedblock");
 	}
 }

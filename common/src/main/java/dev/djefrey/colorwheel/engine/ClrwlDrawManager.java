@@ -120,33 +120,38 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	}
 
 	@FunctionalInterface
-	protected interface State2Instancer<I extends AbstractInstancer<?>>
+	protected interface State2Instancer<I extends ClrwlAbstractInstancer<?>>
 	{
 		// I tried using a plain Function<State<?>, I> here, but it exploded with type errors.
-		@Nullable I apply(InstanceHandleImpl.State<?> state);
+		@Nullable I apply(ClrwlInstanceHandle.State<?> state);
 	}
 
-	protected static <I extends AbstractInstancer<?>> Map<GroupKey<?>, Int2ObjectMap<List<Pair<I, InstanceHandleImpl<?>>>>> doCrumblingSort(List<Engine.CrumblingBlock> crumblingBlocks, State2Instancer<I> cast)
+	protected static <I extends ClrwlAbstractInstancer<?>> Map<GroupKey<?>, Int2ObjectMap<List<Pair<I, ClrwlInstanceHandle<?>>>>> doCrumblingSort(List<Engine.CrumblingBlock> crumblingBlocks, State2Instancer<I> cast)
 	{
-		Map<GroupKey<?>, Int2ObjectMap<List<Pair<I, InstanceHandleImpl<?>>>>> byType = new HashMap<>();
-		for (Engine.CrumblingBlock block : crumblingBlocks) {
+		Map<GroupKey<?>, Int2ObjectMap<List<Pair<I, ClrwlInstanceHandle<?>>>>> byType = new HashMap<>();
+		for (Engine.CrumblingBlock block : crumblingBlocks)
+		{
 			int progress = block.progress();
 
-			if (progress < 0 || progress >= ModelBakery.DESTROY_TYPES.size()) {
+			if (progress < 0 || progress >= ModelBakery.DESTROY_TYPES.size())
+			{
 				continue;
 			}
 
-			for (Instance instance : block.instances()) {
+			for (Instance instance : block.instances())
+			{
 				// Filter out instances that weren't created by this engine.
 				// If all is well, we probably shouldn't take the `continue`
 				// branches but better to do checked casts.
-				if (!(instance.handle() instanceof InstanceHandleImpl<?> impl)) {
+				if (!(instance.handle() instanceof ClrwlInstanceHandle<?> impl))
+				{
 					continue;
 				}
 
 				var instancer = cast.apply(impl.state);
 
-				if (instancer == null) {
+				if (instancer == null)
+				{
 					continue;
 				}
 

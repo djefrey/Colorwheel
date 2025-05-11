@@ -52,6 +52,10 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	@Nullable
 	private ProgramSource flw_shadow;
 
+	@Unique
+	@Nullable
+	private ProgramSource flw_damagedblock;
+
 	@Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/include/AbsolutePackPath;Ljava/util/function/Function;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/shaderpack/ShaderPack;)V",
 			at = @At("RETURN"),
 			remap = false)
@@ -78,8 +82,9 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 			return builder.toString();
 		};
 
-		this.flw_gbuffers = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
-		this.flw_shadow   = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_shadow",  (ProgramSet) (Object) this, shaderProperties, BlendModeOverride.OFF, false);
+		this.flw_gbuffers 	  = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
+		this.flw_shadow   	  = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_shadow",  (ProgramSet) (Object) this, shaderProperties, false);
+		this.flw_damagedblock = callReadProgramSource(directory, sourceProviderNoPreprocess, "flw_damagedblock",  (ProgramSet) (Object) this, shaderProperties, false);
 
 		colorwheel$locateClrwlDirectives();
 	}
@@ -91,6 +96,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 		clrwlPrograms.add(this.flw_gbuffers);
 		clrwlPrograms.add(this.flw_shadow);
+		clrwlPrograms.add(this.flw_damagedblock);
 
 		DispatchingDirectiveHolder packDirectiveHolder = new DispatchingDirectiveHolder();
 
@@ -131,5 +137,16 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 
 		return flw_shadow.requireValid();
+	}
+
+
+	public Optional<ProgramSource> colorwheel$getFlwDamagedblock()
+	{
+		if (flw_damagedblock == null)
+		{
+			return Optional.empty();
+		}
+
+		return flw_damagedblock.requireValid();
 	}
 }

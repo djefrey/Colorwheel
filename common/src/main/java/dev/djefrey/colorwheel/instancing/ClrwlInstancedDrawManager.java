@@ -18,10 +18,12 @@ import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.material.Transparency;
 import dev.engine_room.flywheel.backend.Samplers;
+import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.instancing.InstancedLight;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
+import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
@@ -30,6 +32,7 @@ import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.model.ModelBakery;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -176,6 +179,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		framebuffer.bind();
 
 		submitDraws(solidDraws, isShadow);
+
+		MaterialRenderState.reset();
+		TextureBinder.resetLightAndOverlay();
 	}
 
 	public void renderTranslucent()
@@ -321,7 +327,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(), material);
+			program.bind(drawCall.mesh().baseVertex(), 0, material);
 			environment.setupDraw(program.getProgram());
 			MaterialRenderState.setup(material);
 
@@ -361,7 +367,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(), material);
+			program.bind(drawCall.mesh().baseVertex(),0, material);
 			environment.setupDraw(program.getProgram());
 			MaterialRenderState.setupOit(material);
 
@@ -371,6 +377,98 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			program.unbind();
 		}
+	}
+
+	@Override
+	public void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks)
+	{
+		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
+
+		if (isShadow)
+		{
+			return;
+		}
+
+		// Sort draw calls into buckets, so we don't have to do as many shader binds.
+		var byType = doCrumblingSort(crumblingBlocks, handle ->
+		{
+			// AbstractInstancer directly implement HandleState, so this check is valid.
+			if (handle instanceof ClrwlInstancedInstancer<?> instancer)
+			{
+				return instancer;
+			}
+			// This rejects instances that were created by a different engine,
+			// and also instances that are hidden or deleted.
+			return null;
+		});
+
+		if (byType.isEmpty())
+		{
+			return;
+		}
+
+		var framebuffer = getCurrentFramebuffer(false);
+		framebuffer.bind();
+
+		ClrwlUniforms.bind(false);
+		vao.bindForDraw();
+		TextureBinder.bindLightAndOverlay();
+
+		var crumblingMaterial = SimpleMaterial.builder();
+
+		for (var groupEntry : byType.entrySet())
+		{
+			var byProgress = groupEntry.getValue();
+
+			GroupKey<?> key = groupEntry.getKey();
+
+			for (var progressEntry : byProgress.int2ObjectEntrySet())
+			{
+				Samplers.CRUMBLING.makeActive();
+				TextureBinder.bind(ModelBakery.BREAKING_LOCATIONS.get(progressEntry.getIntKey()));
+
+				for (var instanceHandlePair : progressEntry.getValue())
+				{
+					ClrwlInstancedInstancer<?> instancer = instanceHandlePair.getFirst();
+					var index = instanceHandlePair.getSecond().index;
+
+					for (ClrwlInstancedDraw draw : instancer.draws())
+					{
+						CommonCrumbling.applyCrumblingProperties(crumblingMaterial, draw.material());
+
+						var shaderKey = new ClrwlShaderKey(key.instanceType(), crumblingMaterial, ContextShader.CRUMBLING, pack, dimension, false, ClrwlPipelineCompiler.OitMode.OFF);
+
+						if (brokenShaders.contains(shaderKey))
+						{
+							continue;
+						}
+
+						ClrwlProgram program;
+
+						try
+						{
+							program = programs.get(shaderKey);
+						}
+						catch (Exception e)
+						{
+							brokenShaders.add(shaderKey);
+							Colorwheel.LOGGER.error("Could not compile shader: " + shaderKey.getPath(), e);
+							continue;
+						}
+
+						program.bind(0, index, crumblingMaterial);
+						MaterialRenderState.setup(crumblingMaterial);
+
+						Samplers.INSTANCE_BUFFER.makeActive();
+
+						draw.renderOne(instanceTexture);
+					}
+				}
+			}
+		}
+
+		MaterialRenderState.reset();
+		TextureBinder.resetLightAndOverlay();
 	}
 
 	@Override
@@ -445,65 +543,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			needSort = true;
 			instancer.addDrawCall(instancedDraw);
 		}
-	}
-
-	@Override
-	public void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks) {
-//		// Sort draw calls into buckets, so we don't have to do as many shader binds.
-//		var byType = doCrumblingSort(crumblingBlocks, handle -> {
-//			// AbstractInstancer directly implement HandleState, so this check is valid.
-//			if (handle instanceof InstancedInstancer<?> instancer) {
-//				return instancer;
-//			}
-//			// This rejects instances that were created by a different engine,
-//			// and also instances that are hidden or deleted.
-//			return null;
-//		});
-//
-//		if (byType.isEmpty()) {
-//			return;
-//		}
-//
-//		var crumblingMaterial = SimpleMaterial.builder();
-//
-//		Uniforms.bindAll();
-//		vao.bindForDraw();
-//		TextureBinder.bindLightAndOverlay();
-//
-//		for (var groupEntry : byType.entrySet()) {
-//			var byProgress = groupEntry.getValue();
-//
-//			GroupKey<?> key = groupEntry.getKey();
-//
-//			for (var progressEntry : byProgress.int2ObjectEntrySet()) {
-//				Samplers.CRUMBLING.makeActive();
-//				TextureBinder.bind(ModelBakery.BREAKING_LOCATIONS.get(progressEntry.getIntKey()));
-//
-//				for (var instanceHandlePair : progressEntry.getValue()) {
-//					InstancedInstancer<?> instancer = instanceHandlePair.getFirst();
-//					var index = instanceHandlePair.getSecond().index;
-//
-//					for (InstancedDraw draw : instancer.draws()) {
-//						CommonCrumbling.applyCrumblingProperties(crumblingMaterial, draw.material());
-//
-//						var shader = programs.get(key.instanceType(), ContextShader.CRUMBLING, crumblingMaterial, PipelineCompiler.OitMode.OFF);
-//						var program = ((ShaderInstanceAccessor) shader).flwcompat$getProgram();
-//						shader.apply();
-//						program.setInt("_flw_baseInstance", index);
-//						uploadMaterialUniform(program, crumblingMaterial);
-//
-//						MaterialRenderState.setup(crumblingMaterial);
-//
-//						Samplers.INSTANCE_BUFFER.makeActive();
-//
-//						draw.renderOne(instanceTexture);
-//					}
-//				}
-//			}
-//		}
-//
-//		MaterialRenderState.reset();
-//		TextureBinder.resetLightAndOverlay();
 	}
 
 	@Override

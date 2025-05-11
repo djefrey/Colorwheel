@@ -36,6 +36,7 @@ public class ClrwlProgram
 	private final ProgramImages images;
 
 	public final int vertexOffsetUniform;
+	public final int baseInstanceUniform;
 	public final int packedMaterialUniform;
 	public final int modelMatrixUniform;
 	public final int normalMatrixUniform;
@@ -126,6 +127,7 @@ public class ClrwlProgram
 		this.images = imageBuilder.build();
 
 		this.vertexOffsetUniform = tryGetUniformLocation2("_flw_vertexOffset");
+		this.baseInstanceUniform = tryGetUniformLocation2("_flw_baseInstance");
 		this.packedMaterialUniform = tryGetUniformLocation2("_flw_packedMaterial");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
@@ -148,14 +150,15 @@ public class ClrwlProgram
 							   customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, Material material)
+	public void bind(int vertexOffset, int baseInstance, Material material)
 	{
 		GL20.glUseProgram(this.handle);
 
 		int packedFogAndCutout = ClrwlMaterialEncoder.packUberShader(material);
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
 
-		setUniform(vertexOffsetUniform, vertexOffset);
+		setUniformU(vertexOffsetUniform, vertexOffset);
+		setUniformS(baseInstanceUniform, baseInstance);
 		setUniform(packedMaterialUniform, packedFogAndCutout, packedMaterialProperties);
 
 		samplers.update();
@@ -201,7 +204,11 @@ public class ClrwlProgram
 		GL31.glDeleteProgram(this.handle);
 	}
 
-	private void setUniform(int index, int i) {
+	private void setUniformS(int index, int i) {
+		GL31.glUniform1i(index, i);
+	}
+
+	private void setUniformU(int index, int i) {
 		GL31.glUniform1ui(index, i);
 	}
 

@@ -2,6 +2,12 @@
 #include "flywheel:internal/depth.glsl"
 #include "colorwheel:internal/oit/wavelet.glsl"
 
+#ifdef _FLW_CRUMBLING
+uniform sampler2D _flw_crumblingTex;
+
+in vec2 _flw_crumblingTexCoord;
+#endif
+
 #ifdef CLRWL_OIT
 
 uniform sampler2D _flw_depthRange;

@@ -16,4 +16,5 @@ public interface ProgramSetAccessor
 
 	Optional<ProgramSource> colorwheel$getFlwGbuffers();
 	Optional<ProgramSource> colorwheel$getFlwShadow();
+	Optional<ProgramSource> colorwheel$getFlwDamagedblock();
 }
