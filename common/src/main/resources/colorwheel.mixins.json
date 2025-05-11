@@ -8,7 +8,7 @@
   "mixins": [
     "IrisMixin",
     "IrisRenderingPipelineMixin",
-    "ProgramDirectivesMixin",
+    "PackDirectivesMixin",
     "ProgramSetMixin",
     "ProgramSourceMixin",
     "RenderTargetMixin",

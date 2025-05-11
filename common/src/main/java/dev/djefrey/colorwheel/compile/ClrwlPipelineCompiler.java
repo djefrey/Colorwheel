@@ -94,10 +94,9 @@ public class ClrwlPipelineCompiler
 						vertex, null, null, null, fragment,
 						programSet,
 						((ProgramSourceAccessor) sources).colorwheel$getShaderProperties(),
-						((ProgramSourceAccessor) sources).colorwheel$getBlendModeOverride())
-					.withDirectiveOverride(sources.getDirectives());
+						((ProgramSourceAccessor) sources).colorwheel$getBlendModeOverride());
 
-			return ClrwlProgram.createProgram(name, isShadow, customSource, irisPipeline.getCustomUniforms(), irisPipeline);
+			return ClrwlProgram.createProgram(name, isShadow, customSource, programSet.getPackDirectives(), irisPipeline.getCustomUniforms(), irisPipeline);
 		}
 
 		return null;

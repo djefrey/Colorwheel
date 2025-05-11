@@ -2,7 +2,6 @@ package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
-import dev.djefrey.colorwheel.engine.ClrwlOitCoeffDirective;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.*;
@@ -10,18 +9,21 @@ import dev.engine_room.flywheel.lib.util.ResourceUtil;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class OitCompositeComponent implements SourceComponent
 {
     private final ShaderSources sources;
-    private final int[] renderTargets;
-    private final List<ClrwlOitCoeffDirective> coeffs;
+    private final Map<Integer, Integer> translucents;
+    private final List<Integer> opaques;
+    private final Map<Integer, Integer> ranks;
 
-    public OitCompositeComponent(ShaderSources sources, int[] renderTargets, List<ClrwlOitCoeffDirective> coeffs)
+    public OitCompositeComponent(ShaderSources sources, Map<Integer, Integer> translucents, List<Integer> opaques, Map<Integer, Integer> ranks)
     {
         this.sources = sources;
-        this.renderTargets = renderTargets;
-        this.coeffs = coeffs;
+        this.translucents = translucents;
+        this.opaques = opaques;
+        this.ranks = ranks;
     }
 
     @Override
@@ -38,13 +40,14 @@ public class OitCompositeComponent implements SourceComponent
     public String source()
     {
         var builder = new GlslBuilder();
+        int targetCnt = translucents.size() + opaques.size();
 
-        int targetCnt = renderTargets.length;
-        int coeffCount = coeffs.size();
-        var reverseMap = ClrwlOitCoeffDirective.getReverseMap(coeffs);
+        var sortedCoeffs = ranks.keySet().stream().sorted().toList();
+        var sortedTranslucents = translucents.keySet().stream().sorted().toList();
+        var sortedOpaques = opaques.stream().sorted().toList();
 
-        OitCoefficientsSamplersComponent.addSamplers(builder, coeffCount);
-        addAccumulateSamplers(builder, targetCnt);
+        OitCoefficientsSamplersComponent.addSamplers(builder, sortedCoeffs);
+        addAccumulateSamplers(builder, sortedTranslucents, sortedOpaques);
         builder.uniform().type("sampler2D").name("_flw_depthRange");
 
         addOutputs(builder, targetCnt);
@@ -58,23 +61,45 @@ public class OitCompositeComponent implements SourceComponent
 
         body.add(GlslStmt.raw("gl_FragDepth = delinearize_depth(minDepth, _flw_cullData.znear, _flw_cullData.zfar);"));
 
-        for (int i = 0; i < coeffCount; i++)
+        for (int k : sortedCoeffs)
         {
-            var name = "total_transmittance" + i;
-            var coeffName = "clrwl_coefficients" + i;
+            var rank = ranks.get(k);
 
-            body.add(GlslStmt.raw("float " + name + " = total_transmittance(" + coeffName + ", " + coeffs.get(i).rank() + ");"));
+            if (rank == null)
+            {
+                rank = 3;
+            }
+
+            var name = "total_transmittance" + k;
+            var coeffName = "clrwl_coefficients" + k;
+
+            body.add(GlslStmt.raw("float " + name + " = total_transmittance(" + coeffName + ", " + rank + ");"));
         }
 
-        for (int i = 0; i < targetCnt; i++)
+        for (int k : sortedTranslucents)
         {
-            var texelName = "texel" + i;
-            var accumulate = "_clrwl_accumulate" + i;
-            var out = "frag" + i;
-            var totalName = "total_transmittance" + reverseMap.get(i);
+            var coeffId = sortedTranslucents.get(k);
+
+            if (coeffId == null)
+            {
+                coeffId = 0;
+            }
+
+            var texelName = "texelTranslucent" + k;
+            var accumulate = "_clrwl_accumulate" + k;
+            var out = "frag" + k;
+            var totalName = "total_transmittance" + coeffId;
 
             body.add(GlslStmt.raw("vec4 " + texelName + " = texelFetch(" + accumulate + ", ivec2(gl_FragCoord.xy), 0);"));
             body.add(GlslStmt.raw(out + " = vec4(" + texelName + ".rgb / " + texelName + ".a, 1. - " + totalName + ");"));
+        }
+
+        for (int k : sortedOpaques)
+        {
+            var accumulate = "_clrwl_opaque" + k;
+            var out = "frag" + (translucents.size() + k);
+
+            body.add(GlslStmt.raw(out + " = texelFetch(" + accumulate + ", ivec2(gl_FragCoord.xy), 0);"));
         }
 
         builder.function()
@@ -103,13 +128,22 @@ public class OitCompositeComponent implements SourceComponent
         }
     }
 
-    public static void addAccumulateSamplers(GlslBuilder builder, int targetCnt)
+    public static void addAccumulateSamplers(GlslBuilder builder, List<Integer> translucents, List<Integer> opaques)
     {
-        for (int i = 0; i < targetCnt; i++)
+        for (int i : translucents)
         {
             var uniform = new GlslUniform()
                     .type("sampler2D")
                     .name("_clrwl_accumulate" + i);
+
+            builder.add(uniform);
+        }
+
+        for (int i : opaques)
+        {
+            var uniform = new GlslUniform()
+                    .type("sampler2D")
+                    .name("_clrwl_opaque" + i);
 
             builder.add(uniform);
         }

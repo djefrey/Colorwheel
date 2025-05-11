@@ -275,8 +275,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		{
 			if (oitFramebuffers == null)
 			{
-				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwGbuffers().orElseThrow();
-				oitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, source.getDirectives());
+				oitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
 			}
 
 			return oitFramebuffers;
@@ -285,8 +284,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		{
 			if (shadowOitFramebuffers == null)
 			{
-				ProgramSource source = ((ProgramSetAccessor) programSet).colorwheel$getFlwShadow().orElseThrow();
-				shadowOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, source.getDirectives());
+				shadowOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
 			}
 
 			return shadowOitFramebuffers;

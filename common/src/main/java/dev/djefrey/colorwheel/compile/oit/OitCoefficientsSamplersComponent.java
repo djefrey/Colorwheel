@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
+import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
@@ -15,15 +15,11 @@ import java.util.List;
 
 public class OitCoefficientsSamplersComponent implements SourceComponent
 {
-    private final ShaderPack pack;
-    private final NamespacedId dimension;
-    private final boolean isShadow;
+    private final List<Integer> coeffs;
 
-    public OitCoefficientsSamplersComponent(ShaderPack pack, NamespacedId dimension, boolean isShadow)
+    public OitCoefficientsSamplersComponent(List<Integer> coeffs)
     {
-        this.pack = pack;
-        this.dimension = dimension;
-        this.isShadow = isShadow;
+        this.coeffs = coeffs;
     }
 
     @Override
@@ -36,20 +32,8 @@ public class OitCoefficientsSamplersComponent implements SourceComponent
     public String source()
     {
         var builder = new GlslBuilder();
-        ProgramSource programSet;
 
-        if (!isShadow)
-        {
-            programSet = ((ProgramSetAccessor) pack.getProgramSet(dimension)).colorwheel$getFlwGbuffers().orElseThrow();
-        }
-        else
-        {
-            programSet = ((ProgramSetAccessor) pack.getProgramSet(dimension)).colorwheel$getFlwShadow().orElseThrow();
-        }
-
-        var coeffs = ((ProgramDirectivesAccessor) programSet.getDirectives()).colorwheel$getOitCoefficients();
-
-        addSamplers(builder, coeffs.size());
+        addSamplers(builder, coeffs);
 
         return builder.build();
     }
@@ -60,9 +44,9 @@ public class OitCoefficientsSamplersComponent implements SourceComponent
         return Colorwheel.rl("oit_coefficients_samplers").toString();
     }
 
-    public static void addSamplers(GlslBuilder builder, int coeffCount)
+    public static void addSamplers(GlslBuilder builder, List<Integer> coeffs)
     {
-        for (int i = 0; i < coeffCount; i++)
+        for (int i : coeffs)
         {
             var uniform = new GlslUniform()
                     .type("sampler2DArray")

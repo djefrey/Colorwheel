@@ -7,6 +7,8 @@ import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 
 public record ClrwlShaderKey(InstanceType<?> instanceType,
                              Material material,
@@ -26,5 +28,15 @@ public record ClrwlShaderKey(InstanceType<?> instanceType,
                 + '/' + (isShadow ? "shadow" : "color")
                 + '/' + instanceName
                 + '/' + materialName + '_' + contextName + oit.name;
+    }
+
+    public ProgramSet programSet()
+    {
+        return pack.getProgramSet(dimension);
+    }
+
+    public PackDirectives packDirectives()
+    {
+        return programSet().getPackDirectives();
     }
 }

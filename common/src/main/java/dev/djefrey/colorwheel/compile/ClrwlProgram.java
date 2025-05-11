@@ -1,19 +1,14 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Ints;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
+import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
-import dev.djefrey.colorwheel.mixin.ProgramDirectivesMixin;
 import dev.engine_room.flywheel.api.material.Material;
-import dev.engine_room.flywheel.backend.Samplers;
 import dev.engine_room.flywheel.backend.engine.embed.EmbeddingUniforms;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
-import net.irisshaders.iris.gl.blending.BlendModeOverride;
-import net.irisshaders.iris.gl.blending.BufferBlendOverride;
 import net.irisshaders.iris.gl.program.ProgramImages;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
@@ -21,16 +16,16 @@ import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
-import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
-import org.spongepowered.include.com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ClrwlProgram
 {
@@ -45,7 +40,7 @@ public class ClrwlProgram
 	public final int modelMatrixUniform;
 	public final int normalMatrixUniform;
 
-	public static ImmutableSet<Integer> getReservedTextureUnits(int oitCoeffCount)
+	public static ImmutableSet<Integer> getReservedTextureUnits(Set<Integer> coeffs)
 	{
 		List<Integer> res = new ArrayList<>();
 
@@ -61,17 +56,17 @@ public class ClrwlProgram
 		res.add(ClrwlSamplers.DEPTH_RANGE.number);
 		res.add(ClrwlSamplers.NOISE.number);
 
-		for (int i = 0; i < oitCoeffCount; i++)
+		for (int k : coeffs)
 		{
-			res.add(ClrwlSamplers.getCoefficient(i).number);
+			res.add(ClrwlSamplers.getCoefficient(k).number);
 		}
 
 		return ImmutableSet.copyOf(res);
 	}
 
-	private ClrwlProgram(String name, boolean isShadowPass, ProgramDirectives directives, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
-		var oitCoeffs = ((ProgramDirectivesAccessor) directives).colorwheel$getOitCoefficients();
+		var oitCoeffs = ((PackDirectivesAccessor) directives).getCoefficientsRanks(isShadowPass).keySet();
 
 		this.handle = GL20.glCreateProgram();
 
@@ -100,7 +95,7 @@ public class ClrwlProgram
 		}
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, this.handle);
-		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs.size()));
+		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs));
 		ProgramImages.Builder   imageBuilder   = ProgramImages.builder(this.handle);
 
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DIFFUSE.number, "flw_diffuseTex");
@@ -113,9 +108,9 @@ public class ClrwlProgram
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DEPTH_RANGE.number, "_flw_depthRange");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.NOISE.number, "_flw_blueNoise");
 
-		for (int i = 0; i < oitCoeffs.size(); i++)
+		for (int k : oitCoeffs)
 		{
-			samplerBuilder.addExternalSampler(ClrwlSamplers.getCoefficient(i).number, "clrwl_coefficients" + i);
+			samplerBuilder.addExternalSampler(ClrwlSamplers.getCoefficient(k).number, "clrwl_coefficients" + k);
 		}
 
 		customUniforms.assignTo(uniformBuilder);
@@ -142,13 +137,13 @@ public class ClrwlProgram
 		return GL20.glGetUniformLocation(this.handle, name);
 	}
 
-	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ProgramSource source, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ProgramSource source, PackDirectives directives, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
 		String vertex = source.getVertexSource().orElseThrow(RuntimeException::new);
 		String fragment = source.getFragmentSource().orElseThrow(RuntimeException::new);
 
 		return new ClrwlProgram(name, isShadowPass,
-							   source.getDirectives(),
+							   directives,
 							   vertex, fragment,
 							   customUniforms, pipeline);
 	}

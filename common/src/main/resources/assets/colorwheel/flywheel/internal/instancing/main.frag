@@ -9,9 +9,13 @@ void main() {
     _flw_shader_main();
 
     #ifdef _FLW_USE_DISCARD
-    // flw_fragColor is set to iris_FragData0
+    // flw_fragColor is set to gl_FragData[0]
     if (flw_discardPredicate(flw_fragColor)) {
         discard;
     }
+    #endif
+
+    #ifdef CLRWL_POST_SHADER
+    _clrwl_post_shader();
     #endif
 }

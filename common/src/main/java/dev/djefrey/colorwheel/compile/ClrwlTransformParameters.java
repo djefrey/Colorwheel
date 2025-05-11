@@ -14,10 +14,18 @@ import net.irisshaders.iris.shaderpack.texture.TextureStage;
 // DO NOT USE IN TRANSFORM PATCHER
 public class ClrwlTransformParameters extends Parameters
 {
-	public ClrwlTransformParameters(PatchShaderType type, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	private final ClrwlPipelineCompiler.OitMode oit;
+
+	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		super(Patch.VANILLA, textureMap);
 		super.type = type;
+		this.oit = oit;
+	}
+
+	public ClrwlPipelineCompiler.OitMode getOit()
+	{
+		return oit;
 	}
 
 	@Override

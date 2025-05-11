@@ -1,6 +1,10 @@
 package dev.djefrey.colorwheel.compile;
 
+import io.github.douira.glsl_transformer.ast.node.Identifier;
 import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
+import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
+import io.github.douira.glsl_transformer.ast.node.expression.ReferenceExpression;
+import io.github.douira.glsl_transformer.ast.node.expression.binary.ArrayAccessExpression;
 import io.github.douira.glsl_transformer.ast.node.statement.Statement;
 import io.github.douira.glsl_transformer.ast.print.PrintType;
 import io.github.douira.glsl_transformer.ast.query.Root;
@@ -13,6 +17,9 @@ import net.irisshaders.iris.pipeline.transform.PatchShaderType;
 import net.irisshaders.iris.pipeline.transform.transformer.CommonTransformer;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,14 +81,42 @@ public class ClrwlTransformPatcher
 
 				// TODO: remove duplicated uniforms
 
+				var oit = parameters.getOit();
+				String colorFragData;
+
+				if (oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE
+				||  oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
+				{
+					Map<ArrayAccessExpression, Long> toReplace = new HashMap<>();
+
+					for (Identifier id : root.identifierIndex.get("gl_FragData"))
+					{
+						var access = id.getAncestor(ArrayAccessExpression.class);
+						var idx = ((LiteralExpression) access.getRight()).getInteger();
+
+						toReplace.put(access, idx);
+					}
+
+					for (var kv : toReplace.entrySet())
+					{
+						kv.getKey().replaceByAndDelete(new ReferenceExpression(new Identifier("clrwl_FragData" + kv.getValue())));
+					}
+
+					colorFragData = "clrwl_FragData0";
+				}
+				else
+				{
+					colorFragData = "iris_FragData0";
+				}
+
 				CommonTransformer.transform(transformer, tree, root, parameters, false);
 
 				root.rename("main", "_flw_shader_main");
 
-				if (parameters.type == PatchShaderType.FRAGMENT && root.identifierIndex.has("iris_FragData0"))
+				if (parameters.type == PatchShaderType.FRAGMENT && root.identifierIndex.has(colorFragData))
 				{
 					// Insert assign to ensure that discard test is correct
-					var statement = transformer.parseStatement(root, "flw_fragColor = iris_FragData0;");
+					var statement = transformer.parseStatement(root, "flw_fragColor = " + colorFragData + ";");
 					tree.appendFunctionBody("_flw_shader_main", statement);
 				}
 			});
@@ -90,14 +125,14 @@ public class ClrwlTransformPatcher
 
 	public static String patchVertex(String vertex, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, textureMap);
 
 		return transformer.transform(vertex, parameters);
 	}
 
-	public static String patchFragment(String fragment, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, textureMap);
 
 		return transformer.transform(fragment, parameters);
 	}

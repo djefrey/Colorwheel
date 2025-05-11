@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.nio.file.Path;
@@ -52,43 +53,10 @@ public class ShaderPackMixin implements ShaderPackAccessor
 			at = @At("RETURN"),
 			locals = LocalCapture.CAPTURE_FAILEXCEPTION,
 			remap = false)
-	private void injectBeforeProgramSet(Path root, Map changedConfigs, ImmutableList environmentDefines, CallbackInfo ci, ArrayList envDefines1, ImmutableList.Builder starts, ImmutableList potentialFileNames, boolean[] hasDimensionIds, List dimensionIdCreator, IncludeGraph graph, List finalEnvironmentDefines, List invalidFlagList, List invalidFeatureFlags, List newEnvDefines, List optionalFeatureFlags, ProfileSet profiles, List disabledPrograms, IncludeProcessor includeProcessor, Iterable<StringPair> finalEnvironmentDefines1, int userOptionsChanged)
+	private void injectInit(Path root, Map changedConfigs, ImmutableList environmentDefines, CallbackInfo ci, ArrayList envDefines1, ImmutableList.Builder starts, ImmutableList potentialFileNames, boolean[] hasDimensionIds, List dimensionIdCreator, IncludeGraph graph, List finalEnvironmentDefines, List invalidFlagList, List invalidFeatureFlags, List newEnvDefines, List optionalFeatureFlags, ProfileSet profiles, List disabledPrograms, IncludeProcessor includeProcessor, Iterable<StringPair> finalEnvironmentDefines1, int userOptionsChanged)
 	{
 		this.colorwheel$packName = root.getParent().getFileName().toString();
-
 		this.colorwheel$environmentDefines = ImmutableList.copyOf(finalEnvironmentDefines1);
-		Function<AbsolutePackPath, String> sourceProviderNoPreprocess = (path) ->
-		{
-			String pathString = path.getPathString();
-			// Removes the first "/" in the path if present, and the file
-			// extension in order to represent the path as its program name
-			String programString = pathString.substring(pathString.indexOf("/") == 0 ? 1 : 0, pathString.lastIndexOf("."));
-
-			// Return an empty program source if the program is disabled by the current profile
-			if (disabledPrograms.contains(programString)) {
-				return null;
-			}
-
-			ImmutableList<String> lines = includeProcessor.getIncludedFile(path);
-
-			if (lines == null) {
-				return null;
-			}
-
-			StringBuilder builder = new StringBuilder();
-
-			for (String line : lines) {
-				builder.append(line);
-				builder.append('\n');
-			}
-
-			return builder.toString();
-		};
-
-		var directory = AbsolutePackPath.fromAbsolutePath("/" + dimensionMap.getOrDefault(new NamespacedId("*", "*"), ""));
-
-		ProgramSetAccessor programSet = ((ProgramSetAccessor) base);
-		programSet.colorwheel$setupFlwPrograms(directory, sourceProviderNoPreprocess, shaderProperties);
 	}
 
 	public String colorwheel$getPackName()

@@ -1,0 +1,96 @@
+package dev.djefrey.colorwheel.compile.oit;
+
+import dev.djefrey.colorwheel.Colorwheel;
+import dev.engine_room.flywheel.backend.glsl.SourceComponent;
+import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
+import dev.engine_room.flywheel.backend.glsl.generate.GlslBlock;
+import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
+import dev.engine_room.flywheel.backend.glsl.generate.GlslStmt;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+public class OitCollectCoeffsComponent implements SourceComponent
+{
+    private final Map<Integer, Integer> ranks;
+    private final Map<Integer, Integer> fragdata;
+
+    public OitCollectCoeffsComponent(Map<Integer, Integer> ranks, Map<Integer, Integer> fragdata)
+    {
+        this.ranks = ranks;
+        this.fragdata = fragdata;
+    }
+
+    @Override
+    public Collection<? extends SourceComponent> included()
+    {
+        return List.of();
+    }
+
+    @Override
+    public String source()
+    {
+        var builder = new GlslBuilder();
+        var body = new GlslBlock();
+
+        body.add(GlslStmt.raw("float linearDepth = _clrwl_linear_depth();"));
+        body.add(GlslStmt.raw("vec2 depthRange = texelFetch(_flw_depthRange, ivec2(gl_FragCoord.xy), 0).rg;"));
+        body.add(GlslStmt.raw("float delta = depthRange.x + depthRange.y;"));
+        body.add(GlslStmt.raw("float flw_depth = (linearDepth + depthRange.x) / delta;"));
+        body.add(GlslStmt.raw("float depth_adjustment = _clrwl_tented_blue_noise(flw_depth) * _flw_oitNoise;"));
+        body.add(GlslStmt.raw(""));
+
+        var sorted = ranks.keySet().stream().sorted().toList();
+
+        for (int k : sorted)
+        {
+            int rank = ranks.get(k);
+            int frag = fragdata.get(k);
+            int depth = 1 << (rank - 1);
+
+            String name = "clrwl_coeffs" + k;
+            String fragData = "clrwl_FragData" + frag;
+            String transmittance = "transmittance" + k;
+            String adjusted_depth = "adjusted_depth" + k;
+
+            body.add(GlslStmt.raw("float " + transmittance + " = 1.0 - " + fragData + ".a;"));
+            body.add(GlslStmt.raw("float " + adjusted_depth + " = flw_depth;"));
+
+            // Don't do the depth adjustment if this fragment is opaque.
+            body.add(GlslStmt.raw("if (" + transmittance + " > 1e-5) { " + adjusted_depth + " -= depth_adjustment; } "));
+
+            body.add(GlslStmt.raw("vec4[4] " + name + ";"));
+
+            for (int d = 0; d < depth; d++)
+            {
+                body.add(GlslStmt.raw(name + "[" + d +"] = vec4(0.);"));
+            }
+
+            body.add(GlslStmt.raw("add_transmittance(" + name + ", " + transmittance + ", " + adjusted_depth + ", " + rank + ");"));
+
+            for (int d = 0; d < depth; d++)
+            {
+                // clrwl_coeffs12
+                String outName = name + d;
+
+                body.add(GlslStmt.raw(outName + " = " + name + "[" + d + "];"));
+            }
+        }
+
+        builder.function()
+                .signature(FnSignature.create()
+                        .returnType("void")
+                        .name("_clrwl_post_shader")
+                        .build())
+                .body(body);
+
+        return builder.build();
+    }
+
+    @Override
+    public String name()
+    {
+        return Colorwheel.rl("oit_collect_coeffs").toString();
+    }
+}

@@ -1,29 +1,28 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
+import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
+import dev.djefrey.colorwheel.compile.ClrwlFragDataOutComponent;
+import dev.djefrey.colorwheel.compile.GlslAssignment;
 import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
-import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class OitCoefficientsOutputComponent implements SourceComponent
 {
-    private final ShaderPack pack;
-    private final NamespacedId dimension;
-    private final boolean isShadow;
+    private final Map<Integer, Integer> ranks;
+    private final int drawBufferCnt;
 
-    public OitCoefficientsOutputComponent(ShaderPack pack, NamespacedId dimension, boolean isShadow)
+    public OitCoefficientsOutputComponent(Map<Integer, Integer> ranks, int drawBufferCnt)
     {
-        this.pack = pack;
-        this.dimension = dimension;
-        this.isShadow = isShadow;
+        this.ranks = ranks;
+        this.drawBufferCnt = drawBufferCnt;
     }
 
     @Override
@@ -36,35 +35,28 @@ public class OitCoefficientsOutputComponent implements SourceComponent
     public String source()
     {
         var builder = new GlslBuilder();
-        ProgramSource programSet;
 
-        if (!isShadow)
-        {
-            programSet = ((ProgramSetAccessor) pack.getProgramSet(dimension)).colorwheel$getFlwGbuffers().orElseThrow();
-        }
-        else
-        {
-            programSet = ((ProgramSetAccessor) pack.getProgramSet(dimension)).colorwheel$getFlwShadow().orElseThrow();
-        }
-
-        var coeffs = ((ProgramDirectivesAccessor) programSet.getDirectives()).colorwheel$getOitCoefficients();
+        var sorted = ranks.keySet().stream().sorted().toList();
         int idx = 0;
 
-        for (int i = 0; i < coeffs.size(); i++)
+        for (int k : sorted)
         {
-            int slices = divRoundUp(1 << (coeffs.get(i).rank() + 1), 4);
+            int rank = ranks.get(k);
+            int depth = 1 << (rank - 1);
 
-            for (int l = 0; l < slices; l++)
+            for (int d = 0; d < depth; d++)
             {
                 var out = new GlslFragmentOutput()
                         .binding(idx)
                         .type("vec4")
-                        .name(("clrwl_coeffs" + i) + l);
+                        .name(("clrwl_coeffs" + k) + d);
 
                 builder.add(out);
                 idx += 1;
             }
         }
+
+        ClrwlFragDataOutComponent.addFragDataOuts(builder, drawBufferCnt);
 
         return builder.build();
     }
@@ -73,10 +65,5 @@ public class OitCoefficientsOutputComponent implements SourceComponent
     public String name()
     {
         return Colorwheel.rl("oit_coefficients_output").toString();
-    }
-
-    private static int divRoundUp(int num, int den)
-    {
-        return (num + den - 1) / den;
     }
 }

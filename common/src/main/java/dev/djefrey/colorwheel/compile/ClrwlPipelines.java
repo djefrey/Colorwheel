@@ -3,8 +3,11 @@ package dev.djefrey.colorwheel.compile;
 import dev.djefrey.colorwheel.ClrwlVertex;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.IrisShaderComponent;
+import dev.djefrey.colorwheel.Utils;
+import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.oit.*;
+import dev.djefrey.colorwheel.engine.ClrwlOitCoeffDirective;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.component.BufferTextureInstanceComponent;
@@ -18,7 +21,9 @@ import net.irisshaders.iris.shaderpack.preprocessor.JcppProcessor;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClrwlPipelines
 {
@@ -95,34 +100,10 @@ public class ClrwlPipelines
                                         ? sources.get(CutoutShaders.OFF.source())
                                         : ClrwlPipelineCompiler.CUTOUT)
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_FRAG))
-                    .withComponent((k) ->
-                    {
-                        if (k.oit() == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
-                        {
-                            return new OitCoefficientsOutputComponent(k.pack(), k.dimension(), k.isShadow());
-                        }
-                        else if (k.oit() == ClrwlPipelineCompiler.OitMode.EVALUATE)
-                        {
-                            return new OitCoefficientsSamplersComponent(k.pack(), k.dimension(), k.isShadow());
-                        }
-
-                        return null;
-                    })
+                    .with(ClrwlPipelines::getOitInouts)
                     .with(ClrwlPipelines::getIrisShaderFragmentSource)
+                    .with(ClrwlPipelines::getPostShaderFragmentSource)
                     .withResource(MAIN_FRAG)
-                    .build())
-            .build();
-
-    public static ClrwlOitDepthPipeline OIT_DEPTH = ClrwlOitDepthPipeline.builder()
-            .id("oit_depth")
-            .minVersion(GlCompat.MAX_GLSL_VERSION)
-            .vertex(ClrwlOitDepthPipeline.vertexStage()
-                    .withResource(FULLSCREEN)
-                    .build()
-                )
-            .fragment(ClrwlOitDepthPipeline.fragmentStage()
-                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .withResource(OIT_DEPTH_RANGE_FRAG)
                     .build())
             .build();
 
@@ -135,7 +116,7 @@ public class ClrwlPipelines
             )
             .fragment(ClrwlOitCompositePipeline.fragmentStage()
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.renderTargets(), k.coefficients()))
+                    .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.translucentCoeffs(), k.opaques(), k.ranks()))
                     .build())
             .build();
 
@@ -176,32 +157,121 @@ public class ClrwlPipelines
 
     private static SourceComponent getIrisShaderFragmentSource(ClrwlShaderKey k, ClrwlCompilation c)
     {
+        var pipeline = c.getIrisPipeline();
+        var sources = c.getIrisSources();
+
+        String fragmentSource = sources.getFragmentSource().orElseThrow();
+
+        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
+        List<StringPair> defines = new ArrayList<>(irisDefines);
+        defines.addAll(c.defines);
+
+        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
+        String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, k.oit(), pipeline.getTextureMap());
+
+        return new IrisShaderComponent(sources.getName(), transformed);
+    }
+
+    private static SourceComponent getOitInouts(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        if (k.oit() == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE)
+        {
+            var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
+
+            return new ClrwlFragDataOutComponent(drawBuffers.length);
+        }
+        else if (k.oit() == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
+        {
+            PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+            var ranks = directives.getCoefficientsRanks(k.isShadow());
+
+            var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
+
+            return new OitCoefficientsOutputComponent(ranks, drawBuffers.length);
+        }
+        else if (k.oit() == ClrwlPipelineCompiler.OitMode.EVALUATE)
+        {
+            PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+            var coeffs = directives.getCoefficientsRanks(k.isShadow()).keySet().stream().sorted().toList();
+
+            return new OitCoefficientsSamplersComponent(coeffs);
+        }
+
+        return null;
+    }
+
+    private static SourceComponent getPostShaderFragmentSource(ClrwlShaderKey k, ClrwlCompilation c)
+    {
         switch (k.oit())
         {
-            case OFF, GENERATE_COEFFICIENTS, EVALUATE ->
-            {
-                var pipeline = c.getIrisPipeline();
-                var sources = c.getIrisSources();
-
-                String fragmentSource = sources.getFragmentSource().orElseThrow();
-
-                List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-                List<StringPair> defines = new ArrayList<>(irisDefines);
-                defines.addAll(c.defines);
-
-                String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
-                String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, pipeline.getTextureMap());
-
-                return new IrisShaderComponent(sources.getName(), transformed);
-            }
-
             case DEPTH_RANGE ->
             {
+                c.define("CLRWL_POST_SHADER");
                 return c.getLoader().get(OIT_DEPTH_RANGE_FRAG);
+            }
+
+            case GENERATE_COEFFICIENTS ->
+            {
+                PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+                var ranks = directives.getCoefficientsRanks(k.isShadow());
+                var coeffs = directives.getTranslucentCoefficients(k.isShadow());
+                var renderTargets = Utils.reverse(directives.getTranslucentRenderTargets(k.isShadow()));
+                var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
+
+                Map<Integer, Integer> locations = new HashMap<>();
+
+                for (int i = 0; i < drawBuffers.length; i++)
+                {
+                    int buffer = drawBuffers[i];
+
+                    var acc = renderTargets.get(buffer);
+                    if (acc != null)
+                    {
+                        locations.put(coeffs.get(acc), i);
+                        continue;
+                    }
+                }
+
+                c.define("CLRWL_POST_SHADER");
+                return new OitCollectCoeffsComponent(ranks, locations);
+            }
+
+            case EVALUATE ->
+            {
+                PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+                var ranks = directives.getCoefficientsRanks(k.isShadow());
+                var translucentRenderTargets = Utils.reverse(directives.getTranslucentRenderTargets(k.isShadow()));
+                var opaqueRenderTargets = Utils.reverse(directives.getOpaqueRenderTargets(k.isShadow()));
+                var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
+
+                Map<Integer, Integer> translucentLocations = new HashMap<>();
+                Map<Integer, Integer> opaqueLocations = new HashMap<>();
+
+                for (int i = 0; i < drawBuffers.length; i++)
+                {
+                    int buffer = drawBuffers[i];
+
+                    var acc = translucentRenderTargets.get(buffer);
+                    if (acc != null)
+                    {
+                        translucentLocations.put(acc, i);
+                        continue;
+                    }
+
+                    acc = opaqueRenderTargets.get(buffer);
+                    if (acc != null)
+                    {
+                        opaqueLocations.put(acc, i);
+                        continue;
+                    }
+                }
+
+                c.define("CLRWL_POST_SHADER");
+                return new OitEvaluateComponent(translucentLocations, opaqueLocations, ranks);
             }
         }
 
-        throw new RuntimeException("OitMode " + k.oit() + " is not handled");
+        return null;
     }
 
     private ClrwlPipelines() {}

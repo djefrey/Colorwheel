@@ -16,7 +16,6 @@ import dev.engine_room.flywheel.backend.gl.shader.GlShader;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL20;
 
 import java.util.*;
@@ -33,45 +32,13 @@ public class ClrwlOitPrograms
         this.sources = sources;
     }
 
-    @Nullable
-    private GlProgram depthProgramCache = null;
     private final Map<ClrwlOitCompositeShaderKey, GlProgram> compositeProgramCache = new HashMap<>();
 
-    public GlProgram getOitDepthProgram()
+    public GlProgram getOitCompositeProgram(Map<Integer, Integer> translucentCoeffs, List<Integer> opaques, Map<Integer, Integer> ranks)
     {
-        if (depthProgramCache == null)
-        {
-            depthProgramCache = this.compileDepth(new ClrwlOitDepthShaderKey());
-        }
-
-        return depthProgramCache;
-    }
-
-    public GlProgram getOitCompositeProgram(int[] renderTargets, List<ClrwlOitCoeffDirective> coefficients)
-    {
-        ClrwlOitCompositeShaderKey key = new ClrwlOitCompositeShaderKey(renderTargets,  coefficients);
+        ClrwlOitCompositeShaderKey key = new ClrwlOitCompositeShaderKey(translucentCoeffs, opaques, ranks);
 
         return compositeProgramCache.computeIfAbsent(key, this::compileComposite);
-    }
-
-    private GlProgram compileDepth(ClrwlOitDepthShaderKey key)
-    {
-        String id = ClrwlPipelines.OIT_DEPTH.id();
-        var vertex = compileStage(id, ClrwlPipelines.OIT_DEPTH.vertex(), key).unwrap();
-        var fragment = compileStage(id, ClrwlPipelines.OIT_DEPTH.fragment(), key).unwrap();
-
-        var linker = new ProgramLinker();
-        var program = linker.link(List.of(vertex, fragment), ($) -> {});
-
-        program.bind();
-        program.setUniformBlockBinding(ClrwlUniforms.FRAME_BLOCK_NAME, ClrwlUniforms.FRAME_INDEX);
-
-        program.setSamplerBinding("_flw_depthRange", ClrwlSamplers.DEPTH_RANGE);
-        program.setSamplerBinding("clrwl_coefficients0", ClrwlSamplers.getCoefficient(0));
-
-        GlProgram.unbind();
-
-        return program;
     }
 
     private GlProgram compileComposite(ClrwlOitCompositeShaderKey key)
@@ -88,14 +55,19 @@ public class ClrwlOitPrograms
 
         program.setSamplerBinding("_flw_depthRange", ClrwlSamplers.DEPTH_RANGE);
 
-        for (int i = 0; i < key.renderTargets().length; i++)
+        for (var k : key.translucentCoeffs().keySet())
         {
-            program.setSamplerBinding("_clrwl_accumulate" + i, ClrwlSamplers.getAccumulate(i));
+            program.setSamplerBinding("_clrwl_accumulate" + k, ClrwlSamplers.getAccumulate(k));
         }
 
-        for (int i = 0; i < key.coefficients().size(); i++)
+        for (var k : key.opaques())
         {
-            program.setSamplerBinding("clrwl_coefficients" + i, ClrwlSamplers.getCoefficient(i));
+            program.setSamplerBinding("_clrwl_opaque" + k, ClrwlSamplers.getAccumulate(key.translucentCoeffs().size() + k));
+        }
+
+        for (var k : key.ranks().keySet())
+        {
+            program.setSamplerBinding("clrwl_coefficients" + k, ClrwlSamplers.getCoefficient(k));
         }
 
         GlProgram.unbind();
