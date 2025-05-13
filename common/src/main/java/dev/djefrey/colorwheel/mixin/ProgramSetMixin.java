@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.mixin;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.shaderpack.ShaderPack;
@@ -99,7 +100,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 		DispatchingDirectiveHolder packDirectiveHolder = new DispatchingDirectiveHolder();
 
-		packDirectives.acceptDirectivesFrom(packDirectiveHolder);
+		((PackDirectivesAccessor) packDirectives).colorwheel$acceptColorwheelDirectives(packDirectiveHolder);
 
 		for (ProgramSource source : clrwlPrograms)
 		{

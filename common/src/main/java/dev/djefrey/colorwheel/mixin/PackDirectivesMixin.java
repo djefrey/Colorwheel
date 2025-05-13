@@ -57,11 +57,7 @@ public class PackDirectivesMixin implements PackDirectivesAccessor
     @Unique
     private Map<Integer, Integer> colorwheel$shadowOpaqueRenderTargets = new HashMap<>();
 
-
-    @Inject(method = "acceptDirectivesFrom(Lnet/irisshaders/iris/shaderpack/parsing/DirectiveHolder;)V",
-            at = @At("RETURN"),
-            remap = false)
-    private void injectAcceptDirectives(DirectiveHolder directives, CallbackInfo ci)
+    public void colorwheel$acceptColorwheelDirectives(DirectiveHolder directives)
     {
         int maxCoeffs = 4;
         int maxTranslucents = IrisLimits.MAX_COLOR_BUFFERS;

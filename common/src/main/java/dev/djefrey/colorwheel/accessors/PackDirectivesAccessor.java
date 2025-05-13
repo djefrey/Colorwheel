@@ -1,11 +1,14 @@
 package dev.djefrey.colorwheel.accessors;
 
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
+import net.irisshaders.iris.shaderpack.parsing.DirectiveHolder;
 
 import java.util.Map;
 
 public interface PackDirectivesAccessor
 {
+    void colorwheel$acceptColorwheelDirectives(DirectiveHolder directives);
+
     default Map<Integer, Integer> getCoefficientsRanks(boolean isShadow)
     {
         return isShadow ? colorwheel$getShadowCoefficientsRanks() : colorwheel$getGbuffersCoefficientsRanks();
