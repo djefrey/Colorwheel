@@ -5,6 +5,7 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.IrisShaderComponent;
 import dev.djefrey.colorwheel.Utils;
 import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
+import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.oit.*;
 import dev.djefrey.colorwheel.engine.ClrwlOitCoeffDirective;
@@ -16,6 +17,7 @@ import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.material.CutoutShaders;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
+import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.preprocessor.JcppProcessor;
 import net.minecraft.resources.ResourceLocation;
@@ -54,6 +56,15 @@ public class ClrwlPipelines
             })
             .vertex(ClrwlPipeline.vertexStage()
                     .define("IS_FLYWHEEL")
+                    .onCompile((k, c) ->
+                    {
+                        var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.VERTEX);
+
+                        for (var ext : exts)
+                        {
+                            c.enableExtension(ext);
+                        }
+                    })
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
                     .onCompile((k, c) -> setContextDefine(k.context(), c))
                     .onCompile((k, c) ->
@@ -78,6 +89,15 @@ public class ClrwlPipelines
             .fragment(ClrwlPipeline.fragmentStage()
                     .define("IS_FLYWHEEL")
                     .enableExtension("GL_ARB_conservative_depth")
+                    .onCompile((k, c) ->
+                    {
+                        var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.FRAGMENT);
+
+                        for (var ext : exts)
+                        {
+                            c.enableExtension(ext);
+                        }
+                    })
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
                     .onCompile((k, c) -> setContextDefine(k.context(), c))
                     .onCompile((k, c) -> setCutoutDefine(k.material().cutout(), c))

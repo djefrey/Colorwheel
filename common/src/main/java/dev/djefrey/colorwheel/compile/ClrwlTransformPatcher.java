@@ -27,6 +27,7 @@ public class ClrwlTransformPatcher
 {
 	private static final SingleASTTransformer<ClrwlTransformParameters> transformer;
 	private static final Pattern versionPattern = Pattern.compile("^.*#version\\s+(\\d+)", Pattern.DOTALL);
+	private static final Pattern extensionPattern = Pattern.compile("^.*#extension\\s+([a-zA-Z0-9_]+)\\s+:\\s+([a-zA-Z0-9_]+)", Pattern.DOTALL);
 
 	static
 	{
@@ -39,14 +40,17 @@ public class ClrwlTransformPatcher
 			@Override
 			public TranslationUnit parseTranslationUnit(Root rootInstance, String input)
 			{
-				Matcher matcher = versionPattern.matcher(input);
+				Matcher versionMatcher = versionPattern.matcher(input);
 
-				if (!matcher.find()) {
+				if (!versionMatcher.find()) {
 					throw new IllegalArgumentException(
 							"No #version directive found in source code! See debugging.md for more information.");
 				}
 
-				input = matcher.replaceAll(""); // Remove version tag, replaced by Flywheel's one
+				input = versionMatcher.replaceAll(""); // Remove version tag, replaced by Flywheel's one
+
+				Matcher extensionMatcher = extensionPattern.matcher(input);  // Remove all extensions
+				input = extensionMatcher.replaceAll("");
 
 				return super.parseTranslationUnit(rootInstance, input);
 			}
