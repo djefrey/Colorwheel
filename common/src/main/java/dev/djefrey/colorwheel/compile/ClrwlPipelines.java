@@ -165,11 +165,13 @@ public class ClrwlPipelines
 
         String vertexSource = sources.getVertexSource().orElseThrow();
 
-        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-        List<StringPair> defines = new ArrayList<>(irisDefines);
-        defines.addAll(c.defines);
+//        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
+//        List<StringPair> defines = new ArrayList<>(irisDefines);
+//        defines.addAll(c.defines);
+//
+//        String preprocessed = JcppProcessor.glslPreprocessSource(vertexSource, defines);
 
-        String preprocessed = JcppProcessor.glslPreprocessSource(vertexSource, defines);
+        String preprocessed = vertexSource;
         String transformed = ClrwlTransformPatcher.patchVertex(preprocessed, pipeline.getTextureMap());
 
         return new IrisShaderComponent(sources.getName(), transformed);
@@ -182,11 +184,13 @@ public class ClrwlPipelines
 
         String fragmentSource = sources.getFragmentSource().orElseThrow();
 
-        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-        List<StringPair> defines = new ArrayList<>(irisDefines);
-        defines.addAll(c.defines);
+//        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
+//        List<StringPair> defines = new ArrayList<>(irisDefines);
+//        defines.addAll(c.defines);
+//
+//        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
 
-        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
+        String preprocessed = fragmentSource;
         String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, k.oit(), pipeline.getTextureMap());
 
         return new IrisShaderComponent(sources.getName(), transformed);

@@ -10,6 +10,7 @@ import net.irisshaders.iris.shaderpack.include.IncludeGraph;
 import net.irisshaders.iris.shaderpack.include.IncludeProcessor;
 import net.irisshaders.iris.shaderpack.parsing.ConstDirectiveParser;
 import net.irisshaders.iris.shaderpack.parsing.DispatchingDirectiveHolder;
+import net.irisshaders.iris.shaderpack.preprocessor.JcppProcessor;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
@@ -61,30 +62,33 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 			remap = false)
 	private void injectInit(AbsolutePackPath directory, Function sourceProvider, ShaderProperties shaderProperties, ShaderPack pack, CallbackInfo ci)
 	{
-		IncludeGraph graph = pack.getShaderPackOptions().getIncludes();
-		IncludeProcessor includeProcessor = new IncludeProcessor(graph);
+		// TODO: Sources are preprocessed otherwise the PackDirectives / ProgramDirectives are not correct
+		// Current method does not allow to have specific code for OIT pass, which could provide performance gain
 
-		Function<AbsolutePackPath, String> sourceProviderNoPreprocess = (path) ->
-		{
-			ImmutableList<String> lines = includeProcessor.getIncludedFile(path);
+//		IncludeGraph graph = pack.getShaderPackOptions().getIncludes();
+//		IncludeProcessor includeProcessor = new IncludeProcessor(graph);
+//
+//		Function<AbsolutePackPath, String> sourceProviderNoPreprocess = (path) ->
+//		{
+//			ImmutableList<String> lines = includeProcessor.getIncludedFile(path);
+//
+//			if (lines == null) {
+//				return null;
+//			}
+//
+//			StringBuilder builder = new StringBuilder();
+//
+//			for (String line : lines) {
+//				builder.append(line);
+//				builder.append('\n');
+//			}
+//
+//			return builder.toString();
+//		};
 
-			if (lines == null) {
-				return null;
-			}
-
-			StringBuilder builder = new StringBuilder();
-
-			for (String line : lines) {
-				builder.append(line);
-				builder.append('\n');
-			}
-
-			return builder.toString();
-		};
-
-		this.clrwl_gbuffers = callReadProgramSource(directory, sourceProviderNoPreprocess, "clrwl_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
-		this.clrwl_shadow = callReadProgramSource(directory, sourceProviderNoPreprocess, "clrwl_shadow",  (ProgramSet) (Object) this, shaderProperties, false);
-		this.clrwl_damagedblock = callReadProgramSource(directory, sourceProviderNoPreprocess, "clrwl_damagedblock", (ProgramSet) (Object) this, shaderProperties, false);
+		this.clrwl_gbuffers = callReadProgramSource(directory, sourceProvider, "clrwl_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
+		this.clrwl_shadow = callReadProgramSource(directory, sourceProvider, "clrwl_shadow",  (ProgramSet) (Object) this, shaderProperties, false);
+		this.clrwl_damagedblock = callReadProgramSource(directory, sourceProvider, "clrwl_damagedblock", (ProgramSet) (Object) this, shaderProperties, false);
 
 		colorwheel$locateClrwlDirectives();
 	}
