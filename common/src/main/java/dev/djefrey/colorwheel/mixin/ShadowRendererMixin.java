@@ -43,12 +43,6 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
     @Final
     private float intervalSize;
 
-    @Shadow(remap = false)
-    public static PoseStack createShadowModelView(float sunPathRotation, float intervalSize)
-    {
-        return null;
-    }
-
     @Accessor(remap = false)
     public abstract ShadowRenderTargets getTargets();
 
@@ -68,7 +62,6 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
 
             // Determine the player camera position
             Vector3d cameraPos = CameraUniforms.getUnshiftedCameraPosition();
-            PoseStack modelView = createShadowModelView(this.sunPathRotation, this.intervalSize);
 
             double cameraX = cameraPos.x();
             double cameraY = cameraPos.y();
@@ -82,7 +75,7 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
                         Minecraft.getInstance().levelRenderer,
                         level,
                         Minecraft.getInstance().renderBuffers(),
-                        modelView,
+                        ShadowRenderer.MODELVIEW,
                         ShadowRenderer.PROJECTION,
                         playerCamera,
                         (float) cameraX, (float) cameraY, (float) cameraZ,

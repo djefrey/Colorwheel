@@ -76,7 +76,7 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		var camY = (float) (cameraPos.y - renderOrigin.getY());
 		var camZ = (float) (cameraPos.z - renderOrigin.getZ());
 
-		VIEW.set(context.stack().last().pose());
+		VIEW.set(context.modelView());
 		VIEW.translate(-camX, -camY, -camZ);
 		PROJECTION.set(context.projection());
 		VIEW_PROJECTION.set(context.viewProjection());
@@ -86,7 +86,7 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		CAMERA_LOOK.set(camera.getLookVector());
 		CAMERA_ROT.set(camera.getXRot(), camera.getYRot());
 
-		Matrix4f normal = new Matrix4f(context.stack().last().pose())
+		Matrix4f normal = new Matrix4f(context.modelView())
 				.translate(-camX, -camY, -camZ)
 				.invert()
 				.transpose();

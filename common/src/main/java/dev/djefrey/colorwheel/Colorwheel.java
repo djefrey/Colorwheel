@@ -31,7 +31,7 @@ public final class Colorwheel {
 
     public static ResourceLocation rl(String path)
     {
-        return new ResourceLocation(MOD_ID, path);
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
     public static boolean isUsingCompatibleShaderPack()

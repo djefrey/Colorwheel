@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[47,)"
+loaderVersion = "[4,)"
 #issueTrackerURL = ""
 license = "MIT"
 
@@ -14,16 +14,16 @@ Allows you to use Iris Shaders with Flywheel
 logoFile = "logo.png"
 
 [[dependencies.colorwheel]]
-modId = "forge"
-mandatory = true
-versionRange = "[47,)"
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.colorwheel]]
 modId = "minecraft"
-mandatory = true
-versionRange = "[1.20.1,)"
+type = "required"
+versionRange = "[1.21.1,)"
 ordering = "NONE"
 side = "BOTH"
 
@@ -35,8 +35,11 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.colorwheel]]
-modId = "oculus"
+modId = "iris"
 mandatory = true
-versionRange = "[1.7.0,)"
+versionRange = "[1.8.0,)"
 ordering = "NONE"
 side = "BOTH"
+
+[[mixins]]
+config = "colorwheel.mixins.json"

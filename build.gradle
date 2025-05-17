@@ -1,8 +1,8 @@
 plugins {
     id 'idea'
-    id 'dev.architectury.loom' version '1.9-SNAPSHOT' apply false
+    id 'dev.architectury.loom' version '1.10-SNAPSHOT' apply false
     id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
+    id 'com.gradleup.shadow' version '8.3.6' apply false
 }
 
 architectury {
@@ -28,7 +28,8 @@ subprojects {
         maven { url = "https://maven.parchmentmc.org" }
         maven { url = "https://api.modrinth.com/maven" }
         maven { url = "https://maven.createmod.net" }
-        maven { url = "https://maven.tterrag.com/" }
+        maven { url = "https://mvn.devos.one/snapshots" }
+        maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" } // ForgeConfigAPIPort
     }
 
     loom {
@@ -39,7 +40,7 @@ subprojects {
         minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
         mappings loom.layered() {
             officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-${minecraft_version}:${parchment_version}@zip")
+            parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_version}@zip")
         }
     }
 
@@ -49,12 +50,12 @@ subprojects {
         // If you remove this line, sources will not be generated.
         withSourcesJar()
 
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     tasks.withType(JavaCompile).configureEach {
-        it.options.release = 17
+        it.options.release = 21
     }
 
     // Configure Maven publishing.
