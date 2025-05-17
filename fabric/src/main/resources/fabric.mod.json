@@ -34,6 +34,6 @@
     "iris": ">=1.7.0"
   },
   "suggests": {
-    "another-mod": "*"
+
   }
 }
