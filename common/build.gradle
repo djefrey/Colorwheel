@@ -12,5 +12,5 @@ dependencies {
     modCompileOnly "maven.modrinth:iris:${iris_version}"
     modCompileOnly "maven.modrinth:sodium:${sodium_version}"
 
-    implementation(include("io.github.douira:glsl-transformer:2.0.1"))
+    modCompileOnly "io.github.douira:glsl-transformer:2.0.1"
 }
