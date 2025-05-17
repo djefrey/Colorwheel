@@ -264,6 +264,7 @@ public class ClrwlPipelines
             {
                 PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
                 var ranks = directives.getCoefficientsRanks(k.isShadow());
+                var translucentCoeffs = directives.getTranslucentCoefficients(k.isShadow());
                 var translucentRenderTargets = Utils.reverse(directives.getTranslucentRenderTargets(k.isShadow()));
                 var opaqueRenderTargets = Utils.reverse(directives.getOpaqueRenderTargets(k.isShadow()));
                 var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
@@ -291,7 +292,7 @@ public class ClrwlPipelines
                 }
 
                 c.define("CLRWL_POST_SHADER");
-                return new OitEvaluateComponent(translucentLocations, opaqueLocations, ranks);
+                return new OitEvaluateComponent(translucentLocations, opaqueLocations, translucentCoeffs, ranks);
             }
         }
 

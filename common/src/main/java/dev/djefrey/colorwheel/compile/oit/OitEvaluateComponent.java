@@ -15,12 +15,14 @@ public class OitEvaluateComponent implements SourceComponent
 {
     private final Map<Integer, Integer> translucents;
     private final Map<Integer, Integer> opaques;
+    private final Map<Integer, Integer> translucentCoeffs;
     private final Map<Integer, Integer> ranks;
 
-    public OitEvaluateComponent(Map<Integer, Integer> translucents, Map<Integer, Integer> opaques, Map<Integer, Integer> ranks)
+    public OitEvaluateComponent(Map<Integer, Integer> translucents, Map<Integer, Integer> opaques, Map<Integer, Integer> translucentCoeffs, Map<Integer, Integer> ranks)
     {
         this.translucents = translucents;
         this.opaques = opaques;
+        this.translucentCoeffs = translucentCoeffs;
         this.ranks = ranks;
     }
 
@@ -49,11 +51,18 @@ public class OitEvaluateComponent implements SourceComponent
         for (var k : sortedTranslucents)
         {
             int location = translucents.get(k);
-            int rank = ranks.get(k);
+            Integer coeffId = translucentCoeffs.get(k);
+
+            if (coeffId == null)
+            {
+                coeffId = 0;
+            }
+
+            int rank = ranks.get(coeffId);
 
             String outName = "iris_FragData" + location;
             String transmittance = "transmittance" + k;
-            String coeffs = "clrwl_coefficients" + k;
+            String coeffs = "clrwl_coefficients" + coeffId;
             String depth = "depth" + k;
             String correctedTransmittance = "correctedTransmittance" + k;
 

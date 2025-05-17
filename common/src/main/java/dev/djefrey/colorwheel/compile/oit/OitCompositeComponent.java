@@ -78,7 +78,7 @@ public class OitCompositeComponent implements SourceComponent
 
         for (int k : sortedTranslucents)
         {
-            var coeffId = sortedTranslucents.get(k);
+            var coeffId = translucents.get(k);
 
             if (coeffId == null)
             {
