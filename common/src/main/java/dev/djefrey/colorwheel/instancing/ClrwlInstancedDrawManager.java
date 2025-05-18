@@ -33,9 +33,12 @@ import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
 {
@@ -321,6 +324,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 			catch (Exception e)
 			{
+				if (brokenShaders.isEmpty())
+				{
+					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.pack.contains_broken_shader"));
+				}
+
 				brokenShaders.add(key);
                 Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(), e);
 				continue;
@@ -361,6 +369,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 			catch (Exception e)
 			{
+				if (brokenShaders.isEmpty())
+				{
+					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.pack.contains_broken_shader"));
+				}
+
 				brokenShaders.add(key);
 				Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(), e);
 				continue;
@@ -450,6 +463,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 						}
 						catch (Exception e)
 						{
+							if (brokenShaders.isEmpty())
+							{
+								Colorwheel.sendWarnMessage(Component.translatable("colorwheel.pack.contains_broken_shader"));
+							}
+
 							brokenShaders.add(shaderKey);
 							Colorwheel.LOGGER.error("Could not compile shader: " + shaderKey.getPath(), e);
 							continue;
