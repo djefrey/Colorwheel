@@ -1,0 +1,4 @@
+{
+    "colorwheel.pack.incompatible": "%s is not compatible",
+    "colorwheel.pack.contains_broken_shader": "Shader pack contains broken shaders, expect graphical issues"
+}
