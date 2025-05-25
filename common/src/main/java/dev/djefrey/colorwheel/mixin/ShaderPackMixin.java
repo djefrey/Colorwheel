@@ -55,7 +55,27 @@ public class ShaderPackMixin implements ShaderPackAccessor
 			remap = false)
 	private void injectInit(Path root, Map changedConfigs, ImmutableList environmentDefines, CallbackInfo ci, ArrayList envDefines1, ImmutableList.Builder starts, ImmutableList potentialFileNames, boolean[] hasDimensionIds, List dimensionIdCreator, IncludeGraph graph, List finalEnvironmentDefines, List invalidFlagList, List invalidFeatureFlags, List newEnvDefines, List optionalFeatureFlags, ProfileSet profiles, List disabledPrograms, IncludeProcessor includeProcessor, Iterable<StringPair> finalEnvironmentDefines1, int userOptionsChanged)
 	{
-		this.colorwheel$packName = root.getParent().getFileName().toString();
+		Path parent = root.getParent();
+
+		if (parent == null) // isZip
+		{
+			var separator = root.getFileSystem().getSeparator();
+			var split = root.getFileSystem().toString().split(separator);
+
+			if (split.length > 0)
+			{
+				this.colorwheel$packName = split[split.length - 1];
+			}
+			else
+			{
+				this.colorwheel$packName = "shaders";
+			}
+		}
+		else
+		{
+			this.colorwheel$packName = parent.getFileName().toString();
+		}
+
 		this.colorwheel$environmentDefines = ImmutableList.copyOf(finalEnvironmentDefines1);
 	}
 
