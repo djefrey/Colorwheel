@@ -10,6 +10,7 @@ import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.oit.*;
 import dev.djefrey.colorwheel.engine.ClrwlOitCoeffDirective;
 import dev.engine_room.flywheel.api.material.CutoutShader;
+import dev.engine_room.flywheel.backend.BackendConfig;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.component.BufferTextureInstanceComponent;
 import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponent;
@@ -75,7 +76,7 @@ public class ClrwlPipelines
                             c.define(k.oit().define);
                         }
                     })
-                    // TODO: Light smoothness
+                    .onCompile(ClrwlPipelines::setLightSmoothness)
                     .withResource(API_IMPL_VERT)
                     .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
                     .with((k, c) -> new ExtendedInstanceShaderComponent(c.getLoader(), k.instanceType().vertexShader()))
@@ -109,7 +110,7 @@ public class ClrwlPipelines
                             c.define(k.oit().define);
                         }
                     })
-                    // TODO: Light smoothness
+                    .onCompile(ClrwlPipelines::setLightSmoothness)
                     .withResource(COMPONENTS_HEADER_FRAG)
                     .withResource(API_IMPL_FRAG)
                     .withLoader((k, sources) -> sources.get(k.material().shaders().fragmentSource()))
@@ -139,6 +140,35 @@ public class ClrwlPipelines
                     .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.translucentCoeffs(), k.opaques(), k.ranks()))
                     .build())
             .build();
+
+    private static void setLightSmoothness(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        var smoothness = BackendConfig.INSTANCE.lightSmoothness();
+
+        switch (smoothness)
+        {
+            case FLAT ->
+            {
+                c.define("_FLW_LIGHT_SMOOTHNESS", "0");
+            }
+
+            case TRI_LINEAR ->
+            {
+                c.define("_FLW_LIGHT_SMOOTHNESS", "1");
+            }
+
+            case SMOOTH ->
+            {
+                c.define("_FLW_LIGHT_SMOOTHNESS", "2");
+            }
+
+            case SMOOTH_INNER_FACE_CORRECTED ->
+            {
+                c.define("_FLW_LIGHT_SMOOTHNESS", "2");
+                c.define("_FLW_INNER_FACE_CORRECTION");
+            }
+        }
+    }
 
     private static void setContextDefine(ContextShader ctx, ClrwlCompilation c)
     {
