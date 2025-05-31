@@ -83,6 +83,17 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "blockEntityId", "2147483647");
 				root.replaceReferenceExpressions(transformer, "entityId", "2147483647");
 
+				if (!parameters.isCrumbling())
+				{
+					root.replaceReferenceExpressions(transformer, "tex", "flw_diffuseTex");
+					root.replaceReferenceExpressions(transformer, "gtexture", "flw_diffuseTex");
+				}
+				else
+				{
+					root.replaceReferenceExpressions(transformer, "tex", "_flw_crumblingTex");
+					root.replaceReferenceExpressions(transformer, "gtexture", "_flw_crumblingTex");
+				}
+
 				// TODO: remove duplicated uniforms
 
 				var oit = parameters.getOit();
@@ -127,16 +138,16 @@ public class ClrwlTransformPatcher
 		});
 	}
 
-	public static String patchVertex(String vertex, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchVertex(String vertex, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, isCrumbling, textureMap);
 
 		return transformer.transform(vertex, parameters);
 	}
 
-	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, isCrumbling, textureMap);
 
 		return transformer.transform(fragment, parameters);
 	}

@@ -15,17 +15,24 @@ import net.irisshaders.iris.shaderpack.texture.TextureStage;
 public class ClrwlTransformParameters extends Parameters
 {
 	private final ClrwlPipelineCompiler.OitMode oit;
+	private final boolean isCrumbling;
 
-	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		super(Patch.VANILLA, textureMap);
 		super.type = type;
 		this.oit = oit;
+		this.isCrumbling = isCrumbling;
 	}
 
 	public ClrwlPipelineCompiler.OitMode getOit()
 	{
 		return oit;
+	}
+
+	public boolean isCrumbling()
+	{
+		return isCrumbling;
 	}
 
 	@Override
