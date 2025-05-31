@@ -1,10 +1,13 @@
 package dev.djefrey.colorwheel.instancing;
 
+import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.ClrwlMeshPool;
 import dev.djefrey.colorwheel.ClrwlSamplers;
+import dev.djefrey.colorwheel.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
@@ -24,6 +27,7 @@ import dev.engine_room.flywheel.backend.engine.instancing.InstancedLight;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
+import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
@@ -36,7 +40,6 @@ import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -180,7 +183,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		framebuffer.bind();
 
-		submitDraws(solidDraws, isShadow);
+		var bufferBlendOff = isShadow ? getShadowBufferBlendOff() : getGbuffersBufferBlendOff();
+
+		submitDraws(solidDraws, isShadow, bufferBlendOff);
 
 		MaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
@@ -208,11 +213,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		TextureBinder.bindLightAndOverlay();
 		light.bind();
 
+		var bufferBlendOff = isShadow ? getShadowBufferBlendOff() : getGbuffersBufferBlendOff();
+
 		if (!translucentDraws.isEmpty())
 		{
 			framebuffer.bind();
-
-			submitDraws(translucentDraws, isShadow);
+			submitDraws(translucentDraws, isShadow, bufferBlendOff);
 		}
 
 		if (!oitDraws.isEmpty())
@@ -238,7 +244,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
 
-			oitFramebuffer.composite(framebuffer);
+			oitFramebuffer.composite(framebuffer, bufferBlendOff);
 		}
 
 		MaterialRenderState.reset();
@@ -299,9 +305,99 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		}
 	}
 
+	private List<Integer> gbuffersBlendOffCache;
+	private List<Integer> shadowBlendOffCache;
+	private List<Integer> damagedblockBlendOffCache;
+
+	private List<Integer> getGbuffersBufferBlendOff()
+	{
+		if (gbuffersBlendOffCache != null)
+		{
+			return gbuffersBlendOffCache;
+		}
+
+		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers();
+
+		if (source.isEmpty())
+		{
+			gbuffersBlendOffCache = Collections.emptyList();
+			return gbuffersBlendOffCache;
+		}
+
+		var res = computeBufferBlendOff(source.get(), properties.getGbuffersBufferBlendOff());
+		gbuffersBlendOffCache = res;
+		return res;
+	}
+
+	private List<Integer> getShadowBufferBlendOff()
+	{
+		if (shadowBlendOffCache != null)
+		{
+			return shadowBlendOffCache;
+		}
+
+		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow();
+
+		if (source.isEmpty())
+		{
+			shadowBlendOffCache = Collections.emptyList();
+			return shadowBlendOffCache;
+		}
+
+		var res = computeBufferBlendOff(source.get(), properties.getShadowBufferBlendOff());
+		shadowBlendOffCache = res;
+		return res;
+	}
+
+	private List<Integer> getDamagedblockBufferBlendOff()
+	{
+		if (damagedblockBlendOffCache != null)
+		{
+			return damagedblockBlendOffCache;
+		}
+
+		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDamagedblock();
+
+		if (source.isEmpty())
+		{
+			damagedblockBlendOffCache = Collections.emptyList();
+			return damagedblockBlendOffCache;
+		}
+
+		var res = computeBufferBlendOff(source.get(), properties.getDamagedblockBufferBlendOff());
+		damagedblockBlendOffCache = res;
+		return res;
+	}
+
+	private List<Integer> computeBufferBlendOff(ProgramSource source, List<Integer> bufferBlendOff)
+	{
+		if (bufferBlendOff.isEmpty())
+		{
+			return Collections.emptyList();
+		}
+
+		var drawBuffers = source.getDirectives().getDrawBuffers();
+		var list = new ArrayList<Integer>();
+
+		for (int i = 0; i < drawBuffers.length; i++)
+		{
+			int buf = drawBuffers[i];
+
+			if (bufferBlendOff.contains(buf))
+			{
+				list.add(i);
+			}
+		}
+
+		return ImmutableList.copyOf(list);
+	}
+
 	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
 
-	private void submitDraws(List<ClrwlInstancedDraw> draws, boolean isShadow)
+	private void submitDraws(List<ClrwlInstancedDraw> draws, boolean isShadow, List<Integer> bufferBlendOff)
 	{
 		for (var drawCall : draws)
 		{
@@ -337,6 +433,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			program.bind(drawCall.mesh().baseVertex(), 0, material);
 			environment.setupDraw(program.getProgram());
 			MaterialRenderState.setup(material);
+
+			for (var buffer : bufferBlendOff)
+			{
+				IrisRenderSystem.disableBufferBlend(buffer);
+			}
 
 			ClrwlSamplers.INSTANCE_BUFFER.makeActive();
 
@@ -426,6 +527,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		vao.bindForDraw();
 		TextureBinder.bindLightAndOverlay();
 
+		var bufferBlendOff = getDamagedblockBufferBlendOff();
+
 		var crumblingMaterial = SimpleMaterial.builder();
 
 		for (var groupEntry : byType.entrySet())
@@ -475,6 +578,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 						program.bind(0, index, crumblingMaterial);
 						MaterialRenderState.setup(crumblingMaterial);
+
+						for (var buffer : bufferBlendOff)
+						{
+							IrisRenderSystem.disableBufferBlend(buffer);
+						}
 
 						Samplers.INSTANCE_BUFFER.makeActive();
 

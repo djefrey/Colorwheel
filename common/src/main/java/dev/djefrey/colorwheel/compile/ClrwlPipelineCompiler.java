@@ -3,6 +3,7 @@ package dev.djefrey.colorwheel.compile;
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
+import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
@@ -63,6 +64,7 @@ public class ClrwlPipelineCompiler
 		{
 			ProgramSet programSet = key.pack().getProgramSet(key.dimension());
 			boolean isShadow = key.isShadow();
+			var clrwlProperties = ((ShaderPackAccessor) key.pack()).colorwheel$getProperties();
 
 			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
 			var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().shaders().vertexSource());
@@ -70,21 +72,25 @@ public class ClrwlPipelineCompiler
 			var oitName = key.oit().name;
 
 			String name;
+			String programName;
 			ProgramSource sources;
 
 			if (key.context() == ContextShader.CRUMBLING)
 			{
 				name = String.format("clrwl_damagedblock_%s_%s", instanceName, materialName);
+				programName = "clrwl_damagedblock";
 				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDamagedblock().orElseThrow();
 			}
 			else if (!isShadow)
 			{
 				name = String.format("clrwl_gbuffers_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
+				programName = "clrwl_gbuffers";
 				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().orElseThrow();
 			}
 			else
 			{
 				name = String.format("clrwl_shadow_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
+				programName = "clrwl_shadow";
 				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().orElseThrow();
 			}
 
@@ -95,11 +101,7 @@ public class ClrwlPipelineCompiler
 			dumpSources("/pipeline/vert/" + shaderPath + ".vsh", vertex);
 			dumpSources("/pipeline/frag/" + shaderPath + ".fsh", fragment);
 
-			var customSource = new ProgramSource(name,
-						vertex, null, null, null, fragment,
-						programSet,
-						((ProgramSourceAccessor) sources).colorwheel$getShaderProperties(),
-						((ProgramSourceAccessor) sources).colorwheel$getBlendModeOverride());
+			var customSource = new ClrwlProgramSource(name, vertex, fragment);
 
 			return ClrwlProgram.createProgram(name, isShadow, customSource, programSet.getPackDirectives(), irisPipeline.getCustomUniforms(), irisPipeline);
 		}

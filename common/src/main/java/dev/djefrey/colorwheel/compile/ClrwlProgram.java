@@ -15,7 +15,6 @@ import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.joml.Matrix3f;
@@ -67,7 +66,9 @@ public class ClrwlProgram
 		return ImmutableSet.copyOf(res);
 	}
 
-	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives,
+						 String vertex, String fragment,
+						 CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
 		this.vertex = new GlShader(ShaderType.VERTEX, name + ".vsh", vertex);
 		this.fragment = new GlShader(ShaderType.FRAGMENT, name + ".fsh", fragment);
@@ -143,15 +144,14 @@ public class ClrwlProgram
 		return GL20.glGetUniformLocation(this.handle, name);
 	}
 
-	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ProgramSource source, PackDirectives directives, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ClrwlProgramSource source, PackDirectives directives, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
 		String vertex = source.getVertexSource().orElseThrow(RuntimeException::new);
 		String fragment = source.getFragmentSource().orElseThrow(RuntimeException::new);
 
-		return new ClrwlProgram(name, isShadowPass,
-							   directives,
-							   vertex, fragment,
-							   customUniforms, pipeline);
+		return new ClrwlProgram(name, isShadowPass, directives,
+							    vertex, fragment,
+							    customUniforms, pipeline);
 	}
 
 	public void bind(int vertexOffset, int baseInstance, Material material)
