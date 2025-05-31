@@ -2,6 +2,11 @@ plugins {
     id 'com.github.johnrengelman.shadow'
 }
 
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
 configurations {
     common {
         canBeResolved = true
@@ -29,13 +34,8 @@ dependencies {
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 
     modRuntimeOnly "dev.engine-room.flywheel:flywheel-fabric-${minecraft_version}:${flywheel_version}"
-    modRuntimeOnly "maven.modrinth:oculus:${oculus_version}"
+    modRuntimeOnly "maven.modrinth:iris:${iris_version}"
     modRuntimeOnly "maven.modrinth:sodium:${sodium_version}"
-
-    implementation "org.lwjgl:lwjgl:3.3.1"
-    implementation "org.lwjgl:lwjgl-glfw:3.3.1"
-    implementation "org.lwjgl:lwjgl-opengl:3.3.1"
-    implementation "org.lwjgl:lwjgl-stb:3.3.1"
 }
 
 processResources {
