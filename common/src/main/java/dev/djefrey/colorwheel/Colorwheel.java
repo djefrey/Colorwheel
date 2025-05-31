@@ -7,6 +7,8 @@ import dev.engine_room.flywheel.api.backend.Backend;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.ChatFormatting;
@@ -56,7 +58,9 @@ public final class Colorwheel {
             sendErrorMessage(Component.translatable("colorwheel.pack.incompatible", name));
         }
 
-        return isCompatible;
+        WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
+
+        return worldPipeline instanceof IrisRenderingPipeline;
     }
 
     public static void sendWarnMessage(MutableComponent component)
