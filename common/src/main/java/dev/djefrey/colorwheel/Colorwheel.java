@@ -56,6 +56,7 @@ public final class Colorwheel {
         if (!isCompatible)
         {
             sendErrorMessage(Component.translatable("colorwheel.pack.incompatible", name));
+            return false;
         }
 
         WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
