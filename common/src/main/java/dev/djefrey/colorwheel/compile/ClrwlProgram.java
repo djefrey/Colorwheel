@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
+import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.material.Material;
@@ -41,6 +42,8 @@ public class ClrwlProgram
 	public final int packedMaterialUniform;
 	public final int modelMatrixUniform;
 	public final int normalMatrixUniform;
+	public final int blockEntityUniform;
+	public final int entityUniform;
 
 	public static ImmutableSet<Integer> getReservedTextureUnits(Set<Integer> coeffs)
 	{
@@ -136,6 +139,8 @@ public class ClrwlProgram
 		this.packedMaterialUniform = tryGetUniformLocation2("_flw_packedMaterial");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
+		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityId");
+		this.entityUniform = tryGetUniformLocation2("_clrwl_entityId");
 
 		ClrwlUniforms.setUniformBlockBinding(this);
 	}
@@ -154,7 +159,7 @@ public class ClrwlProgram
 							    customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, int baseInstance, Material material)
+	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual)
 	{
 		GL20.glUseProgram(this.handle);
 
@@ -164,6 +169,9 @@ public class ClrwlProgram
 		setUniformU(vertexOffsetUniform, vertexOffset);
 		setUniformS(baseInstanceUniform, baseInstance);
 		setUniform(packedMaterialUniform, packedFogAndCutout, packedMaterialProperties);
+
+		setUniformS(blockEntityUniform, visual.getBlockEntity());
+		setUniformS(entityUniform, visual.getEntity());
 
 		samplers.update();
 		uniforms.update();

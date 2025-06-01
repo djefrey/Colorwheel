@@ -4,7 +4,7 @@ plugins {
 
 loom {
     forge {
-        mixinConfig "colorwheel.mixins.json"
+        mixinConfig("colorwheel.mixins.iris.json", "colorwheel.mixins.flw.json")
     }
     runs {
         client {

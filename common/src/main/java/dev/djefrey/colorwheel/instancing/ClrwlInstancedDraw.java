@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.instancing;
 
 import dev.djefrey.colorwheel.ClrwlMeshPool;
+import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.engine.GroupKey;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
@@ -25,6 +26,8 @@ public class ClrwlInstancedDraw {
 
 		mesh.acquire();
 	}
+
+	public ClrwlInstanceVisual visual() { return instancer.visual; }
 
 	public int bias() {
 		return bias;

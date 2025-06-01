@@ -80,8 +80,8 @@ public class ClrwlTransformPatcher
 
 //				root.replaceReferenceExpressions(transformer, "gl_NormalMatrix", "clrwl_normal");
 
-				root.replaceReferenceExpressions(transformer, "blockEntityId", "2147483647");
-				root.replaceReferenceExpressions(transformer, "entityId", "2147483647");
+				root.rename("blockEntityId", "_clrwl_blockEntityId");
+				root.rename("entityId", "_clrwl_entityId");
 
 				if (!parameters.isCrumbling())
 				{

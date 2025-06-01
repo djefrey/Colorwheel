@@ -30,7 +30,7 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	 * <br>
 	 * This map is populated as instancers are requested and contains both initialized and uninitialized instancers.
 	 */
-	protected final Map<InstancerKey<?>, N> instancers = new ConcurrentHashMap<>();
+	protected final Map<ClrwlInstancerKey<?>, N> instancers = new ConcurrentHashMap<>();
 	/**
 	 * A list of instancers that have not yet been initialized.
 	 * <br>
@@ -38,12 +38,13 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	 */
 	protected final Queue<UninitializedInstancer<N, ?>> initializationQueue = new ConcurrentLinkedQueue<>();
 
-	public <I extends Instance> ClrwlAbstractInstancer<I> getInstancer(Environment environment, InstanceType<I> type, Model model, int bias) {
-		return getInstancer(new InstancerKey<>(environment, type, model, bias));
+	public <I extends Instance> ClrwlAbstractInstancer<I> getInstancer(ClrwlInstanceVisual visual, Environment environment, InstanceType<I> type, Model model, int bias)
+	{
+		return getInstancer(new ClrwlInstancerKey<>(visual, environment, type, model, bias));
 	}
 
 	@SuppressWarnings("unchecked")
-	public <I extends Instance> ClrwlAbstractInstancer<I> getInstancer(InstancerKey<I> key)
+	public <I extends Instance> ClrwlAbstractInstancer<I> getInstancer(ClrwlInstancerKey<I> key)
 	{
 		return (ClrwlAbstractInstancer<I>) instancers.computeIfAbsent(key, this::createAndDeferInit);
 	}
@@ -81,11 +82,11 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 
 	public abstract void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks);
 
-	protected abstract <I extends Instance> N create(InstancerKey<I> type);
+	protected abstract <I extends Instance> N create(ClrwlInstancerKey<I> type);
 
-	protected abstract <I extends Instance> void initialize(InstancerKey<I> key, N instancer);
+	protected abstract <I extends Instance> void initialize(ClrwlInstancerKey<I> key, N instancer);
 
-	private N createAndDeferInit(InstancerKey<?> key)
+	private N createAndDeferInit(ClrwlInstancerKey<?> key)
 	{
 		var out = create(key);
 
@@ -171,6 +172,6 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 
 	public abstract void triggerFallback();
 
-	protected record UninitializedInstancer<N, I extends Instance>(InstancerKey<I> key, N instancer) {
+	protected record UninitializedInstancer<N, I extends Instance>(ClrwlInstancerKey<I> key, N instancer) {
 	}
 }

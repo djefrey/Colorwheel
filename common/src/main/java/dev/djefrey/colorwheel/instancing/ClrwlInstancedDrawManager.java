@@ -14,6 +14,7 @@ import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.ClrwlAbstractInstancer;
 import dev.djefrey.colorwheel.engine.ClrwlDrawManager;
+import dev.djefrey.colorwheel.engine.ClrwlInstancerKey;
 import dev.djefrey.colorwheel.engine.ClrwlOitFramebuffers;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
@@ -472,7 +473,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(), 0, material);
+			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual());
 			environment.setupDraw(program.getProgram());
 			MaterialRenderState.setup(material);
 
@@ -522,7 +523,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(),0, material);
+			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual());
 			environment.setupDraw(program.getProgram());
 			MaterialRenderState.setupOit(material);
 
@@ -624,7 +625,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 							continue;
 						}
 
-						program.bind(0, index, crumblingMaterial);
+						program.bind(0, index, crumblingMaterial, draw.visual());
 						MaterialRenderState.setup(crumblingMaterial);
 
 						for (var buffer : bufferBlendOff)
@@ -700,13 +701,13 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	}
 
 	@Override
-	protected <I extends Instance> ClrwlInstancedInstancer<I> create(InstancerKey<I> key)
+	protected <I extends Instance> ClrwlInstancedInstancer<I> create(ClrwlInstancerKey<I> key)
 	{
 		return new ClrwlInstancedInstancer<>(key, new ClrwlAbstractInstancer.Recreate<>(key, this));
 	}
 
 	@Override
-	protected <I extends Instance> void initialize(InstancerKey<I> key, ClrwlInstancedInstancer<?> instancer) {
+	protected <I extends Instance> void initialize(ClrwlInstancerKey<I> key, ClrwlInstancedInstancer<?> instancer) {
 		instancer.init();
 
 		var meshes = key.model()

@@ -7,11 +7,11 @@ import dev.engine_room.flywheel.api.instance.InstancerProvider;
 import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.backend.engine.embed.GlobalEnvironment;
 
-public record ClrwlInstancerProvider(ClrwlEngine engine) implements InstancerProvider
+public record ClrwlInstancerProvider(ClrwlEngine engine, ClrwlInstanceVisual visual) implements InstancerProvider
 {
     @Override
     public <I extends Instance> Instancer<I> instancer(InstanceType<I> type, Model model, int bias)
     {
-        return engine.instancer(GlobalEnvironment.INSTANCE, type, model, bias);
+        return engine.instancer(visual, GlobalEnvironment.INSTANCE, type, model, bias);
     }
 }

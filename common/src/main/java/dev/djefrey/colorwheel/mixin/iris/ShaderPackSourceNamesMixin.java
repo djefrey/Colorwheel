@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.mixin;
+package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
 import net.irisshaders.iris.shaderpack.include.ShaderPackSourceNames;
