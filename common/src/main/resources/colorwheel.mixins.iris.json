@@ -9,6 +9,7 @@
     "IrisMixin",
     "IrisRenderingPipelineMixin",
     "PackDirectivesMixin",
+    "ProgramDirectivesMixin",
     "ProgramSetMixin",
     "ProgramSourceMixin",
     "RenderTargetMixin",

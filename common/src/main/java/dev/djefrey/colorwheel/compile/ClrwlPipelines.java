@@ -202,7 +202,7 @@ public class ClrwlPipelines
 //        String preprocessed = JcppProcessor.glslPreprocessSource(vertexSource, defines);
 
         String preprocessed = vertexSource;
-        String transformed = ClrwlTransformPatcher.patchVertex(preprocessed, k.context() == ContextShader.CRUMBLING, pipeline.getTextureMap());
+        String transformed = ClrwlTransformPatcher.patchVertex(preprocessed, k.context() == ContextShader.CRUMBLING, sources.getDirectives(), pipeline.getTextureMap());
 
         return new IrisShaderComponent(sources.getName(), transformed);
     }
@@ -221,7 +221,7 @@ public class ClrwlPipelines
 //        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
 
         String preprocessed = fragmentSource;
-        String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, k.oit(), k.context() == ContextShader.CRUMBLING, pipeline.getTextureMap());
+        String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, k.oit(), k.context() == ContextShader.CRUMBLING, sources.getDirectives(), pipeline.getTextureMap());
 
         return new IrisShaderComponent(sources.getName(), transformed);
     }

@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.blending.AlphaTest;
 import net.irisshaders.iris.gl.texture.TextureType;
@@ -7,6 +8,7 @@ import net.irisshaders.iris.helpers.Tri;
 import net.irisshaders.iris.pipeline.transform.Patch;
 import net.irisshaders.iris.pipeline.transform.PatchShaderType;
 import net.irisshaders.iris.pipeline.transform.parameter.Parameters;
+import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
 // ColorwheelTransformParameters extends from Parameters so that CommonTransformer.transform can be used
@@ -16,13 +18,15 @@ public class ClrwlTransformParameters extends Parameters
 {
 	private final ClrwlPipelineCompiler.OitMode oit;
 	private final boolean isCrumbling;
+	private final Directives directives;
 
-	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, boolean isCrumbling, Directives directives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		super(Patch.VANILLA, textureMap);
 		super.type = type;
 		this.oit = oit;
 		this.isCrumbling = isCrumbling;
+		this.directives = directives;
 	}
 
 	public ClrwlPipelineCompiler.OitMode getOit()
@@ -33,6 +37,11 @@ public class ClrwlTransformParameters extends Parameters
 	public boolean isCrumbling()
 	{
 		return isCrumbling;
+	}
+
+	public Directives directives()
+	{
+		return directives;
 	}
 
 	@Override
@@ -47,7 +56,24 @@ public class ClrwlTransformParameters extends Parameters
 		int result = 1;
 		result = prime * result + ((patch == null) ? 0 : patch.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		result = prime * result + ((getTextureMap() == null) ? 0 : getTextureMap().hashCode());
+		result = prime * result + oit.hashCode();
+		result = prime * result + (isCrumbling ? 1 : 0);
+		result = prime * result + directives.hashCode();
 		return result;
 	}
+
+	public record Directives(boolean noAutoFragColor)
+	{
+		public static Directives fromVertex(ProgramDirectives directives)
+		{
+			return new Directives(false);
+		}
+
+		public static Directives fromFragment(ProgramDirectives directives)
+		{
+			var accessor = ((ProgramDirectivesAccessor) directives);
+
+			return new Directives(accessor.colorwheel$isAutoFragColorDisable());
+		}
+	};
 }
