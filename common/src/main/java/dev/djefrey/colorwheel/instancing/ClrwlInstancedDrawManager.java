@@ -1,10 +1,7 @@
 package dev.djefrey.colorwheel.instancing;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.ClrwlMeshPool;
-import dev.djefrey.colorwheel.ClrwlSamplers;
-import dev.djefrey.colorwheel.ClrwlShaderProperties;
-import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
@@ -73,8 +70,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	@Nullable
 	private GlFramebuffer gbuffersFramebuffer;
+
 	@Nullable
-	private ClrwlOitFramebuffers gbuffersOitFramebuffers;
+	private GlFramebuffer gbuffersTranslucentFramebuffer;
+	@Nullable
+	private ClrwlOitFramebuffers gbuffersTranslucentOitFramebuffers;
 
 	@Nullable
 	private GlFramebuffer shadowFramebuffer;
@@ -156,13 +156,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		light.flush(lightStorage);
 	}
 
-	@Override
-	public void renderAll()
-	{
-		renderSolid();
-		renderTranslucent();
-	}
-
 	public void renderSolid()
 	{
 		if (solidDraws.isEmpty())
@@ -178,7 +171,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
-		var framebuffer = getCurrentFramebuffer(isShadow, false);
+		var framebuffer = getCurrentFramebuffer(isShadow ? ClrwlShaderPrograms.SHADOW : ClrwlShaderPrograms.GBUFFERS);
 
 		if (framebuffer == null)
 		{
@@ -215,7 +208,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
-		var framebuffer = getCurrentFramebuffer(isShadow, false);
+		var framebuffer = getCurrentFramebuffer(isShadow ? ClrwlShaderPrograms.SHADOW : ClrwlShaderPrograms.GBUFFERS_TRANSLUCENT);
 
 		if (framebuffer == null)
 		{
@@ -227,7 +220,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		TextureBinder.bindLightAndOverlay();
 		light.bind();
 
-		var bufferBlendOff = isShadow ? getShadowBufferBlendOff() : getGbuffersBufferBlendOff();
+		var bufferBlendOff = isShadow ? getShadowBufferBlendOff() : getGbuffersTranslucentBufferBlendOff();
 
 		if (!translucentDraws.isEmpty())
 		{
@@ -266,7 +259,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	}
 
 	@Nullable
-	private GlFramebuffer getCurrentFramebuffer(boolean isShadow, boolean isCrumbling)
+	private GlFramebuffer getCurrentFramebuffer(ClrwlShaderPrograms program)
 	{
 		if (((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$consumeFramebufferChanged())
 		{
@@ -276,6 +269,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				gbuffersFramebuffer = null;
 			}
 
+			if (gbuffersTranslucentFramebuffer != null)
+			{
+				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersTranslucentFramebuffer);
+				gbuffersTranslucentFramebuffer = null;
+			}
+
 			if (damagedblockFramebuffer != null)
 			{
 				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(damagedblockFramebuffer);
@@ -283,45 +282,66 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 		}
 
-		if (isCrumbling) // Damagedblock
+		var programAccessor = ((ProgramSetAccessor) programSet);
+
+		switch (program)
 		{
-			if (damagedblockFramebuffer == null)
+            case GBUFFERS ->
 			{
-				Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDamagedblock();
+				if (gbuffersFramebuffer == null)
+				{
+					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlGbuffers();
 
-				damagedblockFramebuffer = source.map(src ->
-						((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createGbuffersFramebuffer(src))
-						.orElse(null);
-			}
+					gbuffersFramebuffer = source.map(src ->
+									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createSolidGbuffersFramebuffer(src))
+							.orElse(null);
+				}
 
-			return damagedblockFramebuffer;
-		}
-		else if (!isShadow) // Gbuffers
-		{
-			if (gbuffersFramebuffer == null)
+				return gbuffersFramebuffer;
+            }
+            case GBUFFERS_TRANSLUCENT ->
 			{
-				Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers();
+				if (gbuffersTranslucentFramebuffer == null)
+				{
+					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlGbuffersTranslucent()
+														.or(programAccessor::colorwheel$getClrwlGbuffers);
 
-				gbuffersFramebuffer = source.map(src ->
-								((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createGbuffersFramebuffer(src))
-						.orElse(null);
-			}
+					gbuffersTranslucentFramebuffer = source.map(src ->
+									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createTranslucentGbuffersFramebuffer(src))
+							.orElse(null);
+				}
 
-			return gbuffersFramebuffer;
-		}
-		else // Shadow
-		{
-			if (shadowFramebuffer == null)
+				return gbuffersTranslucentFramebuffer;
+            }
+            case SHADOW ->
 			{
-				Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow();
+				if (shadowFramebuffer == null)
+				{
+					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlShadow();
 
-				shadowFramebuffer = source.map(src ->
-								((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createShadowFramebuffer(src))
-						.orElse(null);
-			}
+					shadowFramebuffer = source.map(src ->
+									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createShadowFramebuffer(src))
+							.orElse(null);
+				}
 
-			return shadowFramebuffer;
-		}
+				return shadowFramebuffer;
+            }
+            case DAMAGEDBLOCK ->
+			{
+				if (damagedblockFramebuffer == null)
+				{
+					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlDamagedblock();
+
+					damagedblockFramebuffer = source.map(src ->
+									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createSolidGbuffersFramebuffer(src))
+							.orElse(null);
+				}
+
+				return damagedblockFramebuffer;
+            }
+        }
+
+		throw new RuntimeException("Unknown shader program: " + program);
 	}
 
 	private ClrwlOitFramebuffers getCurrentOitFramebuffer(boolean isShadow)
@@ -330,12 +350,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		if (!isShadow)
 		{
-			if (gbuffersOitFramebuffers == null)
+			if (gbuffersTranslucentOitFramebuffers == null)
 			{
-				gbuffersOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
+				gbuffersTranslucentOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
 			}
 
-			return gbuffersOitFramebuffers;
+			return gbuffersTranslucentOitFramebuffers;
 		}
 		else
 		{
@@ -349,6 +369,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	}
 
 	private List<Integer> gbuffersBlendOffCache;
+	private List<Integer> gbuffersTranslucentBlendOffCache;
 	private List<Integer> shadowBlendOffCache;
 	private List<Integer> damagedblockBlendOffCache;
 
@@ -370,6 +391,26 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		var res = computeBufferBlendOff(source.get(), properties.getGbuffersBufferBlendOff());
 		gbuffersBlendOffCache = res;
+		return res;
+	}
+
+	private List<Integer> getGbuffersTranslucentBufferBlendOff()
+	{
+		if (gbuffersTranslucentBlendOffCache != null)
+		{
+			return gbuffersTranslucentBlendOffCache;
+		}
+
+		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffersTranslucent();
+
+		if (source.isEmpty())
+		{
+			return getGbuffersBufferBlendOff();
+		}
+
+		var res = computeBufferBlendOff(source.get(), properties.getGbuffersBufferBlendOff());
+		gbuffersTranslucentBlendOffCache = res;
 		return res;
 	}
 
@@ -563,7 +604,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
-		var framebuffer = getCurrentFramebuffer(false, true);
+		var framebuffer = getCurrentFramebuffer(ClrwlShaderPrograms.DAMAGEDBLOCK);
 
 		if (framebuffer == null)
 		{
@@ -673,6 +714,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			gbuffersFramebuffer = null;
 		}
 
+		if (gbuffersTranslucentFramebuffer != null)
+		{
+			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersTranslucentFramebuffer);
+			gbuffersTranslucentFramebuffer = null;
+		}
+
 		if (shadowFramebuffer != null)
 		{
 			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyShadowFramebuffer(shadowFramebuffer);
@@ -685,10 +732,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			damagedblockFramebuffer = null;
 		}
 
-		if (gbuffersOitFramebuffers != null)
+		if (gbuffersTranslucentOitFramebuffers != null)
 		{
-			gbuffersOitFramebuffers.delete();
-			gbuffersOitFramebuffers = null;
+			gbuffersTranslucentOitFramebuffers.delete();
+			gbuffersTranslucentOitFramebuffers = null;
 		}
 
 		if (shadowOitFramebuffers != null)

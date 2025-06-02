@@ -22,6 +22,7 @@ public abstract class ShaderPackSourceNamesMixin
 	private static void injectPotentialStats(CallbackInfoReturnable<ImmutableList<String>> cir, ImmutableList.Builder<String> builder)
 	{
 		callAddStarts(builder, "clrwl_gbuffers");
+		callAddStarts(builder, "clrwl_gbuffers_translucent");
 		callAddStarts(builder, "clrwl_shadow");
 		callAddStarts(builder, "clrwl_damagedblock");
 	}

@@ -70,7 +70,6 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 		initializationQueue.clear();
 	}
 
-	public abstract void renderAll();
 	public abstract void renderSolid();
 	public abstract void renderTranslucent();
 

@@ -3,6 +3,7 @@ package dev.djefrey.colorwheel.engine;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.ShadowRenderContext;
+import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
@@ -73,6 +74,8 @@ public class ClrwlEngine implements Engine
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = new LightStorage(level);
+
+		((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$setBeginTranslucentsCallback(drawManager::renderTranslucent);
 
 		ENGINES.put(irisPipeline, this);
 	}
@@ -153,7 +156,8 @@ public class ClrwlEngine implements Engine
 				environmentStorage.flush();
 				drawManager.prepareFrame(lightStorage, environmentStorage);
 
-				drawManager.renderAll();
+				drawManager.renderSolid();
+				// Translucents will be rendered by beginTranslucent hook
 			}
 		}
 		catch (Exception e)
@@ -181,6 +185,8 @@ public class ClrwlEngine implements Engine
 	public void delete()
 	{
 		ENGINES.remove(irisPipeline);
+
+		((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$setBeginTranslucentsCallback(null);
 
 		drawManager.delete();
 		lightStorage.delete();
