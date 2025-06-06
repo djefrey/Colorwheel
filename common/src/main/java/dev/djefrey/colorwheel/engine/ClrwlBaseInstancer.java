@@ -19,7 +19,7 @@ public abstract class ClrwlBaseInstancer<I extends Instance> extends ClrwlAbstra
 	protected final AtomicBitSet changed = new AtomicBitSet();
 	protected final AtomicBitSet deleted = new AtomicBitSet();
 
-	protected ClrwlBaseInstancer(InstancerKey<I> key, Recreate<I> recreate) {
+	protected ClrwlBaseInstancer(ClrwlInstancerKey<I> key, Recreate<I> recreate) {
 		super(key, recreate);
 	}
 

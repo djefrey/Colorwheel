@@ -7,6 +7,11 @@ architectury {
     fabric()
 }
 
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
 configurations {
     common {
         canBeResolved = true

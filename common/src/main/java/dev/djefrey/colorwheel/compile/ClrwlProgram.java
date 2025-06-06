@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
+import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.material.Material;
@@ -15,7 +16,6 @@ import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.joml.Matrix3f;
@@ -42,6 +42,8 @@ public class ClrwlProgram
 	public final int packedMaterialUniform;
 	public final int modelMatrixUniform;
 	public final int normalMatrixUniform;
+	public final int blockEntityUniform;
+	public final int entityUniform;
 
 	public static ImmutableSet<Integer> getReservedTextureUnits(Set<Integer> coeffs)
 	{
@@ -67,7 +69,9 @@ public class ClrwlProgram
 		return ImmutableSet.copyOf(res);
 	}
 
-	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives, String vertex, String fragment, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives,
+						 String vertex, String fragment,
+						 CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
 		this.vertex = new GlShader(ShaderType.VERTEX, name + ".vsh", vertex);
 		this.fragment = new GlShader(ShaderType.FRAGMENT, name + ".fsh", fragment);
@@ -135,6 +139,8 @@ public class ClrwlProgram
 		this.packedMaterialUniform = tryGetUniformLocation2("_flw_packedMaterial");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
+		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityId");
+		this.entityUniform = tryGetUniformLocation2("_clrwl_entityId");
 
 		ClrwlUniforms.setUniformBlockBinding(this);
 	}
@@ -143,18 +149,17 @@ public class ClrwlProgram
 		return GL20.glGetUniformLocation(this.handle, name);
 	}
 
-	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ProgramSource source, PackDirectives directives, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ClrwlProgramSource source, PackDirectives directives, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
 		String vertex = source.getVertexSource().orElseThrow(RuntimeException::new);
 		String fragment = source.getFragmentSource().orElseThrow(RuntimeException::new);
 
-		return new ClrwlProgram(name, isShadowPass,
-							   directives,
-							   vertex, fragment,
-							   customUniforms, pipeline);
+		return new ClrwlProgram(name, isShadowPass, directives,
+							    vertex, fragment,
+							    customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, int baseInstance, Material material)
+	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual)
 	{
 		GL20.glUseProgram(this.handle);
 
@@ -164,6 +169,9 @@ public class ClrwlProgram
 		setUniformU(vertexOffsetUniform, vertexOffset);
 		setUniformS(baseInstanceUniform, baseInstance);
 		setUniform(packedMaterialUniform, packedFogAndCutout, packedMaterialProperties);
+
+		setUniformS(blockEntityUniform, visual.getBlockEntity());
+		setUniformS(entityUniform, visual.getEntity());
 
 		samplers.update();
 		uniforms.update();

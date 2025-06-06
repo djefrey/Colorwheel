@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.mixin;
+package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
 import net.irisshaders.iris.shaderpack.include.ShaderPackSourceNames;
@@ -22,6 +22,7 @@ public abstract class ShaderPackSourceNamesMixin
 	private static void injectPotentialStats(CallbackInfoReturnable<ImmutableList<String>> cir, ImmutableList.Builder<String> builder)
 	{
 		callAddStarts(builder, "clrwl_gbuffers");
+		callAddStarts(builder, "clrwl_gbuffers_translucent");
 		callAddStarts(builder, "clrwl_shadow");
 		callAddStarts(builder, "clrwl_damagedblock");
 	}

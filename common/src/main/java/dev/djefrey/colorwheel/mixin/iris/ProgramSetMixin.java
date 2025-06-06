@@ -1,16 +1,12 @@
-package dev.djefrey.colorwheel.mixin;
+package dev.djefrey.colorwheel.mixin.iris;
 
-import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
-import net.irisshaders.iris.shaderpack.include.IncludeGraph;
-import net.irisshaders.iris.shaderpack.include.IncludeProcessor;
 import net.irisshaders.iris.shaderpack.parsing.ConstDirectiveParser;
 import net.irisshaders.iris.shaderpack.parsing.DispatchingDirectiveHolder;
-import net.irisshaders.iris.shaderpack.preprocessor.JcppProcessor;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
@@ -41,13 +37,13 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	@Override
 	public abstract ProgramSource callReadProgramSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties, boolean readTessellation);
 
-	@Invoker(remap = false)
-	@Override
-	public abstract ProgramSource callReadProgramSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties, BlendModeOverride var5, boolean readTessellation);
-
 	@Unique
 	@Nullable
 	private ProgramSource clrwl_gbuffers;
+
+	@Unique
+	@Nullable
+	private ProgramSource clrwl_gbuffers_translucent;
 
 	@Unique
 	@Nullable
@@ -87,6 +83,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 //		};
 
 		this.clrwl_gbuffers = callReadProgramSource(directory, sourceProvider, "clrwl_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
+		this.clrwl_gbuffers_translucent = callReadProgramSource(directory, sourceProvider, "clrwl_gbuffers_translucent", (ProgramSet) (Object) this, shaderProperties, false);
 		this.clrwl_shadow = callReadProgramSource(directory, sourceProvider, "clrwl_shadow",  (ProgramSet) (Object) this, shaderProperties, false);
 		this.clrwl_damagedblock = callReadProgramSource(directory, sourceProvider, "clrwl_damagedblock", (ProgramSet) (Object) this, shaderProperties, false);
 
@@ -99,6 +96,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		List<ProgramSource> clrwlPrograms = new ArrayList<>();
 
 		clrwlPrograms.add(this.clrwl_gbuffers);
+		clrwlPrograms.add(this.clrwl_gbuffers_translucent);
 		clrwlPrograms.add(this.clrwl_shadow);
 		clrwlPrograms.add(this.clrwl_damagedblock);
 
@@ -131,6 +129,16 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 
         return clrwl_gbuffers.requireValid();
+	}
+
+	public Optional<ProgramSource> colorwheel$getClrwlGbuffersTranslucent()
+	{
+		if (clrwl_gbuffers_translucent == null)
+		{
+			return Optional.empty();
+		}
+
+		return clrwl_gbuffers_translucent.requireValid();
 	}
 
 	public Optional<ProgramSource> colorwheel$getClrwlShadow()

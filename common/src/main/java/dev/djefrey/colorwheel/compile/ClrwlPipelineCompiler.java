@@ -1,8 +1,11 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
+import dev.djefrey.colorwheel.ClrwlShaderPrograms;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
+import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
+import dev.engine_room.flywheel.api.material.Transparency;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
@@ -62,6 +65,7 @@ public class ClrwlPipelineCompiler
 		if (worldPipeline instanceof IrisRenderingPipeline irisPipeline)
 		{
 			ProgramSet programSet = key.pack().getProgramSet(key.dimension());
+			ProgramSetAccessor programAccessor = (ProgramSetAccessor) programSet;
 			boolean isShadow = key.isShadow();
 
 			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
@@ -69,23 +73,39 @@ public class ClrwlPipelineCompiler
 			var contextName = key.context().nameLowerCase();
 			var oitName = key.oit().name;
 
+			ClrwlShaderPrograms program;
 			String name;
 			ProgramSource sources;
 
 			if (key.context() == ContextShader.CRUMBLING)
 			{
+				program = ClrwlShaderPrograms.DAMAGEDBLOCK;
 				name = String.format("clrwl_damagedblock_%s_%s", instanceName, materialName);
-				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDamagedblock().orElseThrow();
+				sources = programAccessor.colorwheel$getClrwlDamagedblock().orElseThrow();
 			}
 			else if (!isShadow)
 			{
-				name = String.format("clrwl_gbuffers_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
-				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().orElseThrow();
+				var isTranslucent = key.material().transparency() == Transparency.TRANSLUCENT
+								 || key.material().transparency() == Transparency.ORDER_INDEPENDENT;
+
+				if (isTranslucent && programAccessor.colorwheel$getClrwlGbuffersTranslucent().isPresent())
+				{
+					program = ClrwlShaderPrograms.GBUFFERS_TRANSLUCENT;
+					name = String.format("clrwl_gbuffers_translucent_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
+					sources = programAccessor.colorwheel$getClrwlGbuffersTranslucent().orElseThrow();
+				}
+				else
+				{
+					program = ClrwlShaderPrograms.GBUFFERS;
+					name = String.format("clrwl_gbuffers_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
+					sources = programAccessor.colorwheel$getClrwlGbuffers().orElseThrow();
+				}
 			}
 			else
 			{
+				program = ClrwlShaderPrograms.SHADOW;
 				name = String.format("clrwl_shadow_%s_%s_%s%s", instanceName, materialName, contextName, oitName);
-				sources = ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().orElseThrow();
+				sources = programAccessor.colorwheel$getClrwlShadow().orElseThrow();
 			}
 
 			var shaderPath = key.getPath();
@@ -95,11 +115,7 @@ public class ClrwlPipelineCompiler
 			dumpSources("/pipeline/vert/" + shaderPath + ".vsh", vertex);
 			dumpSources("/pipeline/frag/" + shaderPath + ".fsh", fragment);
 
-			var customSource = new ProgramSource(name,
-						vertex, null, null, null, fragment,
-						programSet,
-						((ProgramSourceAccessor) sources).colorwheel$getShaderProperties(),
-						((ProgramSourceAccessor) sources).colorwheel$getBlendModeOverride());
+			var customSource = new ClrwlProgramSource(name, vertex, fragment);
 
 			return ClrwlProgram.createProgram(name, isShadow, customSource, programSet.getPackDirectives(), irisPipeline.getCustomUniforms(), irisPipeline);
 		}

@@ -15,6 +15,7 @@ public interface ProgramSetAccessor
 	ProgramSource callReadProgramSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties, BlendModeOverride var5, boolean readTessellation);
 
 	Optional<ProgramSource> colorwheel$getClrwlGbuffers();
+	Optional<ProgramSource> colorwheel$getClrwlGbuffersTranslucent();
 	Optional<ProgramSource> colorwheel$getClrwlShadow();
 	Optional<ProgramSource> colorwheel$getClrwlDamagedblock();
 }

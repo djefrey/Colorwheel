@@ -1,10 +1,11 @@
-package dev.djefrey.colorwheel.mixin;
+package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableSet;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRenderTargetsAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRendererAccessor;
+import dev.djefrey.colorwheel.engine.BeginTranslucentRenderFunction;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
 import dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
@@ -34,13 +35,24 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 
 	@Shadow(remap = false)
 	@Final
+	private ImmutableSet<Integer> flippedAfterTranslucent;
+
+	@Shadow(remap = false)
+	@Final
 	private ShadowRenderer shadowRenderer;
 
-	public GlFramebuffer colorwheel$createGbuffersFramebuffer(ProgramSource sources)
+	public GlFramebuffer colorwheel$createSolidGbuffersFramebuffer(ProgramSource sources)
 	{
 		var drawBuffers = sources.getDirectives().getDrawBuffers();
 
 		return renderTargets.createGbufferFramebuffer(flippedAfterPrepare, drawBuffers);
+	}
+
+	public GlFramebuffer colorwheel$createTranslucentGbuffersFramebuffer(ProgramSource sources)
+	{
+		var drawBuffers = sources.getDirectives().getDrawBuffers();
+
+		return renderTargets.createGbufferFramebuffer(flippedAfterTranslucent, drawBuffers);
 	}
 
 	public GlFramebuffer colorwheel$createShadowFramebuffer(ProgramSource sources)
@@ -75,12 +87,31 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 	@Inject(method = "beginLevelRendering()V",
 			at = @At("RETURN"),
 			remap = false)
-	public void onBeginLevelRendering(CallbackInfo ci, @Local boolean changed)
+	private void onBeginLevelRendering(CallbackInfo ci, @Local boolean changed)
 	{
 		if (changed)
 		{
 			colorwheel$hasFramebufferChanged = true;
 		}
+	}
+
+	@Unique
+	private BeginTranslucentRenderFunction colorwheel$beginTranslucentCallback = null;
+
+	@Inject(method = "beginTranslucents()V",
+			at = @At("RETURN"),
+			remap = false)
+	private void onBeginTranslucents(CallbackInfo ci)
+	{
+		if (colorwheel$beginTranslucentCallback != null)
+		{
+			colorwheel$beginTranslucentCallback.onBeginTranslucent();
+		}
+	}
+
+	public void colorwheel$setBeginTranslucentsCallback(BeginTranslucentRenderFunction fct)
+	{
+		this.colorwheel$beginTranslucentCallback = fct;
 	}
 
 	public void colorwheel$destroyGbuffersFramebuffer(GlFramebuffer framebuffer)

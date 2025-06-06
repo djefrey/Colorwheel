@@ -10,6 +10,7 @@ import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.engine_room.flywheel.backend.NoiseTextures;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
+import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -305,7 +306,7 @@ public class ClrwlOitFramebuffers
     /**
      * Composite the accumulated luminance onto the main framebuffer.
      */
-    public void composite(GlFramebuffer target)
+    public void composite(GlFramebuffer target, List<Integer> bufferBlendOff)
     {
         target.bind();
 
@@ -326,6 +327,11 @@ public class ClrwlOitFramebuffers
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         RenderSystem.blendEquation(GL32.GL_FUNC_ADD);
         RenderSystem.depthFunc(GL32.GL_ALWAYS);
+
+        for (var buffer : bufferBlendOff)
+        {
+            IrisRenderSystem.disableBufferBlend(buffer);
+        }
 
         for (int i = 0; i < accumulate.length; i++)
         {

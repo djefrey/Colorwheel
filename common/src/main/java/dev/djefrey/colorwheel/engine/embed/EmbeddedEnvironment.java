@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.engine.embed;
 
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
+import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.instance.Instancer;
@@ -23,6 +24,7 @@ import org.joml.Matrix4fc;
 public class EmbeddedEnvironment implements VisualEmbedding, Environment
 {
 	private final ClrwlEngine engine;
+	private final ClrwlInstanceVisual visual;
 	private final Vec3i renderOrigin;
 	@Nullable
 	private final EmbeddedEnvironment parent;
@@ -37,9 +39,10 @@ public class EmbeddedEnvironment implements VisualEmbedding, Environment
 
 	private boolean deleted = false;
 
-	public EmbeddedEnvironment(ClrwlEngine engine, Vec3i renderOrigin, @Nullable EmbeddedEnvironment parent)
+	public EmbeddedEnvironment(ClrwlEngine engine, ClrwlInstanceVisual visual, Vec3i renderOrigin, @Nullable EmbeddedEnvironment parent)
 	{
 		this.engine = engine;
+		this.visual = visual;
 		this.renderOrigin = renderOrigin;
 		this.parent = parent;
 
@@ -47,14 +50,14 @@ public class EmbeddedEnvironment implements VisualEmbedding, Environment
 			@Override
 			public <I extends Instance> Instancer<I> instancer(InstanceType<I> type, Model model, int bias) {
 				// Kinda cursed usage of anonymous classes here, but it does the job.
-				return engine.instancer(EmbeddedEnvironment.this, type, model, bias);
+				return engine.instancer(visual, EmbeddedEnvironment.this, type, model, bias);
 			}
 		};
 	}
 
-	public EmbeddedEnvironment(ClrwlEngine engine, Vec3i renderOrigin)
+	public EmbeddedEnvironment(ClrwlEngine engine, ClrwlInstanceVisual visual, Vec3i renderOrigin)
 	{
-		this(engine, renderOrigin, null);
+		this(engine, visual, renderOrigin, null);
 	}
 
 	@Override
@@ -76,7 +79,7 @@ public class EmbeddedEnvironment implements VisualEmbedding, Environment
 
 	@Override
 	public VisualEmbedding createEmbedding(Vec3i renderOrigin) {
-		var out = new EmbeddedEnvironment(engine, renderOrigin, this);
+		var out = new EmbeddedEnvironment(engine, visual, renderOrigin, this);
 		engine.environmentStorage()
 				.track(out);
 		return out;

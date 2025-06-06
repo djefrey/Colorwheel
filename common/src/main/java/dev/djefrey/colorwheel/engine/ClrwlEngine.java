@@ -3,12 +3,12 @@ package dev.djefrey.colorwheel.engine;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.ShadowRenderContext;
+import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
-import dev.engine_room.flywheel.api.Flywheel;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.instance.Instance;
@@ -19,7 +19,6 @@ import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.api.visualization.VisualEmbedding;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
-import dev.engine_room.flywheel.backend.FlwBackend;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
@@ -30,7 +29,6 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
-import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -77,13 +75,15 @@ public class ClrwlEngine implements Engine
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = new LightStorage(level);
 
+		((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$setBeginTranslucentsCallback(drawManager::renderTranslucent);
+
 		ENGINES.put(irisPipeline, this);
 	}
 
 	@Override
 	public VisualizationContext createVisualizationContext()
 	{
-		return new ClrwlVisualizationContext();
+		return new ClrwlMainVisualizationContext();
 	}
 
 	@Override
@@ -156,7 +156,8 @@ public class ClrwlEngine implements Engine
 				environmentStorage.flush();
 				drawManager.prepareFrame(lightStorage, environmentStorage);
 
-				drawManager.renderAll();
+				drawManager.renderSolid();
+				// Translucents will be rendered by beginTranslucent hook
 			}
 		}
 		catch (Exception e)
@@ -185,6 +186,8 @@ public class ClrwlEngine implements Engine
 	{
 		ENGINES.remove(irisPipeline);
 
+		((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$setBeginTranslucentsCallback(null);
+
 		drawManager.delete();
 		lightStorage.delete();
 		environmentStorage.delete();
@@ -200,18 +203,30 @@ public class ClrwlEngine implements Engine
 
 	public LevelAccessor level() { return level; };
 
-	public <I extends Instance>Instancer<I> instancer(Environment environment, InstanceType<I> type, Model model, int bias)
+	public <I extends Instance>Instancer<I> instancer(ClrwlInstanceVisual visual, Environment environment, InstanceType<I> type, Model model, int bias)
 	{
-		return drawManager.getInstancer(environment, type, model, bias);
+		return drawManager.getInstancer(visual, environment, type, model, bias);
 	}
 
-	private class ClrwlVisualizationContext implements VisualizationContext
+	public class ClrwlMainVisualizationContext implements VisualizationContext
 	{
 		private final ClrwlInstancerProvider instancerProvider;
+		private final Map<Integer, ClrwlBlockEntityVisualizationContext> blockEntityCtxs = new HashMap<>();
+		private final Map<Integer, ClrwlEntityVisualizationContext> entityCtxs = new HashMap<>();
 
-		public ClrwlVisualizationContext()
+		public ClrwlMainVisualizationContext()
 		{
-			instancerProvider = new ClrwlInstancerProvider(ClrwlEngine.this);
+			instancerProvider = new ClrwlInstancerProvider(ClrwlEngine.this, ClrwlInstanceVisual.undefined());
+		}
+
+		public VisualizationContext getBlockEntityVisualCtx(int irisId)
+		{
+			return blockEntityCtxs.computeIfAbsent(irisId, ClrwlBlockEntityVisualizationContext::new);
+		}
+
+		public VisualizationContext getEntityVisualCtx(int irisId)
+		{
+			return entityCtxs.computeIfAbsent(irisId, ClrwlEntityVisualizationContext::new);
 		}
 
 		@Override
@@ -227,7 +242,69 @@ public class ClrwlEngine implements Engine
 		@Override
 		public VisualEmbedding createEmbedding(Vec3i renderOrigin)
 		{
-			var out = new EmbeddedEnvironment(ClrwlEngine.this, renderOrigin);
+			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.undefined(), renderOrigin);
+			environmentStorage.track(out);
+			return out;
+		}
+	}
+
+	private class ClrwlBlockEntityVisualizationContext implements VisualizationContext
+	{
+		private final int irisId;
+		private final ClrwlInstancerProvider instancerProvider;
+
+		public ClrwlBlockEntityVisualizationContext(int irisId)
+		{
+			this.irisId = irisId;
+			instancerProvider = new ClrwlInstancerProvider(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId));
+		}
+
+		@Override
+		public InstancerProvider instancerProvider()
+		{
+			return instancerProvider;
+		}
+
+		@Override
+		public Vec3i renderOrigin() {
+			return ClrwlEngine.this.renderOrigin();
+		}
+
+		@Override
+		public VisualEmbedding createEmbedding(Vec3i renderOrigin)
+		{
+			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId), renderOrigin);
+			environmentStorage.track(out);
+			return out;
+		}
+	}
+
+	private class ClrwlEntityVisualizationContext implements VisualizationContext
+	{
+		private final int irisId;
+		private final ClrwlInstancerProvider instancerProvider;
+
+		public ClrwlEntityVisualizationContext(int irisId)
+		{
+			this.irisId = irisId;
+			instancerProvider = new ClrwlInstancerProvider(ClrwlEngine.this, ClrwlInstanceVisual.entity(irisId));
+		}
+
+		@Override
+		public InstancerProvider instancerProvider()
+		{
+			return instancerProvider;
+		}
+
+		@Override
+		public Vec3i renderOrigin() {
+			return ClrwlEngine.this.renderOrigin();
+		}
+
+		@Override
+		public VisualEmbedding createEmbedding(Vec3i renderOrigin)
+		{
+			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.entity(irisId), renderOrigin);
 			environmentStorage.track(out);
 			return out;
 		}

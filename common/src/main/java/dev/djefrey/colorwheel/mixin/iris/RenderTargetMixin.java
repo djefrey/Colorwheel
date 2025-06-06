@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.mixin;
+package dev.djefrey.colorwheel.mixin.iris;
 
 import dev.djefrey.colorwheel.accessors.RenderTargetAccessor;
 import net.irisshaders.iris.gl.texture.PixelFormat;

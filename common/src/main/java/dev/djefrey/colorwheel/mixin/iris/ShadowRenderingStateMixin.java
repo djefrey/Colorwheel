@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.mixin;
+package dev.djefrey.colorwheel.mixin.iris;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.djefrey.colorwheel.Colorwheel;
@@ -6,7 +6,6 @@ import dev.djefrey.colorwheel.ShadowRenderContext;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.internal.FlwApiLink;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import dev.engine_room.flywheel.impl.event.RenderContextImpl;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Camera;

@@ -1,18 +1,14 @@
-package dev.djefrey.colorwheel.mixin;
+package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
+import dev.djefrey.colorwheel.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
-import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.include.IncludeGraph;
 import net.irisshaders.iris.shaderpack.include.IncludeProcessor;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.option.ProfileSet;
-import net.irisshaders.iris.shaderpack.programs.ProgramSet;
-import net.irisshaders.iris.shaderpack.properties.ShaderProperties;
+import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,34 +16,32 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Optional;
 
 @Mixin(ShaderPack.class)
-public class ShaderPackMixin implements ShaderPackAccessor
+public abstract class ShaderPackMixin implements ShaderPackAccessor
 {
-	@Shadow(remap = false)
+    @Shadow(remap = false)
 	@Final
-	private ProgramSet base;
-
-	@Shadow(remap = false)
-	private Map<NamespacedId, String> dimensionMap;
-
-	@Shadow(remap = false)
-	@Final
-	private ShaderProperties shaderProperties;
+	private ShaderPackOptions shaderPackOptions;
 
 	@Unique
 	private String colorwheel$packName;
 
 	@Unique
 	private ImmutableList<StringPair> colorwheel$environmentDefines;
+
+	@Unique
+	private ClrwlShaderProperties colorwheel$properties;
+
+	@Shadow(remap = false)
+	private static Optional<String> loadProperties(Path shaderPath, String name) { return Optional.empty(); }
 
 	@Inject(method = "<init>(Ljava/nio/file/Path;Ljava/util/Map;Lcom/google/common/collect/ImmutableList;Z)V",
 			at = @At("RETURN"),
@@ -75,6 +69,9 @@ public class ShaderPackMixin implements ShaderPackAccessor
 		}
 
 		this.colorwheel$environmentDefines = ImmutableList.copyOf(finalEnvironmentDefines1);
+		this.colorwheel$properties = loadProperties(root, "colorwheel.properties")
+				.map((str) -> new ClrwlShaderProperties(str, shaderPackOptions, finalEnvironmentDefines1))
+				.orElseGet(ClrwlShaderProperties::new);
 	}
 
 	public String colorwheel$getPackName()
@@ -86,4 +83,6 @@ public class ShaderPackMixin implements ShaderPackAccessor
 	{
 		return colorwheel$environmentDefines;
 	}
+
+	public ClrwlShaderProperties colorwheel$getProperties() { return colorwheel$properties; };
 }

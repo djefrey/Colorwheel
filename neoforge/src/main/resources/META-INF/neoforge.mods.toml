@@ -42,4 +42,7 @@ ordering = "NONE"
 side = "BOTH"
 
 [[mixins]]
-config = "colorwheel.mixins.json"
+config = "colorwheel.mixins.iris.json"
+
+[[mixins]]
+config = "colorwheel.mixins.flw.json"

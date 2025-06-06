@@ -11,12 +11,14 @@ import dev.engine_room.flywheel.backend.engine.embed.Environment;
 
 public abstract class ClrwlAbstractInstancer<I extends Instance> implements Instancer<I>
 {
+	public final ClrwlInstanceVisual visual;
 	public final InstanceType<I> type;
 	public final Environment environment;
 	public final Recreate<I> recreate;
 
-	protected ClrwlAbstractInstancer(InstancerKey<I> key, Recreate<I> recreate)
+	protected ClrwlAbstractInstancer(ClrwlInstancerKey<I> key, Recreate<I> recreate)
 	{
+		this.visual = key.visual();
 		this.type = key.type();
 		this.environment = key.environment();
 		this.recreate = recreate;
@@ -37,9 +39,10 @@ public abstract class ClrwlAbstractInstancer<I extends Instance> implements Inst
 		return "ClrwlAbstractInstancer[" + instanceCount() + ']';
 	}
 
-	public record Recreate<I extends Instance>(InstancerKey<I> key, ClrwlDrawManager<?> drawManager)
+	public record Recreate<I extends Instance>(ClrwlInstancerKey<I> key, ClrwlDrawManager<?> drawManager)
 	{
-		public ClrwlAbstractInstancer<I> recreate() {
+		public ClrwlAbstractInstancer<I> recreate()
+		{
 			return drawManager.getInstancer(key);
 		}
 	}
