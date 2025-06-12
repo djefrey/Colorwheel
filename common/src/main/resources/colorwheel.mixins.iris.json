@@ -6,6 +6,7 @@
   "client": [
   ],
   "mixins": [
+    "BlockMaterialMappingMixin",
     "IrisMixin",
     "IrisRenderingPipelineMixin",
     "PackDirectivesMixin",
