@@ -46,3 +46,6 @@ config = "colorwheel.mixins.iris.json"
 
 [[mixins]]
 config = "colorwheel.mixins.flw.json"
+
+[[mixins]]
+config = "colorwheel.mixins.mc.json"

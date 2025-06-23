@@ -7,7 +7,10 @@ import dev.engine_room.flywheel.api.backend.RenderContext;
 public class ClrwlUniforms
 {
     public static final int FRAME_INDEX = 0;
+    public static final int OPTIONS_INDEX = 1;
+
     public static final String FRAME_BLOCK_NAME = "_ClrwlFrameUniforms";
+    public static final String OPTIONS_BLOCK_NAME = "_ClrwlOptionsUniforms";
 
     public static void update(RenderContext context)
     {
@@ -36,15 +39,18 @@ public class ClrwlUniforms
     public static void bindColor()
     {
         ClrwlFrameUniforms.BUFFER.bind();
+        ClrwlOptionsUniforms.BUFFER.bind();
     }
 
     public static void bindShadow()
     {
         ClrwlShadowFrameUniforms.BUFFER.bind();
+        ClrwlOptionsUniforms.BUFFER.bind();
     }
 
     public static void setUniformBlockBinding(ClrwlProgram program)
     {
         program.setUniformBlockBinding(FRAME_BLOCK_NAME, FRAME_INDEX);
+        program.setUniformBlockBinding(OPTIONS_BLOCK_NAME, OPTIONS_INDEX);
     }
 }

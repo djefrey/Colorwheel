@@ -24,7 +24,8 @@
   },
   "mixins": [
     "colorwheel.mixins.iris.json",
-    "colorwheel.mixins.flw.json"
+    "colorwheel.mixins.flw.json",
+    "colorwheel.mixins.mc.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.5",
