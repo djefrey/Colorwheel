@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "dev.djefrey.colorwheel.mixin.mc",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "client": [
+    "OptionsMixin"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
