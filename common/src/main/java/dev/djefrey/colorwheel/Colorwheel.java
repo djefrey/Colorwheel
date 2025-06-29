@@ -45,6 +45,8 @@ public final class Colorwheel {
         return new ResourceLocation(MOD_ID, path);
     }
 
+    private static final AccumulateTimer ACCUMULATE_INCOMPATIBLE = new AccumulateTimer(0.3f);
+
     public static boolean isUsingCompatibleShaderPack()
     {
         Optional<ShaderPack> pack = Iris.getCurrentPack();
@@ -62,11 +64,14 @@ public final class Colorwheel {
         {
             if (Colorwheel.CONFIG.shouldAlertIncompatiblePack())
             {
-                var patch = findPatchedShaderpack(name);
+                ACCUMULATE_INCOMPATIBLE.request(() ->
+                {
+                    var patch = findPatchedShaderpack(name);
 
-                sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", name));
-                patch.ifPresent(s ->
-                        sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.patch_available", s)));
+                    sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", name));
+                    patch.ifPresent(s ->
+                            sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.patch_available", s)));
+                });
             }
 
             return false;
