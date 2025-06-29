@@ -504,9 +504,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 			catch (Exception e)
 			{
-				if (brokenShaders.isEmpty())
+				if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
 				{
-					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.pack.contains_broken_shader"));
+					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
 				}
 
 				brokenShaders.add(key);
@@ -554,9 +554,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 			catch (Exception e)
 			{
-				if (brokenShaders.isEmpty())
+				if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
 				{
-					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.pack.contains_broken_shader"));
+					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
 				}
 
 				brokenShaders.add(key);
@@ -656,9 +656,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 						}
 						catch (Exception e)
 						{
-							if (brokenShaders.isEmpty())
+							if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
 							{
-								Colorwheel.sendWarnMessage(Component.translatable("colorwheel.pack.contains_broken_shader"));
+								Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
 							}
 
 							brokenShaders.add(shaderKey);

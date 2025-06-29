@@ -30,6 +30,9 @@ public final class Colorwheel {
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(rl("instancing"));
 
+    // Not ideal but good enough for now
+    public static ClrwlConfig CONFIG = null;
+
     public static void init()
     {
 
@@ -55,7 +58,11 @@ public final class Colorwheel {
 
         if (!isCompatible)
         {
-            sendErrorMessage(Component.translatable("colorwheel.pack.incompatible", name));
+            if (Colorwheel.CONFIG.shouldAlertIncompatiblePack())
+            {
+                sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", name));
+            }
+
             return false;
         }
 
