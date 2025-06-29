@@ -29,7 +29,7 @@ Colorwheel, instead, implements an extension to the Iris shader standard. This m
 To use this mod, you need to install Iris and a mod that includes Flywheel (like Create or Vanillin).  
 You also need to use a compatible shaderpack.  
 
-You can find Colorwheel releases and compatibility patches in the [Releases](https://github.com/djefrey/Colorwheel/releases) section.  
+You can find Colorwheel releases in the [Releases](https://github.com/djefrey/Colorwheel/releases) section.  
 The [Colorwheel Patcher](https://github.com/djefrey/Colorwheel-Patcher) mod can be use to apply automatically patches on supported shaders.
 
 ### Credits
