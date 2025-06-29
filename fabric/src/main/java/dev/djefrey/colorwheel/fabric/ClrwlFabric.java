@@ -9,5 +9,7 @@ public final class ClrwlFabric implements ModInitializer {
     public void onInitialize()
     {
         Colorwheel.init();
+
+        ClrwlConfigFabric.INSTANCE.load();
     }
 }

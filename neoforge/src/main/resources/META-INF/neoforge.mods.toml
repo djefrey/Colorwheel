@@ -29,15 +29,22 @@ side = "BOTH"
 
 [[dependencies.colorwheel]]
 modId = "flywheel"
-mandatory = true
+type = "required"
 versionRange = "[1.0.0,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.colorwheel]]
 modId = "iris"
-mandatory = true
+type = "required"
 versionRange = "[1.8.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.colorwheel]]
+modId = "colorwheel_patcher"
+type = "optional"
+versionRange = "[0.2.3,)"
 ordering = "NONE"
 side = "BOTH"
 

@@ -18,6 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public final class Colorwheel {
@@ -30,6 +32,9 @@ public final class Colorwheel {
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(rl("instancing"));
 
+    // Not ideal but good enough for now
+    public static ClrwlConfig CONFIG = null;
+
     public static void init()
     {
 
@@ -39,6 +44,8 @@ public final class Colorwheel {
     {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
+
+    private static final AccumulateTimer ACCUMULATE_INCOMPATIBLE = new AccumulateTimer(0.3f);
 
     public static boolean isUsingCompatibleShaderPack()
     {
@@ -55,13 +62,50 @@ public final class Colorwheel {
 
         if (!isCompatible)
         {
-            sendErrorMessage(Component.translatable("colorwheel.pack.incompatible", name));
+            if (Colorwheel.CONFIG.shouldAlertIncompatiblePack())
+            {
+                ACCUMULATE_INCOMPATIBLE.request(() ->
+                {
+                    var patch = findPatchedShaderpack(name);
+
+                    sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", name));
+                    patch.ifPresent(s ->
+                            sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.patch_available", s)));
+                });
+            }
+
             return false;
         }
 
         WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
 
         return worldPipeline instanceof IrisRenderingPipeline;
+    }
+
+    public static Optional<String> findPatchedShaderpack(String shaderpack)
+    {
+        Path shaderpackFolder = Iris.getShaderpacksDirectory();
+
+        try
+        {
+            Class<?> clazz = Class.forName("dev.djefrey.colorwheel_patcher.ClrwlPatcher");
+            Method method = clazz.getMethod("findPatchedShaderpackInFolder", String.class, Path.class);
+            Object res = method.invoke(null, shaderpack, shaderpackFolder);
+
+            if (res instanceof Optional<?> maybePatch)
+            {
+                if (maybePatch.isPresent() && maybePatch.get() instanceof String)
+                {
+                    return Optional.of((String) maybePatch.get());
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            // Patcher is not installed, do nothing
+        }
+
+        return Optional.empty();
     }
 
     public static void sendWarnMessage(MutableComponent component)

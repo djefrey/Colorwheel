@@ -1,4 +1,15 @@
 {
-    "colorwheel.pack.incompatible": "%s is not compatible",
-    "colorwheel.pack.contains_broken_shader": "Shader pack contains broken shaders, expect graphical issues"
+    "colorwheel.alert.incompatible_pack": "'%s' is not compatible",
+    "colorwheel.alert.incompatible_pack.patch_available": "You may use '%s' instead",
+    "colorwheel.alert.broken_pack": "Shader pack contains broken shaders, expect graphical issues",
+
+    "command.colorwheel.alert_incompatible_pack.get.on": "Incompatible shader pack alert is enabled",
+    "command.colorwheel.alert_incompatible_pack.get.off": "Incompatible shader pack alert is disabled",
+    "command.colorwheel.alert_incompatible_pack.set.on": "Incompatible shader pack alert is now enabled",
+    "command.colorwheel.alert_incompatible_pack.set.off": "Incompatible shader pack alert is now disabled",
+
+    "command.colorwheel.alert_broken_pack.get.on": "Broken shader pack alert is enabled",
+    "command.colorwheel.alert_broken_pack.get.off": "Broken shader pack alert is disabled",
+    "command.colorwheel.alert_broken_pack.set.on": "Broken shader pack alert is now enabled",
+    "command.colorwheel.alert_broken_pack.set.off": "Broken shader pack alert is now disabled"
 }
