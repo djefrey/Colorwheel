@@ -18,6 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public final class Colorwheel {
@@ -60,7 +62,11 @@ public final class Colorwheel {
         {
             if (Colorwheel.CONFIG.shouldAlertIncompatiblePack())
             {
+                var patch = findPatchedShaderpack(name);
+
                 sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", name));
+                patch.ifPresent(s ->
+                        sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.patch_available", s)));
             }
 
             return false;
@@ -69,6 +75,32 @@ public final class Colorwheel {
         WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
 
         return worldPipeline instanceof IrisRenderingPipeline;
+    }
+
+    public static Optional<String> findPatchedShaderpack(String shaderpack)
+    {
+        Path shaderpackFolder = Iris.getShaderpacksDirectory();
+
+        try
+        {
+            Class<?> clazz = Class.forName("dev.djefrey.colorwheel_patcher.ClrwlPatcher");
+            Method method = clazz.getMethod("findPatchedShaderpackInFolder", String.class, Path.class);
+            Object res = method.invoke(null, shaderpack, shaderpackFolder);
+
+            if (res instanceof Optional<?> maybePatch)
+            {
+                if (maybePatch.isPresent() && maybePatch.get() instanceof String)
+                {
+                    return Optional.of((String) maybePatch.get());
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            // Patcher is not installed, do nothing
+        }
+
+        return Optional.empty();
     }
 
     public static void sendWarnMessage(MutableComponent component)

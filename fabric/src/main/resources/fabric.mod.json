@@ -36,6 +36,6 @@
     "iris": ">=1.7.0"
   },
   "suggests": {
-
+    "colorwheel_patcher": ">=0.2.3"
   }
 }

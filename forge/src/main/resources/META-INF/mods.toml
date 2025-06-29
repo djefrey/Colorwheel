@@ -40,3 +40,10 @@ mandatory = true
 versionRange = "[1.7.0,)"
 ordering = "NONE"
 side = "BOTH"
+
+[[dependencies.colorwheel]]
+modId = "colorwheel_patcher"
+mandatory = false
+versionRange = "[0.2.3,)"
+ordering = "NONE"
+side = "BOTH"
