@@ -68,7 +68,7 @@ public class ClrwlEngine implements Engine
 		this.irisPipeline = (IrisRenderingPipeline) worldPipeline;
 		this.pack = Iris.getCurrentPack().orElseThrow();
 
-		ClrwlPrograms programs = ClrwlPrograms.build(FlwPrograms.SOURCES);
+		ClrwlPrograms programs = ClrwlPrograms.build(FlwPrograms.SOURCES, pack, dimension);
 
 		this.drawManager = new ClrwlInstancedDrawManager(dimension, irisPipeline, pack, programs);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;

@@ -80,7 +80,7 @@ public class ClrwlPipelines
                     .withResource(API_IMPL_VERT)
                     .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
                     .with((k, c) -> new ExtendedInstanceShaderComponent(c.getLoader(), k.instanceType().vertexShader()))
-                    .withLoader((k, sources) -> sources.get(k.material().shaders().vertexSource()))
+                    .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
                     .withLoader(($, sources) -> sources.get(ClrwlVertex.LAYOUT_SHADER))
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_VERT))
                     .withComponent((k) -> new BufferTextureInstanceComponent(k.instanceType()))
@@ -101,7 +101,7 @@ public class ClrwlPipelines
                     })
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
                     .onCompile((k, c) -> setContextDefine(k.context(), c))
-                    .onCompile((k, c) -> setCutoutDefine(k.material().cutout(), c))
+                    .onCompile((k, c) -> setCutoutDefine(k.cutout(), c))
                     .onCompile((k, c) ->
                     {
                         if (k.oit() != ClrwlPipelineCompiler.OitMode.OFF)
@@ -113,13 +113,13 @@ public class ClrwlPipelines
                     .onCompile(ClrwlPipelines::setLightSmoothness)
                     .withResource(COMPONENTS_HEADER_FRAG)
                     .withResource(API_IMPL_FRAG)
-                    .withLoader((k, sources) -> sources.get(k.material().shaders().fragmentSource()))
+                    .withLoader((k, sources) -> sources.get(k.material().fragmentSource()))
                     .withComponent(($) -> ClrwlPipelineCompiler.FOG)
-                    .withLoader((k, sources) -> sources.get(k.material().light().source()))
+                    .withLoader((k, sources) -> sources.get(k.light().source()))
                     .withLoader((k, sources) ->
-                            k.material().cutout() == CutoutShaders.OFF
-                                        ? sources.get(CutoutShaders.OFF.source())
-                                        : ClrwlPipelineCompiler.CUTOUT)
+                            k.cutout() == CutoutShaders.OFF
+                                    ? sources.get(CutoutShaders.OFF.source())
+                                    : ClrwlPipelineCompiler.CUTOUT)
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_FRAG))
                     .with(ClrwlPipelines::getOitInouts)
                     .with(ClrwlPipelines::getIrisShaderFragmentSource)
@@ -236,7 +236,7 @@ public class ClrwlPipelines
         }
         else if (k.oit() == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
         {
-            PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+            PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
             var ranks = directives.getCoefficientsRanks(k.isShadow());
 
             var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
@@ -245,7 +245,7 @@ public class ClrwlPipelines
         }
         else if (k.oit() == ClrwlPipelineCompiler.OitMode.EVALUATE)
         {
-            PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+            PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
             var coeffs = directives.getCoefficientsRanks(k.isShadow()).keySet().stream().sorted().toList();
 
             return new OitCoefficientsSamplersComponent(coeffs);
@@ -266,7 +266,7 @@ public class ClrwlPipelines
 
             case GENERATE_COEFFICIENTS ->
             {
-                PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+                PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
                 var ranks = directives.getCoefficientsRanks(k.isShadow());
                 var coeffs = directives.getTranslucentCoefficients(k.isShadow());
                 var renderTargets = Utils.reverse(directives.getTranslucentRenderTargets(k.isShadow()));
@@ -292,7 +292,7 @@ public class ClrwlPipelines
 
             case EVALUATE ->
             {
-                PackDirectivesAccessor directives = (PackDirectivesAccessor) k.packDirectives();
+                PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
                 var ranks = directives.getCoefficientsRanks(k.isShadow());
                 var translucentCoeffs = directives.getTranslucentCoefficients(k.isShadow());
                 var translucentRenderTargets = Utils.reverse(directives.getTranslucentRenderTargets(k.isShadow()));
