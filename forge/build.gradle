@@ -1,5 +1,6 @@
 plugins {
     id 'com.github.johnrengelman.shadow'
+    id "me.shedaniel.unified-publishing"
 }
 
 loom {
@@ -70,4 +71,50 @@ shadowJar {
 
 remapJar {
     inputFile.set shadowJar.archiveFile
+}
+
+unifiedPublishing {
+    project {
+        displayName = "$project.version-forge"
+        version = "$project.version"
+        releaseType = "beta"
+        changelog = new File("${rootProject.rootDir.toPath().toString()}/CHANGELOG.md").getText('UTF-8')
+        gameVersions = ["1.20.1"]
+        gameLoaders = ["forge"]
+
+        mainPublication remapJar
+
+        relations {
+            depends {
+                curseforge = "oculus"
+                modrinth = "oculus"
+            }
+            optional {
+                curseforge = "create"
+                modrinth = "create"
+            }
+            optional {
+                curseforge = "vanillin"
+                modrinth = "flw-vanillin"
+            }
+            optional {
+                curseforge = "colorwheel-patcher"
+                modrinth = "colorwheel-patcher"
+            }
+        }
+
+        if (System.getenv("CF_TOKEN") != null) {
+            curseforge {
+                token = System.getenv("CF_TOKEN")
+                id = "1254143"
+            }
+        }
+
+        if (System.getenv("MODRINTH_TOKEN") != null) {
+            modrinth {
+                token = System.getenv("MODRINTH_TOKEN")
+                id = "BzHgFoGz"
+            }
+        }
+    }
 }
