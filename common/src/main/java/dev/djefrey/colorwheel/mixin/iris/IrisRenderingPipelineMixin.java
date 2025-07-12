@@ -25,19 +25,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(IrisRenderingPipeline.class)
 public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelineAccessor
 {
-	@Shadow(remap = false)
+	@Shadow
 	@Final
 	private RenderTargets renderTargets;
 
-	@Shadow(remap = false)
+	@Shadow
 	@Final
 	private ImmutableSet<Integer> flippedAfterPrepare;
 
-	@Shadow(remap = false)
+	@Shadow
 	@Final
 	private ImmutableSet<Integer> flippedAfterTranslucent;
 
-	@Shadow(remap = false)
+	@Shadow
 	@Final
 	private ShadowRenderer shadowRenderer;
 

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(ShaderPackSourceNames.class)
 public abstract class ShaderPackSourceNamesMixin
 {
-	@Invoker(remap = false)
+	@Invoker
 	private static void callAddStarts(ImmutableList.Builder<String> potentialFileNames, String baseName) {}
 
 	@Inject(method = "findPotentialStarts",

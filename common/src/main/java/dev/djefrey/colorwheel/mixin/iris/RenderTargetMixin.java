@@ -11,11 +11,11 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(RenderTarget.class)
 public class RenderTargetMixin implements RenderTargetAccessor
 {
-    @Shadow(remap = false)
+    @Shadow
     @Final
     private PixelFormat format;
 
-    @Shadow(remap = false)
+    @Shadow
     @Final
     private PixelType type;
 

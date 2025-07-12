@@ -21,8 +21,7 @@ public class ProgramDirectivesMixin implements ProgramDirectivesAccessor
     private boolean colorwheel$disableAutoFrag = false;
 
     @Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/programs/ProgramSource;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Ljava/util/Set;Lnet/irisshaders/iris/gl/blending/BlendModeOverride;)V",
-            at = @At("RETURN"),
-            remap = false)
+            at = @At("RETURN"))
     private void injectInit(ProgramSource source, ShaderProperties properties, Set supportedRenderTargets, BlendModeOverride defaultBlendOverride, CallbackInfo ci)
     {
         this.colorwheel$disableAutoFrag = colorwheel$containsFlagDirective(source.getFragmentSource(), "CLRWL_DISABLE_AUTO_FRAGCOLOR");

@@ -27,7 +27,7 @@ import java.util.Optional;
 @Mixin(ShaderPack.class)
 public abstract class ShaderPackMixin implements ShaderPackAccessor
 {
-    @Shadow(remap = false)
+    @Shadow
 	@Final
 	private ShaderPackOptions shaderPackOptions;
 
@@ -40,13 +40,12 @@ public abstract class ShaderPackMixin implements ShaderPackAccessor
 	@Unique
 	private ClrwlShaderProperties colorwheel$properties;
 
-	@Shadow(remap = false)
+	@Shadow
 	private static Optional<String> loadProperties(Path shaderPath, String name) { return Optional.empty(); }
 
 	@Inject(method = "<init>(Ljava/nio/file/Path;Ljava/util/Map;Lcom/google/common/collect/ImmutableList;)V",
 			at = @At("RETURN"),
-			locals = LocalCapture.CAPTURE_FAILEXCEPTION,
-			remap = false)
+			locals = LocalCapture.CAPTURE_FAILEXCEPTION)
 	private void injectInit(Path root, Map changedConfigs, ImmutableList environmentDefines, CallbackInfo ci, ArrayList envDefines1, ImmutableList.Builder starts, ImmutableList potentialFileNames, boolean[] hasDimensionIds, List dimensionIdCreator, IncludeGraph graph, List finalEnvironmentDefines, List invalidFlagList, List invalidFeatureFlags, List newEnvDefines, List optionalFeatureFlags, ProfileSet profiles, List disabledPrograms, IncludeProcessor includeProcessor, Iterable<StringPair> finalEnvironmentDefines1, int userOptionsChanged)
 	{
 		Path parent = root.getParent();
