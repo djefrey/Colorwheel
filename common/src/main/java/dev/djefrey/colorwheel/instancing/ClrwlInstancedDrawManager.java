@@ -25,6 +25,7 @@ import dev.engine_room.flywheel.backend.engine.instancing.InstancedLight;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
+import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -490,7 +491,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			var groupKey = drawCall.groupKey;
 			var environment = groupKey.environment();
 
-			var key = new ClrwlShaderKey(groupKey.instanceType(), material, environment.contextShader(), pack, dimension, isShadow, ClrwlPipelineCompiler.OitMode.OFF);
+			var key = ClrwlShaderKey.fromMaterial(groupKey.instanceType(), material, environment.contextShader(), isShadow, ClrwlPipelineCompiler.OitMode.OFF);
 
 			if (brokenShaders.contains(key))
 			{
@@ -511,7 +512,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				}
 
 				brokenShaders.add(key);
-                Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(), e);
+                Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(getShaderPackName()), e);
 				continue;
 			}
 
@@ -540,7 +541,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			var groupKey = drawCall.groupKey;
 			var environment = groupKey.environment();
 
-			var key = new ClrwlShaderKey(groupKey.instanceType(), material, environment.contextShader(), pack, dimension, isShadow, oit);
+			var key = ClrwlShaderKey.fromMaterial(groupKey.instanceType(), material, environment.contextShader(), isShadow, oit);
 
 			if (brokenShaders.contains(key))
 			{
@@ -561,7 +562,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				}
 
 				brokenShaders.add(key);
-				Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(), e);
+				Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(getShaderPackName()), e);
 				continue;
 			}
 
@@ -642,7 +643,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 					{
 						CommonCrumbling.applyCrumblingProperties(crumblingMaterial, draw.material());
 
-						var shaderKey = new ClrwlShaderKey(key.instanceType(), crumblingMaterial, ContextShader.CRUMBLING, pack, dimension, false, ClrwlPipelineCompiler.OitMode.OFF);
+						var shaderKey = ClrwlShaderKey.fromMaterial(key.instanceType(), crumblingMaterial, ContextShader.CRUMBLING, false, ClrwlPipelineCompiler.OitMode.OFF);
 
 						if (brokenShaders.contains(shaderKey))
 						{
@@ -663,7 +664,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 							}
 
 							brokenShaders.add(shaderKey);
-							Colorwheel.LOGGER.error("Could not compile shader: " + shaderKey.getPath(), e);
+							Colorwheel.LOGGER.error("Could not compile shader: " + shaderKey.getPath(getShaderPackName()), e);
 							continue;
 						}
 
@@ -777,5 +778,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	public void triggerFallback()
 	{
 		Minecraft.getInstance().levelRenderer.allChanged();
+	}
+
+	private String getShaderPackName()
+	{
+		return Iris.getCurrentPackName();
 	}
 }

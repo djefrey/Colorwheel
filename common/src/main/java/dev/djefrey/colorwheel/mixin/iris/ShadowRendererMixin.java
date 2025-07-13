@@ -27,31 +27,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ShadowRenderer.class)
 public abstract class ShadowRendererMixin implements ShadowRendererAccessor
 {
-    @Shadow(remap = false)
+    @Shadow
     @Final
     private boolean shouldRenderTranslucent;
 
-    @Shadow(remap = false)
+    @Shadow
     @Final
     private boolean shouldRenderBlockEntities;
 
-    @Shadow(remap = false)
+    @Shadow
     @Final
     private float sunPathRotation;
 
-    @Shadow(remap = false)
+    @Shadow
     @Final
     private float intervalSize;
 
-    @Accessor(remap = false)
+    @Accessor
     public abstract ShadowRenderTargets getTargets();
 
     @Inject(
             method = "renderShadows(Lnet/irisshaders/iris/mixin/LevelRendererAccessor;Lnet/minecraft/client/Camera;)V",
             at = @At(value = "INVOKE",
                     target = "net/irisshaders/iris/shadows/ShadowRenderer.copyPreTranslucentDepth (Lnet/irisshaders/iris/mixin/LevelRendererAccessor;)V",
-            shift = At.Shift.AFTER),
-            remap = false
+            shift = At.Shift.AFTER)
     )
     private void injectRenderShadowsTranslucent(LevelRendererAccessor levelRenderer, Camera playerCamera, CallbackInfo ci)
     {

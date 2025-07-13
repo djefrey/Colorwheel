@@ -1,11 +1,14 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.util.AtomicReferenceCounted;
+import net.irisshaders.iris.shaderpack.ShaderPack;
+import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -37,14 +40,14 @@ public class ClrwlPrograms
 		return extensions.build();
 	}
 
-	public static ClrwlPrograms build(ShaderSources sources)
+	public static ClrwlPrograms build(ShaderSources sources, ShaderPack pack, NamespacedId dimension)
 	{
 		if (!GlCompat.SUPPORTS_INSTANCING)
 		{
 			return null;
 		}
 
-		var compiler = new ClrwlPipelineCompiler(sources, ClrwlPipelines.INSTANCING);
+		var compiler = new ClrwlPipelineCompiler(sources, ClrwlPipelines.INSTANCING, pack, dimension);
 		var oit = new ClrwlOitPrograms(sources);
 
 		ClrwlPrograms programs = new ClrwlPrograms(compiler, oit);

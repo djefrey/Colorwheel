@@ -6,6 +6,7 @@ import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -18,12 +19,14 @@ public class ClrwlCompilation
     public final List<String> extensions = new ArrayList<>();
 
     private final IrisRenderingPipeline pipeline;
+    private final PackDirectives directives;
     private final ProgramSource irisSources;
     private final ShaderSources sourceLoader;
 
-    public ClrwlCompilation(IrisRenderingPipeline pipeline, ProgramSource irisSources, ShaderSources sourceLoader)
+    public ClrwlCompilation(IrisRenderingPipeline pipeline, PackDirectives directives, ProgramSource irisSources, ShaderSources sourceLoader)
     {
         this.pipeline = pipeline;
+        this.directives = directives;
         this.irisSources = irisSources;
         this.sourceLoader = sourceLoader;
     }
@@ -92,6 +95,12 @@ public class ClrwlCompilation
     public IrisRenderingPipeline getIrisPipeline()
     {
         return pipeline;
+    }
+
+    @Nullable
+    public PackDirectives getPackDirectives()
+    {
+        return directives;
     }
 
     @Nullable

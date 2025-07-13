@@ -42,8 +42,7 @@ public class ProgramSourceMixin implements ProgramSourceAccessor
 	public Map<ShaderType, List<String>> colorwheel$getShaderExtensions() { return colorwheel$shaderExtensions; }
 
 	@Inject(method = "<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lnet/irisshaders/iris/shaderpack/programs/ProgramSet;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/gl/blending/BlendModeOverride;)V",
-			at = @At("TAIL"),
-			remap = false)
+			at = @At("TAIL"))
 	private void injectInit(String name, String vertex, String geometry, String tess, String tessEval, String fragment, ProgramSet programs, ShaderProperties properties, BlendModeOverride blendModeOverride, CallbackInfo ci)
 	{
 		this.colorwheel$shaderExtensions = Map.of(

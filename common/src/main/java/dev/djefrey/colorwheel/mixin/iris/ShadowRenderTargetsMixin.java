@@ -12,7 +12,7 @@ import java.util.List;
 @Mixin(ShadowRenderTargets.class)
 public class ShadowRenderTargetsMixin implements ShadowRenderTargetsAccessor
 {
-    @Shadow(remap = false)
+    @Shadow
     @Final
     private List<GlFramebuffer> ownedFramebuffers;
 

@@ -19,8 +19,11 @@ import dev.engine_room.flywheel.lib.util.ResourceUtil;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
+import net.irisshaders.iris.shaderpack.ShaderPack;
+import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.minecraft.client.Minecraft;
 
 import java.io.File;
@@ -33,14 +36,18 @@ public class ClrwlPipelineCompiler
 {
 	private final ShaderSources sources;
 	private final ClrwlPipeline pipeline;
+	private final ShaderPack pack;
+	private final NamespacedId dimension;
 
 	public static UberShaderComponent FOG;
 	public static UberShaderComponent CUTOUT;
 
-	public ClrwlPipelineCompiler(ShaderSources sources, ClrwlPipeline pipeline)
+	public ClrwlPipelineCompiler(ShaderSources sources, ClrwlPipeline pipeline, ShaderPack pack, NamespacedId dimension)
 	{
 		this.sources = sources;
 		this.pipeline = pipeline;
+		this.pack = pack;
+		this.dimension = dimension;
 	}
 
 	public static void refreshUberShaders()
@@ -52,8 +59,8 @@ public class ClrwlPipelineCompiler
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
 		// This will index the fog and cutout shaders
-		ClrwlMaterialShaderIndices.fogSources().index(key.material().fog().source());
-		ClrwlMaterialShaderIndices.cutoutSources().index(key.material().cutout().source());
+		ClrwlMaterialShaderIndices.fogSources().index(key.fog().source());
+		ClrwlMaterialShaderIndices.cutoutSources().index(key.cutout().source());
 
 		return this.compile(key);
 	}
@@ -64,12 +71,12 @@ public class ClrwlPipelineCompiler
 
 		if (worldPipeline instanceof IrisRenderingPipeline irisPipeline)
 		{
-			ProgramSet programSet = key.pack().getProgramSet(key.dimension());
+			ProgramSet programSet = pack.getProgramSet(dimension);
 			ProgramSetAccessor programAccessor = (ProgramSetAccessor) programSet;
 			boolean isShadow = key.isShadow();
 
 			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
-			var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().shaders().vertexSource());
+			var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().vertexSource());
 			var contextName = key.context().nameLowerCase();
 			var oitName = key.oit().name;
 
@@ -85,8 +92,8 @@ public class ClrwlPipelineCompiler
 			}
 			else if (!isShadow)
 			{
-				var isTranslucent = key.material().transparency() == Transparency.TRANSLUCENT
-								 || key.material().transparency() == Transparency.ORDER_INDEPENDENT;
+				var isTranslucent = key.transparency() == Transparency.TRANSLUCENT
+								 || key.transparency() == Transparency.ORDER_INDEPENDENT;
 
 				if (isTranslucent && programAccessor.colorwheel$getClrwlGbuffersTranslucent().isPresent())
 				{
@@ -108,7 +115,7 @@ public class ClrwlPipelineCompiler
 				sources = programAccessor.colorwheel$getClrwlShadow().orElseThrow();
 			}
 
-			var shaderPath = key.getPath();
+			var shaderPath = key.getPath(Iris.getCurrentPackName());
 			var vertex = compileStage(pipeline.vertex(), key, irisPipeline, sources);
 			var fragment = compileStage(pipeline.fragment(), key, irisPipeline, sources);
 
@@ -125,7 +132,10 @@ public class ClrwlPipelineCompiler
 
 	private String compileStage(ClrwlPipelineStage<ClrwlShaderKey> stage, ClrwlShaderKey key, IrisRenderingPipeline irisPipeline, ProgramSource irisSources)
 	{
-		var compile = new ClrwlCompilation(irisPipeline, irisSources, sources);
+		ProgramSet programSet = pack.getProgramSet(dimension);
+		PackDirectives directives = programSet.getPackDirectives();
+
+		var compile = new ClrwlCompilation(irisPipeline, directives, irisSources, sources);
 
 		compile.version(GlCompat.MAX_GLSL_VERSION);
 

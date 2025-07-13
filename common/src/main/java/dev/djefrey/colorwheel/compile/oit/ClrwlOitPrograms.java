@@ -77,7 +77,7 @@ public class ClrwlOitPrograms
 
     private <K> ShaderResult compileStage(String name, ClrwlPipelineStage<K> stage, K key)
     {
-        var compile = new ClrwlCompilation(null, null, sources);
+        var compile = new ClrwlCompilation(null, null, null, sources);
 
         compile.version(GlCompat.MAX_GLSL_VERSION);
 

@@ -29,11 +29,11 @@ import java.util.function.Function;
 @Mixin(ProgramSet.class)
 public abstract class ProgramSetMixin implements ProgramSetAccessor
 {
-	@Shadow(remap = false)
+	@Shadow
 	@Final
 	private PackDirectives packDirectives;
 
-	@Invoker(remap = false)
+	@Invoker
 	@Override
 	public abstract ProgramSource callReadProgramSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties, boolean readTessellation);
 
@@ -54,8 +54,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	private ProgramSource clrwl_damagedblock;
 
 	@Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/include/AbsolutePackPath;Ljava/util/function/Function;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/shaderpack/ShaderPack;)V",
-			at = @At("RETURN"),
-			remap = false)
+			at = @At("RETURN"))
 	private void injectInit(AbsolutePackPath directory, Function sourceProvider, ShaderProperties shaderProperties, ShaderPack pack, CallbackInfo ci)
 	{
 		// TODO: Sources are preprocessed otherwise the PackDirectives / ProgramDirectives are not correct

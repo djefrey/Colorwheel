@@ -1,5 +1,6 @@
 plugins {
     id 'com.gradleup.shadow'
+    id "me.shedaniel.unified-publishing"
 }
 
 architectury {
@@ -65,4 +66,50 @@ shadowJar {
 
 remapJar {
     inputFile.set shadowJar.archiveFile
+}
+
+unifiedPublishing {
+    project {
+        displayName = "$project.version-neoforge"
+        version = "$project.version"
+        releaseType = "beta"
+        changelog = new File("${rootProject.rootDir.toPath().toString()}/CHANGELOG.md").getText('UTF-8')
+        gameVersions = ["1.21.1"]
+        gameLoaders = ["neoforge"]
+
+        mainPublication remapJar
+
+        relations {
+            depends {
+                curseforge = "irisshaders"
+                modrinth = "iris"
+            }
+            optional {
+                curseforge = "create"
+                modrinth = "create"
+            }
+            optional {
+                curseforge = "vanillin"
+                modrinth = "flw-vanillin"
+            }
+            optional {
+                curseforge = "colorwheel-patcher"
+                modrinth = "colorwheel-patcher"
+            }
+        }
+
+        if (System.getenv("CF_TOKEN") != null) {
+            curseforge {
+                token = System.getenv("CF_TOKEN")
+                id = "1254143"
+            }
+        }
+
+        if (System.getenv("MODRINTH_TOKEN") != null) {
+            modrinth {
+                token = System.getenv("MODRINTH_TOKEN")
+                id = "BzHgFoGz"
+            }
+        }
+    }
 }

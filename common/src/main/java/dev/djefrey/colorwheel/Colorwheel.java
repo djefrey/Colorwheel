@@ -45,7 +45,7 @@ public final class Colorwheel {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
-    private static final AccumulateTimer ACCUMULATE_INCOMPATIBLE = new AccumulateTimer(0.3f);
+    private static final AccumulateTimer ACCUMULATE_INCOMPATIBLE = new AccumulateTimer(0.5f);
 
     public static boolean isUsingCompatibleShaderPack()
     {
@@ -56,7 +56,7 @@ public final class Colorwheel {
             return false;
         }
 
-        String name = ((ShaderPackAccessor) pack.get()).colorwheel$getPackName();
+        String name = Iris.getCurrentPackName();
         ProgramSet programSet = pack.get().getProgramSet(Iris.getCurrentDimension());
         var isCompatible = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().isPresent();
 

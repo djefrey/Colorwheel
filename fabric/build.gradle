@@ -1,10 +1,6 @@
 plugins {
     id 'com.gradleup.shadow'
-}
-
-architectury {
-    platformSetupLoomIde()
-    fabric()
+    id "me.shedaniel.unified-publishing"
 }
 
 architectury {
@@ -31,8 +27,6 @@ configurations {
 
 dependencies {
     modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
-    // localRuntime "org.anarres:jcpp:1.4.14"
-    implementation "io.github.douira:glsl-transformer:2.0.1"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
@@ -40,11 +34,14 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 
-    localRuntime "dev.engine-room.flywheel:flywheel-fabric-${minecraft_version}:${flywheel_version}"
-    localRuntime "dev.engine-room.vanillin:vanillin-fabric-${minecraft_version}:${vanillin_version}"
+    localRuntime "org.anarres:jcpp:1.4.14"
+    localRuntime "io.github.douira:glsl-transformer:2.0.1"
 
-    localRuntime "maven.modrinth:sodium:mc${minecraft_version}-${sodium_version}-fabric"
-    localRuntime "maven.modrinth:iris:${iris_version}+${minecraft_version}-fabric"
+    modLocalRuntime "dev.engine-room.flywheel:flywheel-fabric-${minecraft_version}:${flywheel_version}"
+    modLocalRuntime "dev.engine-room.vanillin:vanillin-fabric-${minecraft_version}:${vanillin_version}"
+
+    modLocalRuntime "maven.modrinth:sodium:mc${minecraft_version}-${sodium_version}-fabric"
+    modLocalRuntime "maven.modrinth:iris:${iris_version}+${minecraft_version}-fabric"
 }
 
 processResources {
@@ -62,4 +59,50 @@ shadowJar {
 
 remapJar {
     inputFile.set shadowJar.archiveFile
+}
+
+unifiedPublishing {
+    project {
+        displayName = "$project.version-fabric"
+        version = "$project.version"
+        releaseType = "beta"
+        changelog = new File("${rootProject.rootDir.toPath().toString()}/CHANGELOG.md").getText('UTF-8')
+        gameVersions = ["1.21.1"]
+        gameLoaders = ["fabric"]
+
+        mainPublication remapJar
+
+        relations {
+            depends {
+                curseforge = "irisshaders"
+                modrinth = "iris"
+            }
+            optional {
+                curseforge = "create"
+                modrinth = "create"
+            }
+            optional {
+                curseforge = "vanillin"
+                modrinth = "flw-vanillin"
+            }
+            optional {
+                curseforge = "colorwheel-patcher"
+                modrinth = "colorwheel-patcher"
+            }
+        }
+
+        if (System.getenv("CF_TOKEN") != null) {
+            curseforge {
+                token = System.getenv("CF_TOKEN")
+                id = "1254143"
+            }
+        }
+
+        if (System.getenv("MODRINTH_TOKEN") != null) {
+            modrinth {
+                token = System.getenv("MODRINTH_TOKEN")
+                id = "BzHgFoGz"
+            }
+        }
+    }
 }
