@@ -56,7 +56,7 @@ public final class Colorwheel {
             return false;
         }
 
-        String name = ((ShaderPackAccessor) pack.get()).colorwheel$getPackName();
+        String name = Iris.getCurrentPackName();
         ProgramSet programSet = pack.get().getProgramSet(Iris.getCurrentDimension());
         var isCompatible = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().isPresent();
 

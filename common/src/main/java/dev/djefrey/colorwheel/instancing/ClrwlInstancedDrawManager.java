@@ -25,6 +25,7 @@ import dev.engine_room.flywheel.backend.engine.instancing.InstancedLight;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
+import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -780,6 +781,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private String getShaderPackName()
 	{
-		return ((ShaderPackAccessor) pack).colorwheel$getPackName();
+		return Iris.getCurrentPackName();
 	}
 }

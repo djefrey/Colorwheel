@@ -1,6 +1,7 @@
 ### 0.2.3
 
 - Fix lag when mining Create blocks and assembling contraptions
+- Fix incompatible shaderpack alert displaying full path
 - Working Fabric builds
 
 ### 0.2.2

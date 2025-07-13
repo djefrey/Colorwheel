@@ -115,7 +115,7 @@ public class ClrwlPipelineCompiler
 				sources = programAccessor.colorwheel$getClrwlShadow().orElseThrow();
 			}
 
-			var shaderPath = key.getPath(((ShaderPackAccessor) pack).colorwheel$getPackName());
+			var shaderPath = key.getPath(Iris.getCurrentPackName());
 			var vertex = compileStage(pipeline.vertex(), key, irisPipeline, sources);
 			var fragment = compileStage(pipeline.fragment(), key, irisPipeline, sources);
 
