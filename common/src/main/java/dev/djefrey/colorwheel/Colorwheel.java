@@ -45,7 +45,7 @@ public final class Colorwheel {
         return new ResourceLocation(MOD_ID, path);
     }
 
-    private static final AccumulateTimer ACCUMULATE_INCOMPATIBLE = new AccumulateTimer(0.3f);
+    private static final AccumulateTimer ACCUMULATE_INCOMPATIBLE = new AccumulateTimer(0.5f);
 
     public static boolean isUsingCompatibleShaderPack()
     {
