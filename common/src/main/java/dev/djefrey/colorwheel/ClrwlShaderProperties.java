@@ -14,7 +14,7 @@ import java.util.List;
 
 public class ClrwlShaderProperties
 {
-    private final Map<String, Set<Integer>> bufferBlendOff = new HashMap<>();
+    private final Map<ClrwlProgramId, Set<Integer>> blendOffBuffers = new HashMap<>();
 
     public ClrwlShaderProperties()
     {
@@ -55,12 +55,19 @@ public class ClrwlShaderProperties
                         throw new RuntimeException("Buffer blending not supported");
                     }
 
-                    String program = path[1];
+                    var maybeProgramId = ClrwlProgramId.fromName(path[1]);
+
+                    if (maybeProgramId.isEmpty())
+                    {
+                        continue;
+                    }
+
+                    var programId = maybeProgramId.get();
                     String buffer = path[2];
 
                     int id;
 
-                    if (program.equals("clrwl_shadow"))
+                    if (programId.group() == ClrwlProgramGroup.SHADOW)
                     {
                         if (!buffer.startsWith("shadowcolor"))
                         {
@@ -97,7 +104,7 @@ public class ClrwlShaderProperties
                         }
                     }
 
-                    var set = bufferBlendOff.computeIfAbsent(program, (s) -> new HashSet<>());
+                    var set = blendOffBuffers.computeIfAbsent(programId, (s) -> new HashSet<>());
 
                     if (value.equals("on"))
                     {
@@ -118,24 +125,9 @@ public class ClrwlShaderProperties
         }
     }
 
-    public List<Integer> getGbuffersBufferBlendOff()
+    public List<Integer> getBlendOffBufferIds(ClrwlProgramId programId)
     {
-        return getBufferBlendOff("clrwl_gbuffers");
-    }
-
-    public List<Integer> getShadowBufferBlendOff()
-    {
-        return getBufferBlendOff("clrwl_shadow");
-    }
-
-    public List<Integer> getDamagedblockBufferBlendOff()
-    {
-        return getBufferBlendOff("clrwl_damagedblock");
-    }
-
-    private List<Integer> getBufferBlendOff(String program)
-    {
-        var set = bufferBlendOff.get(program);
+        var set = blendOffBuffers.get(programId);
 
         if (set == null)
         {

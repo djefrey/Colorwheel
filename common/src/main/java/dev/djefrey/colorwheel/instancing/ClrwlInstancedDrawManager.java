@@ -9,10 +9,7 @@ import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
-import dev.djefrey.colorwheel.engine.ClrwlAbstractInstancer;
-import dev.djefrey.colorwheel.engine.ClrwlDrawManager;
-import dev.djefrey.colorwheel.engine.ClrwlInstancerKey;
-import dev.djefrey.colorwheel.engine.ClrwlOitFramebuffers;
+import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.backend.Engine;
@@ -56,6 +53,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final List<ClrwlInstancedDraw> oitDraws = new ArrayList<>();
 
 	private final ClrwlPrograms programs;
+	private ClrwlProgramFramebuffers framebuffers;
+
 	/**
 	 * A map of vertex types to their mesh pools.
 	 */
@@ -69,22 +68,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final ShaderPack pack;
 	private final ProgramSet programSet;
 
-	@Nullable
-	private GlFramebuffer gbuffersFramebuffer;
-
-	@Nullable
-	private GlFramebuffer gbuffersTranslucentFramebuffer;
-	@Nullable
-	private ClrwlOitFramebuffers gbuffersTranslucentOitFramebuffers;
-
-	@Nullable
-	private GlFramebuffer shadowFramebuffer;
-	@Nullable
-	private ClrwlOitFramebuffers shadowOitFramebuffers;
-
-	@Nullable
-	private GlFramebuffer damagedblockFramebuffer;
-
 	public ClrwlInstancedDrawManager(NamespacedId dimension, IrisRenderingPipeline irisPipeline, ShaderPack pack, ClrwlPrograms programs)
 	{
 		this.dimension = dimension;
@@ -93,6 +76,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		this.programSet = pack.getProgramSet(dimension);
 
 		this.programs = programs;
+		this.framebuffers = new ClrwlProgramFramebuffers();
 
 		meshPool = new ClrwlMeshPool();
 		vao = GlVertexArray.create();
@@ -166,16 +150,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
-		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().isEmpty())
+		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(ClrwlProgramId.SHADOW).isEmpty())
 		{
-			// No shadow shader, skip
-			return;
-		}
-
-		var framebuffer = getCurrentFramebuffer(isShadow ? ClrwlShaderPrograms.SHADOW : ClrwlShaderPrograms.GBUFFERS);
-
-		if (framebuffer == null)
-		{
+			// No base shadow shader, skip
 			return;
 		}
 
@@ -184,11 +161,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		TextureBinder.bindLightAndOverlay();
 		light.bind();
 
-		framebuffer.bind();
-
-		var bufferBlendOff = isShadow ? getShadowBufferBlendOff() : getGbuffersBufferBlendOff();
-
-		submitDraws(solidDraws, isShadow, bufferBlendOff);
+		submitDraws(solidDraws, isShadow);
 
 		MaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
@@ -203,35 +176,31 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
-		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow().isEmpty())
-		{
-			// No shadow shader, skip
-			return;
-		}
-
-		var framebuffer = getCurrentFramebuffer(isShadow ? ClrwlShaderPrograms.SHADOW : ClrwlShaderPrograms.GBUFFERS_TRANSLUCENT);
-
-		if (framebuffer == null)
-		{
-			return;
-		}
-
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
 		TextureBinder.bindLightAndOverlay();
 		light.bind();
 
-		var bufferBlendOff = isShadow ? getShadowBufferBlendOff() : getGbuffersTranslucentBufferBlendOff();
-
 		if (!translucentDraws.isEmpty())
 		{
-			framebuffer.bind();
-			submitDraws(translucentDraws, isShadow, bufferBlendOff);
+			submitDraws(translucentDraws, isShadow);
 		}
 
 		if (!oitDraws.isEmpty())
 		{
-			var oitFramebuffer = getCurrentOitFramebuffer(isShadow);
+			var program = !isShadow
+					? ClrwlProgramId.GBUFFERS_TRANSLUCENT
+					: ClrwlProgramId.SHADOW_TRANSLUCENT;
+
+			var framebuffer = framebuffers.getFramebuffer(program, irisPipeline, programSet);
+			var blendOffBuffers = framebuffers.getBlendingOffBuffers(program, pack, programSet);
+
+			if (framebuffer == null)
+			{
+				return;
+			}
+
+			var oitFramebuffer = framebuffers.getOitFramebuffers(isShadow, programs.getOitPrograms(), irisPipeline, programSet);
 
 			oitFramebuffer.prepare();
 
@@ -252,243 +221,30 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
 
-			oitFramebuffer.composite(framebuffer, bufferBlendOff);
+			oitFramebuffer.composite(framebuffer, blendOffBuffers);
 		}
 
 		MaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
 	}
 
-	@Nullable
-	private GlFramebuffer getCurrentFramebuffer(ClrwlShaderPrograms program)
-	{
-		if (((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$consumeFramebufferChanged())
-		{
-			if (gbuffersFramebuffer != null)
-			{
-				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersFramebuffer);
-				gbuffersFramebuffer = null;
-			}
-
-			if (gbuffersTranslucentFramebuffer != null)
-			{
-				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersTranslucentFramebuffer);
-				gbuffersTranslucentFramebuffer = null;
-			}
-
-			if (damagedblockFramebuffer != null)
-			{
-				((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(damagedblockFramebuffer);
-				damagedblockFramebuffer = null;
-			}
-		}
-
-		var programAccessor = ((ProgramSetAccessor) programSet);
-
-		switch (program)
-		{
-            case GBUFFERS ->
-			{
-				if (gbuffersFramebuffer == null)
-				{
-					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlGbuffers();
-
-					gbuffersFramebuffer = source.map(src ->
-									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createSolidGbuffersFramebuffer(src))
-							.orElse(null);
-				}
-
-				return gbuffersFramebuffer;
-            }
-            case GBUFFERS_TRANSLUCENT ->
-			{
-				if (gbuffersTranslucentFramebuffer == null)
-				{
-					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlGbuffersTranslucent()
-														.or(programAccessor::colorwheel$getClrwlGbuffers);
-
-					gbuffersTranslucentFramebuffer = source.map(src ->
-									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createTranslucentGbuffersFramebuffer(src))
-							.orElse(null);
-				}
-
-				return gbuffersTranslucentFramebuffer;
-            }
-            case SHADOW ->
-			{
-				if (shadowFramebuffer == null)
-				{
-					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlShadow();
-
-					shadowFramebuffer = source.map(src ->
-									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createShadowFramebuffer(src))
-							.orElse(null);
-				}
-
-				return shadowFramebuffer;
-            }
-            case DAMAGEDBLOCK ->
-			{
-				if (damagedblockFramebuffer == null)
-				{
-					Optional<ProgramSource> source = programAccessor.colorwheel$getClrwlDamagedblock();
-
-					damagedblockFramebuffer = source.map(src ->
-									((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$createSolidGbuffersFramebuffer(src))
-							.orElse(null);
-				}
-
-				return damagedblockFramebuffer;
-            }
-        }
-
-		throw new RuntimeException("Unknown shader program: " + program);
-	}
-
-	private ClrwlOitFramebuffers getCurrentOitFramebuffer(boolean isShadow)
-	{
-		var oitPrograms = programs.getOitPrograms();
-
-		if (!isShadow)
-		{
-			if (gbuffersTranslucentOitFramebuffers == null)
-			{
-				gbuffersTranslucentOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
-			}
-
-			return gbuffersTranslucentOitFramebuffers;
-		}
-		else
-		{
-			if (shadowOitFramebuffers == null)
-			{
-				shadowOitFramebuffers = new ClrwlOitFramebuffers(oitPrograms, irisPipeline, isShadow, programSet.getPackDirectives());
-			}
-
-			return shadowOitFramebuffers;
-		}
-	}
-
-	private List<Integer> gbuffersBlendOffCache;
-	private List<Integer> gbuffersTranslucentBlendOffCache;
-	private List<Integer> shadowBlendOffCache;
-	private List<Integer> damagedblockBlendOffCache;
-
-	private List<Integer> getGbuffersBufferBlendOff()
-	{
-		if (gbuffersBlendOffCache != null)
-		{
-			return gbuffersBlendOffCache;
-		}
-
-		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers();
-
-		if (source.isEmpty())
-		{
-			gbuffersBlendOffCache = Collections.emptyList();
-			return gbuffersBlendOffCache;
-		}
-
-		var res = computeBufferBlendOff(source.get(), properties.getGbuffersBufferBlendOff());
-		gbuffersBlendOffCache = res;
-		return res;
-	}
-
-	private List<Integer> getGbuffersTranslucentBufferBlendOff()
-	{
-		if (gbuffersTranslucentBlendOffCache != null)
-		{
-			return gbuffersTranslucentBlendOffCache;
-		}
-
-		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffersTranslucent();
-
-		if (source.isEmpty())
-		{
-			return getGbuffersBufferBlendOff();
-		}
-
-		var res = computeBufferBlendOff(source.get(), properties.getGbuffersBufferBlendOff());
-		gbuffersTranslucentBlendOffCache = res;
-		return res;
-	}
-
-	private List<Integer> getShadowBufferBlendOff()
-	{
-		if (shadowBlendOffCache != null)
-		{
-			return shadowBlendOffCache;
-		}
-
-		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlShadow();
-
-		if (source.isEmpty())
-		{
-			shadowBlendOffCache = Collections.emptyList();
-			return shadowBlendOffCache;
-		}
-
-		var res = computeBufferBlendOff(source.get(), properties.getShadowBufferBlendOff());
-		shadowBlendOffCache = res;
-		return res;
-	}
-
-	private List<Integer> getDamagedblockBufferBlendOff()
-	{
-		if (damagedblockBlendOffCache != null)
-		{
-			return damagedblockBlendOffCache;
-		}
-
-		var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-		Optional<ProgramSource> source = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDamagedblock();
-
-		if (source.isEmpty())
-		{
-			damagedblockBlendOffCache = Collections.emptyList();
-			return damagedblockBlendOffCache;
-		}
-
-		var res = computeBufferBlendOff(source.get(), properties.getDamagedblockBufferBlendOff());
-		damagedblockBlendOffCache = res;
-		return res;
-	}
-
-	private List<Integer> computeBufferBlendOff(ProgramSource source, List<Integer> bufferBlendOff)
-	{
-		if (bufferBlendOff.isEmpty())
-		{
-			return Collections.emptyList();
-		}
-
-		var drawBuffers = source.getDirectives().getDrawBuffers();
-		var list = new ArrayList<Integer>();
-
-		for (int i = 0; i < drawBuffers.length; i++)
-		{
-			int buf = drawBuffers[i];
-
-			if (bufferBlendOff.contains(buf))
-			{
-				list.add(i);
-			}
-		}
-
-		return ImmutableList.copyOf(list);
-	}
-
 	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
 
-	private void submitDraws(List<ClrwlInstancedDraw> draws, boolean isShadow, List<Integer> bufferBlendOff)
+	private void submitDraws(List<ClrwlInstancedDraw> draws, boolean isShadow)
 	{
 		for (var drawCall : draws)
 		{
 			var material = drawCall.material();
 			var groupKey = drawCall.groupKey;
 			var environment = groupKey.environment();
+
+			var programId = ClrwlProgramId.fromTransparency(material.transparency(), isShadow);
+			var framebuffer = framebuffers.getFramebuffer(programId, irisPipeline, programSet);
+
+			if (framebuffer == null)
+			{
+				continue;
+			}
 
 			var key = ClrwlShaderKey.fromMaterial(groupKey.instanceType(), material, environment.contextShader(), isShadow, ClrwlPipelineCompiler.OitMode.OFF);
 
@@ -519,13 +275,16 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			environment.setupDraw(program.getProgram());
 			MaterialRenderState.setup(material);
 
-			for (var buffer : bufferBlendOff)
+			var blendingOffBuffers = framebuffers.getBlendingOffBuffers(programId, pack, programSet);
+
+			for (var buffer : blendingOffBuffers)
 			{
 				IrisRenderSystem.disableBufferBlend(buffer);
 			}
 
 			ClrwlSamplers.INSTANCE_BUFFER.makeActive();
 
+			framebuffer.bind();
 			drawCall.render(instanceTexture);
 
 			program.unbind();
@@ -605,7 +364,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
-		var framebuffer = getCurrentFramebuffer(ClrwlShaderPrograms.DAMAGEDBLOCK);
+		var framebuffer = framebuffers.getFramebuffer(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, irisPipeline, programSet);
 
 		if (framebuffer == null)
 		{
@@ -618,7 +377,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		vao.bindForDraw();
 		TextureBinder.bindLightAndOverlay();
 
-		var bufferBlendOff = getDamagedblockBufferBlendOff();
+		var blendingOffBuffers = framebuffers.getBlendingOffBuffers(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, pack, programSet);
 
 		var crumblingMaterial = SimpleMaterial.builder();
 
@@ -670,7 +429,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 						program.bind(0, index, crumblingMaterial, draw.visual());
 						MaterialRenderState.setup(crumblingMaterial);
 
-						for (var buffer : bufferBlendOff)
+						for (var buffer : blendingOffBuffers)
 						{
 							IrisRenderSystem.disableBufferBlend(buffer);
 						}
@@ -709,41 +468,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		light.delete();
 
-		if (gbuffersFramebuffer != null)
-		{
-			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersFramebuffer);
-			gbuffersFramebuffer = null;
-		}
-
-		if (gbuffersTranslucentFramebuffer != null)
-		{
-			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(gbuffersTranslucentFramebuffer);
-			gbuffersTranslucentFramebuffer = null;
-		}
-
-		if (shadowFramebuffer != null)
-		{
-			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyShadowFramebuffer(shadowFramebuffer);
-			shadowFramebuffer = null;
-		}
-
-		if (damagedblockFramebuffer != null)
-		{
-			((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$destroyGbuffersFramebuffer(damagedblockFramebuffer);
-			damagedblockFramebuffer = null;
-		}
-
-		if (gbuffersTranslucentOitFramebuffers != null)
-		{
-			gbuffersTranslucentOitFramebuffers.delete();
-			gbuffersTranslucentOitFramebuffers = null;
-		}
-
-		if (shadowOitFramebuffers != null)
-		{
-			shadowOitFramebuffers.delete();
-			shadowOitFramebuffers = null;
-		}
+		framebuffers.delete(irisPipeline);
 
 		super.delete();
 	}

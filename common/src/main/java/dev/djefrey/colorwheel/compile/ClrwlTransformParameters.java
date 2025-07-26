@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
+import dev.engine_room.flywheel.api.material.Transparency;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.blending.AlphaTest;
 import net.irisshaders.iris.gl.texture.TextureType;
@@ -17,15 +18,15 @@ import net.irisshaders.iris.shaderpack.texture.TextureStage;
 public class ClrwlTransformParameters extends Parameters
 {
 	private final ClrwlPipelineCompiler.OitMode oit;
-	private final boolean isCrumbling;
+	private final Transparency transparency;
 	private final Directives directives;
 
-	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, boolean isCrumbling, Directives directives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, Transparency transparency, Directives directives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		super(Patch.VANILLA, textureMap);
 		super.type = type;
 		this.oit = oit;
-		this.isCrumbling = isCrumbling;
+		this.transparency = transparency;
 		this.directives = directives;
 	}
 
@@ -36,7 +37,7 @@ public class ClrwlTransformParameters extends Parameters
 
 	public boolean isCrumbling()
 	{
-		return isCrumbling;
+		return transparency == Transparency.CRUMBLING;
 	}
 
 	public Directives directives()
@@ -57,7 +58,7 @@ public class ClrwlTransformParameters extends Parameters
 		result = prime * result + ((patch == null) ? 0 : patch.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + oit.hashCode();
-		result = prime * result + (isCrumbling ? 1 : 0);
+		result = prime * result + transparency.hashCode();
 		result = prime * result + directives.hashCode();
 		return result;
 	}

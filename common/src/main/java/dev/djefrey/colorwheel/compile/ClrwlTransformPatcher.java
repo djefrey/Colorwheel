@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.engine_room.flywheel.api.material.Transparency;
 import io.github.douira.glsl_transformer.ast.node.Identifier;
 import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
@@ -139,18 +140,18 @@ public class ClrwlTransformPatcher
 		});
 	}
 
-	public static String patchVertex(String vertex, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchVertex(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, isCrumbling, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
 
 		return transformer.transform(vertex, parameters);
 	}
 
-	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromFragment(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, isCrumbling, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, transparency, directives, textureMap);
 
 		return transformer.transform(fragment, parameters);
 	}
