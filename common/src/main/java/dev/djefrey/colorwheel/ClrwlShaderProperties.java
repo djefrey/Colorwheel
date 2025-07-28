@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel;
 
 import com.google.common.collect.ImmutableList;
 import net.irisshaders.iris.gl.IrisRenderSystem;
+import net.irisshaders.iris.gl.blending.*;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.option.OrderBackedProperties;
 import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
@@ -14,7 +15,8 @@ import java.util.List;
 
 public class ClrwlShaderProperties
 {
-    private final Map<ClrwlProgramId, Set<Integer>> blendOffBuffers = new HashMap<>();
+    private final Map<ClrwlProgramId, ClrwlBlendModeOverride> programBlendOverrides = new HashMap<>();
+    private final Map<ClrwlProgramId, ArrayList<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
 
     public ClrwlShaderProperties()
     {
@@ -48,7 +50,28 @@ public class ClrwlShaderProperties
 
             if (path[0].equals("blend"))
             {
-                if (path.length == 3)
+                if (path.length == 2)
+                {
+                    var maybeProgramId = ClrwlProgramId.fromName(path[1]);
+
+                    if (maybeProgramId.isEmpty())
+                    {
+                        Colorwheel.LOGGER.warn("Unknown program: {}", path[1]);
+                        continue;
+                    }
+
+                    var programId = maybeProgramId.get();
+
+                    if (value == "off")
+                    {
+                        programBlendOverrides.put(programId, new ClrwlBlendModeOverride(null));
+                    }
+                    else
+                    {
+                        parseBlendMode(value).ifPresent(bm -> programBlendOverrides.put(programId, new ClrwlBlendModeOverride(bm)));
+                    }
+                }
+                else if (path.length == 3)
                 {
                     if (!IrisRenderSystem.supportsBufferBlending())
                     {
@@ -59,6 +82,7 @@ public class ClrwlShaderProperties
 
                     if (maybeProgramId.isEmpty())
                     {
+                        Colorwheel.LOGGER.warn("Unknown program: {}", path[1]);
                         continue;
                     }
 
@@ -104,19 +128,15 @@ public class ClrwlShaderProperties
                         }
                     }
 
-                    var set = blendOffBuffers.computeIfAbsent(programId, (s) -> new HashSet<>());
+                    var list = bufferBlendOverrides.computeIfAbsent(programId, (s) -> new ArrayList<>());
 
-                    if (value.equals("on"))
+                    if (value.equals("off"))
                     {
-                        set.remove(id);
-                    }
-                    else if (value.equals("off"))
-                    {
-                        set.add(id);
+                        list.add(new BufferBlendInformation(id, null));
                     }
                     else
                     {
-                        Colorwheel.LOGGER.error("Unexpected value '{}' for {}", value, key);
+                        parseBlendMode(value).ifPresent(bm -> list.add(new BufferBlendInformation(id, bm)));
                     }
                 }
 
@@ -125,15 +145,47 @@ public class ClrwlShaderProperties
         }
     }
 
-    public List<Integer> getBlendOffBufferIds(ClrwlProgramId programId)
+    private Optional<BlendMode> parseBlendMode(String value)
     {
-        var set = blendOffBuffers.get(programId);
+        String[] modeStrs = value.split(" ");
+        int[] modeFcts = new int[modeStrs.length];
 
-        if (set == null)
+        if (modeFcts.length != 4)
+        {
+            Colorwheel.LOGGER.error("Invalid blend function count: {} (expected 4)", modeFcts.length);
+            return Optional.empty();
+        }
+
+        for (int i = 0; i < modeStrs.length; i++)
+        {
+            var maybeFct = BlendModeFunction.fromString(modeStrs[i]);
+
+            if (maybeFct.isEmpty())
+            {
+                Colorwheel.LOGGER.error("Unknown blend function: {}", modeStrs[i]);
+                continue;
+            }
+
+            modeFcts[i] = maybeFct.get().getGlId();
+        }
+
+        return Optional.of(new BlendMode(modeFcts[0], modeFcts[1], modeFcts[2], modeFcts[3]));
+    }
+
+    public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId)
+    {
+        return Optional.ofNullable(programBlendOverrides.get(programId));
+    }
+
+    public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId)
+    {
+        var list = bufferBlendOverrides.get(programId);
+
+        if (list == null)
         {
             return Collections.emptyList();
         }
 
-        return ImmutableList.copyOf(set);
+        return ImmutableList.copyOf(list);
     }
 }

@@ -163,7 +163,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		submitDraws(solidDraws, isShadow);
 
-		MaterialRenderState.reset();
+		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
 	}
 
@@ -193,7 +193,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 					: ClrwlProgramId.SHADOW_TRANSLUCENT;
 
 			var framebuffer = framebuffers.getFramebuffer(program, irisPipeline, programSet);
-			var blendOffBuffers = framebuffers.getBlendingOffBuffers(program, pack, programSet);
+			var blendOverride = framebuffers.getBlendModeOverride(program, pack, programSet).orElse(null);
+			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program, pack, programSet);
 
 			if (framebuffer == null)
 			{
@@ -221,10 +222,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
 
-			oitFramebuffer.composite(framebuffer, blendOffBuffers);
+			oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides);
 		}
 
-		MaterialRenderState.reset();
+		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
 	}
 
@@ -271,16 +272,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
+			var blendOverride = framebuffers.getBlendModeOverride(programId, pack, programSet).orElse(null);
+			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId, pack, programSet);
+
 			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual());
 			environment.setupDraw(program.getProgram());
-			MaterialRenderState.setup(material);
-
-			var blendingOffBuffers = framebuffers.getBlendingOffBuffers(programId, pack, programSet);
-
-			for (var buffer : blendingOffBuffers)
-			{
-				IrisRenderSystem.disableBufferBlend(buffer);
-			}
+			ClrwlMaterialRenderState.setup(material, blendOverride, bufferBlendOverrides);
 
 			ClrwlSamplers.INSTANCE_BUFFER.makeActive();
 
@@ -326,7 +323,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual());
 			environment.setupDraw(program.getProgram());
-			MaterialRenderState.setupOit(material);
+			ClrwlMaterialRenderState.setupOit(material);
 
 			Samplers.INSTANCE_BUFFER.makeActive();
 
@@ -377,7 +374,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		vao.bindForDraw();
 		TextureBinder.bindLightAndOverlay();
 
-		var blendingOffBuffers = framebuffers.getBlendingOffBuffers(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, pack, programSet);
+		var blendOverride = framebuffers.getBlendModeOverride(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, pack, programSet).orElse(null);
+		var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, pack, programSet);
 
 		var crumblingMaterial = SimpleMaterial.builder();
 
@@ -427,12 +425,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 						}
 
 						program.bind(0, index, crumblingMaterial, draw.visual());
-						MaterialRenderState.setup(crumblingMaterial);
-
-						for (var buffer : blendingOffBuffers)
-						{
-							IrisRenderSystem.disableBufferBlend(buffer);
-						}
+						ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
 
 						Samplers.INSTANCE_BUFFER.makeActive();
 
@@ -442,7 +435,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 		}
 
-		MaterialRenderState.reset();
+		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
 	}
 

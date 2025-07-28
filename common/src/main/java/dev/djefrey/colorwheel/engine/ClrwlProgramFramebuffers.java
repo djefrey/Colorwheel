@@ -1,12 +1,15 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlProgramId;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
+import net.irisshaders.iris.gl.blending.BlendModeOverride;
+import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
@@ -26,7 +29,7 @@ public class ClrwlProgramFramebuffers
     @Nullable
     private ClrwlOitFramebuffers shadowOitFramebuffer;
 
-    private final Map<ClrwlProgramId, List<Integer>> blendOffBuffers = new HashMap();
+    private final Map<ClrwlProgramId, List<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
 
     @Nullable
     public GlFramebuffer getFramebuffer(ClrwlProgramId program, IrisRenderingPipeline pipeline, ProgramSet programSet)
@@ -104,37 +107,49 @@ public class ClrwlProgramFramebuffers
         }
     }
 
-    public List<Integer> getBlendingOffBuffers(ClrwlProgramId program, ShaderPack pack, ProgramSet programSet)
+    public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
     {
-        return blendOffBuffers.computeIfAbsent(program, (key) ->
+        var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+        var realProgramId = ((ProgramSetAccessor) programSet).colorwheel$getRealClrwlProgram(programId);
+
+        return realProgramId.flatMap(properties::getBlendModeOverride);
+    }
+
+    public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
+    {
+        return bufferBlendOverrides.computeIfAbsent(programId, (key) ->
         {
             var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
             var programSetAccessor = ((ProgramSetAccessor) programSet);
             var maybeSrc = programSetAccessor.colorwheel$getClrwlProgramSource(key);
 
             return maybeSrc
-                    .map(src -> computeBufferBlendOff(src, properties.getBlendOffBufferIds(key)))
+                    .map(src -> computeBufferBlendOff(src, properties.getBufferBlendModeOverrides(key)))
                     .orElse(Collections.emptyList());
         });
     }
 
-    private List<Integer> computeBufferBlendOff(ProgramSource source, List<Integer> bufferBlendOff)
+    private List<BufferBlendInformation> computeBufferBlendOff(ProgramSource source, List<BufferBlendInformation> blendOverrides)
     {
-        if (bufferBlendOff.isEmpty())
+        if (blendOverrides.isEmpty())
         {
             return Collections.emptyList();
         }
 
         var drawBuffers = source.getDirectives().getDrawBuffers();
-        var list = new ArrayList<Integer>();
+        var list = new ArrayList<BufferBlendInformation>();
 
         for (int i = 0; i < drawBuffers.length; i++)
         {
             int buf = drawBuffers[i];
+            BlendModeOverride override = null;
 
-            if (bufferBlendOff.contains(buf))
+            for (var entry : blendOverrides)
             {
-                list.add(i);
+                if (entry.index() == buf)
+                {
+                    list.add(new BufferBlendInformation(i, entry.blendMode()));
+                }
             }
         }
 
@@ -167,6 +182,6 @@ public class ClrwlProgramFramebuffers
         }
 
         framebuffers.clear();
-        blendOffBuffers.clear();
+        bufferBlendOverrides.clear();
     }
 }

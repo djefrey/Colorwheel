@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.djefrey.colorwheel.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Utils;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
@@ -11,6 +12,10 @@ import dev.engine_room.flywheel.backend.NoiseTextures;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
 import net.irisshaders.iris.gl.IrisRenderSystem;
+import net.irisshaders.iris.gl.blending.BlendMode;
+import net.irisshaders.iris.gl.blending.BlendModeFunction;
+import net.irisshaders.iris.gl.blending.BlendModeOverride;
+import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -18,11 +23,13 @@ import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.targets.RenderTargets;
 import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL46;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ClrwlOitFramebuffers
 {
@@ -306,7 +313,7 @@ public class ClrwlOitFramebuffers
     /**
      * Composite the accumulated luminance onto the main framebuffer.
      */
-    public void composite(GlFramebuffer target, List<Integer> bufferBlendOff)
+    public void composite(GlFramebuffer target, @Nullable ClrwlBlendModeOverride blendModeOverride, List<BufferBlendInformation> bufferBlendOverrides)
     {
         target.bind();
 
@@ -316,7 +323,33 @@ public class ClrwlOitFramebuffers
         // If Neo gets wavelet OIT we can use their hooks to be correct with everything.
         RenderSystem.depthMask(true);
         RenderSystem.colorMask(true, true, true, true);
-        RenderSystem.enableBlend();
+
+        BlendMode blendMode;
+
+        if (blendModeOverride == null)
+        {
+            blendMode = new BlendMode(
+                BlendModeFunction.SRC_ALPHA.getGlId(),
+                BlendModeFunction.ONE_MINUS_SRC_ALPHA.getGlId(),
+                BlendModeFunction.ONE.getGlId(),
+                BlendModeFunction.ONE_MINUS_SRC_ALPHA.getGlId()
+            );
+        }
+        else
+        {
+            blendMode = blendModeOverride.blendMode();
+        }
+
+        if (blendMode == null)
+        {
+            RenderSystem.disableBlend();
+        }
+        else
+        {
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
+            RenderSystem.blendEquation(GL32.GL_FUNC_ADD);
+        }
 
         // We rely on the blend func to achieve:
         // final color = (1 - transmittance_total) * sum(color_f * alpha_f * transmittance_f) / sum(alpha_f * transmittance_f)
@@ -324,14 +357,21 @@ public class ClrwlOitFramebuffers
         //
         // Though note that the alpha value we emit in the fragment shader is actually (1. - transmittance_total).
         // The extra inversion step is so we can have a sane alpha value written out for the fabulous blit shader to consume.
-        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-        RenderSystem.blendEquation(GL32.GL_FUNC_ADD);
-        RenderSystem.depthFunc(GL32.GL_ALWAYS);
 
-        for (var buffer : bufferBlendOff)
+        for (var entry : bufferBlendOverrides)
         {
-            IrisRenderSystem.disableBufferBlend(buffer);
+            if (entry.blendMode() == null)
+            {
+                IrisRenderSystem.disableBufferBlend(entry.index());
+            }
+            else
+            {
+                IrisRenderSystem.enableBufferBlend(entry.index());
+                IrisRenderSystem.blendFuncSeparatei(entry.index(), entry.blendMode().srcRgb(), entry.blendMode().dstRgb(), entry.blendMode().srcAlpha(), entry.blendMode().dstAlpha());
+            }
         }
+
+        RenderSystem.depthFunc(GL32.GL_ALWAYS);
 
         for (int i = 0; i < accumulate.length; i++)
         {

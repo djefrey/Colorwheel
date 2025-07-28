@@ -102,6 +102,23 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 	}
 
+	public Optional<ClrwlProgramId> colorwheel$getRealClrwlProgram(ClrwlProgramId programId)
+	{
+		ClrwlProgramId cur = programId;
+
+		while (cur != null)
+		{
+			if (programSrcs.containsKey(cur))
+			{
+				return Optional.of(cur);
+			}
+
+			cur = cur.base();
+		}
+
+		return Optional.empty();
+	}
+
 	public Optional<ProgramSource> colorwheel$getClrwlProgramSource(ClrwlProgramId programId)
 	{
 		ClrwlProgramId cur = programId;
