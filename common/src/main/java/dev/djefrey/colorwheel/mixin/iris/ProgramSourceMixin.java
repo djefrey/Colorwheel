@@ -1,8 +1,8 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
+import dev.djefrey.colorwheel.ShaderType;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
-import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.ShaderProperties;
@@ -47,6 +47,7 @@ public class ProgramSourceMixin implements ProgramSourceAccessor
 	{
 		this.colorwheel$shaderExtensions = Map.of(
 				ShaderType.VERTEX,   colorwheel$parseShaderExtensions(vertex),
+				ShaderType.GEOMETRY, colorwheel$parseShaderExtensions(geometry),
 				ShaderType.FRAGMENT, colorwheel$parseShaderExtensions(fragment)
 		);
 		this.colorwheel$shaderProperties = properties;

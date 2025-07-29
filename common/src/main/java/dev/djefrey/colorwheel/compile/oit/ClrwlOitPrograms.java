@@ -112,7 +112,7 @@ public class ClrwlOitPrograms
 
         if (GL20.glGetShaderi(handle, GL20.GL_COMPILE_STATUS) == GL20.GL_TRUE)
         {
-            return ShaderResult.success(new GlShader(handle, stage.type(), shaderName), infoLog);
+            return ShaderResult.success(new GlShader(handle, stage.type().toFlw().orElseThrow(), shaderName), infoLog);
         }
 
         GL20.glDeleteShader(handle);

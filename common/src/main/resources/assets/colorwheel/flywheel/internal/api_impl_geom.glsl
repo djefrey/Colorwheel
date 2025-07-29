@@ -1,5 +1,3 @@
-#include "flywheel:internal/material.glsl"
-#include "flywheel:internal/api_impl.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
 in ClrwlVertexData
@@ -13,16 +11,20 @@ in ClrwlVertexData
     vec4 flw_vertexTangent;
 
     float flw_distance;
-};
+} clrwl_in[3];
 
-vec4 flw_sampleColor;
+out ClrwlVertexData
+{
+    vec4 flw_vertexPos;
+    vec4 flw_vertexColor;
+    vec2 flw_vertexTexCoord;
+    flat ivec2 flw_vertexOverlay;
+    vec2 flw_vertexLight;
+    vec3 flw_vertexNormal;
+    vec4 flw_vertexTangent;
 
-FlwMaterial flw_material;
-
-bool flw_fragDiffuse;
-vec4 flw_fragColor;
-ivec2 flw_fragOverlay;
-vec2 flw_fragLight;
+    float flw_distance;
+} clrwl_out;
 
 uniform sampler2D flw_diffuseTex;
 uniform sampler2D flw_overlayTex;

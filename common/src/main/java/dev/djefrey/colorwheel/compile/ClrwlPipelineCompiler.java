@@ -27,6 +27,7 @@ import net.minecraft.client.Minecraft;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -84,17 +85,31 @@ public class ClrwlPipelineCompiler
 
 			var shaderPath = key.getPath(Iris.getCurrentPackName());
 			var vertex = compileStage(pipeline.vertex(), key, irisPipeline, sources);
+			var geometry = compileOptionalStage(pipeline.geometry(), key, irisPipeline, sources);
 			var fragment = compileStage(pipeline.fragment(), key, irisPipeline, sources);
 
 			dumpSources("/pipeline/vert/" + shaderPath + ".vsh", vertex);
+			geometry.ifPresent(sh -> dumpSources("/pipeline/geom/" + shaderPath + ".gsh", sh));
 			dumpSources("/pipeline/frag/" + shaderPath + ".fsh", fragment);
 
-			var customSource = new ClrwlProgramSource(name, vertex, fragment);
+			var customSource = new ClrwlProgramSource(name, vertex, geometry, fragment);
 
 			return ClrwlProgram.createProgram(name, isShadow, customSource, programSet.getPackDirectives(), irisPipeline.getCustomUniforms(), irisPipeline);
 		}
 
 		return null;
+	}
+
+	private Optional<String> compileOptionalStage(ClrwlPipelineStage<ClrwlShaderKey> stage, ClrwlShaderKey key, IrisRenderingPipeline irisPipeline, ProgramSource irisSources)
+	{
+		if (irisSources.getGeometrySource().isPresent())
+		{
+			return Optional.of(compileStage(stage, key, irisPipeline, irisSources));
+		}
+		else
+		{
+			return Optional.empty();
+		}
 	}
 
 	private String compileStage(ClrwlPipelineStage<ClrwlShaderKey> stage, ClrwlShaderKey key, IrisRenderingPipeline irisPipeline, ProgramSource irisSources)

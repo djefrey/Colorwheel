@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.accessors;
 
+import dev.djefrey.colorwheel.ShaderType;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
-import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.shaderpack.properties.ShaderProperties;
 
 import java.util.List;

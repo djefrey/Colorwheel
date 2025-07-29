@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.engine_room.flywheel.backend.gl.shader.ShaderType;
+import dev.djefrey.colorwheel.ShaderType;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 
 import java.util.ArrayList;
@@ -12,11 +12,17 @@ public record ClrwlPipeline(String id,
                             GlslVersion minVersion,
                             List<String> extensions,
                             ClrwlPipelineStage<ClrwlShaderKey> vertex,
+                            ClrwlPipelineStage<ClrwlShaderKey> geometry,
                             ClrwlPipelineStage<ClrwlShaderKey> fragment)
 {
     public static ClrwlPipelineStage.Builder<ClrwlShaderKey> vertexStage()
     {
         return new ClrwlPipelineStage.Builder<>(ShaderType.VERTEX);
+    }
+
+    public static ClrwlPipelineStage.Builder<ClrwlShaderKey> geometryStage()
+    {
+        return new ClrwlPipelineStage.Builder<>(ShaderType.GEOMETRY);
     }
 
     public static ClrwlPipelineStage.Builder<ClrwlShaderKey> fragmentStage()
@@ -35,6 +41,7 @@ public record ClrwlPipeline(String id,
         private GlslVersion minVersion;
         private final List<String> extensions = new ArrayList<>();
         private ClrwlPipelineStage<ClrwlShaderKey> vertex;
+        private ClrwlPipelineStage<ClrwlShaderKey> geometry;
         private ClrwlPipelineStage<ClrwlShaderKey> fragment;
 
         public Builder id(String id)
@@ -67,6 +74,12 @@ public record ClrwlPipeline(String id,
             return this;
         }
 
+        public Builder geometry(ClrwlPipelineStage<ClrwlShaderKey> stage)
+        {
+            this.geometry = stage;
+            return this;
+        }
+
         public Builder fragment(ClrwlPipelineStage<ClrwlShaderKey> stage)
         {
             this.fragment = stage;
@@ -79,9 +92,10 @@ public record ClrwlPipeline(String id,
             Objects.requireNonNull(minVersion);
             Objects.requireNonNull(extensions);
             Objects.requireNonNull(vertex);
+            Objects.requireNonNull(geometry);
             Objects.requireNonNull(fragment);
 
-            return new ClrwlPipeline(id, minVersion, extensions, vertex, fragment);
+            return new ClrwlPipeline(id, minVersion, extensions, vertex, geometry, fragment);
         }
     }
 }

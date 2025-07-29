@@ -15,7 +15,6 @@ import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.material.CutoutShaders;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
-import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.preprocessor.JcppProcessor;
 import net.minecraft.resources.ResourceLocation;
@@ -28,12 +27,14 @@ import java.util.Map;
 public class ClrwlPipelines
 {
     public static final ResourceLocation API_IMPL_VERT = Colorwheel.rl("internal/api_impl.vert");
+    public static final ResourceLocation API_IMPL_GEOM = Colorwheel.rl("internal/api_impl_geom.glsl");
     public static final ResourceLocation API_IMPL_FRAG = Colorwheel.rl("internal/api_impl.frag");
 
     public static final ResourceLocation IRIS_COMPAT_VERT = Colorwheel.rl("internal/instancing/iris_compat.vert");
     public static final ResourceLocation IRIS_COMPAT_FRAG = Colorwheel.rl("internal/instancing/iris_compat.frag");
 
     public static final ResourceLocation MAIN_VERT = Colorwheel.rl("internal/instancing/main.vert");
+    public static final ResourceLocation MAIN_GEOM = Colorwheel.rl("internal/instancing/main_geom.glsl");
     public static final ResourceLocation MAIN_FRAG = Colorwheel.rl("internal/instancing/main.frag");
 
     public static final ResourceLocation OIT_DEPTH_RANGE_FRAG = Colorwheel.rl("internal/oit/depth_range.frag");
@@ -83,6 +84,21 @@ public class ClrwlPipelines
                     .withComponent((k) -> new BufferTextureInstanceComponent(k.instanceType()))
                     .with(ClrwlPipelines::getIrisShaderVertexSource)
                     .withResource(MAIN_VERT)
+                    .build())
+            .geometry(ClrwlPipeline.geometryStage()
+                    .onCompile(ClrwlPipelines::setIrisDefines)
+                    .onCompile((k, c) ->
+                    {
+                        var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.GEOMETRY);
+
+                        for (var ext : exts)
+                        {
+                            c.enableExtension(ext);
+                        }
+                    })
+                    .withResource(API_IMPL_GEOM)
+                    .with(ClrwlPipelines::getIrisShaderGeometrySource)
+                    .withResource(MAIN_GEOM)
                     .build())
             .fragment(ClrwlPipeline.fragmentStage()
                     .onCompile(ClrwlPipelines::setIrisDefines)
@@ -208,6 +224,25 @@ public class ClrwlPipelines
 
         String preprocessed = vertexSource;
         String transformed = ClrwlTransformPatcher.patchVertex(preprocessed, k.transparency(), sources.getDirectives(), pipeline.getTextureMap());
+
+        return new IrisShaderComponent(sources.getName(), transformed);
+    }
+
+    private static SourceComponent getIrisShaderGeometrySource(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        var pipeline = c.getIrisPipeline();
+        var sources = c.getIrisSources();
+
+        String geometrySource = sources.getGeometrySource().orElseThrow();
+
+//        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
+//        List<StringPair> defines = new ArrayList<>(irisDefines);
+//        defines.addAll(c.defines);
+//
+//        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
+
+        String preprocessed = geometrySource;
+        String transformed = ClrwlTransformPatcher.patchGeometry(preprocessed, k.transparency(), sources.getDirectives(), pipeline.getTextureMap());
 
         return new IrisShaderComponent(sources.getName(), transformed);
     }

@@ -18,6 +18,7 @@ import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL20;
@@ -25,11 +26,14 @@ import org.lwjgl.opengl.GL31;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class ClrwlProgram
 {
 	private final GlShader vertex;
+	@Nullable
+	private final GlShader geometry;
 	private final GlShader fragment;
 	private final int handle;
 	private final ProgramUniforms uniforms;
@@ -70,15 +74,22 @@ public class ClrwlProgram
 	}
 
 	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives,
-						 String vertex, String fragment,
+						 String vertex, Optional<String> geometry, String fragment,
 						 CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
 		this.vertex = new GlShader(ShaderType.VERTEX, name + ".vsh", vertex);
+		this.geometry = geometry.map(sh -> new GlShader(ShaderType.GEOMETRY, name + ".gsh", sh)).orElse(null);
 		this.fragment = new GlShader(ShaderType.FRAGMENT, name + ".fsh", fragment);
 
 		this.handle = GL20.glCreateProgram();
 
 		GL20.glAttachShader(this.handle, this.vertex.getHandle());
+
+		if (this.geometry != null)
+		{
+			GL20.glAttachShader(this.handle, this.geometry.getHandle());
+		}
+
 		GL20.glAttachShader(this.handle, this.fragment.getHandle());
 
 		GL20.glBindAttribLocation(this.handle, 0, "_flw_aPos");
@@ -96,8 +107,14 @@ public class ClrwlProgram
 		{
 			var err = new RuntimeException("Shader link error in Colorwheel program: " + GL20.glGetProgramInfoLog(this.handle));
 			GL20.glDeleteProgram(this.handle);
+
 			this.vertex.destroy();
+			if (this.geometry != null)
+			{
+				this.geometry.destroy();
+			}
 			this.fragment.destroy();
+
 			throw err;
 		}
 
@@ -151,11 +168,8 @@ public class ClrwlProgram
 
 	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ClrwlProgramSource source, PackDirectives directives, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
-		String vertex = source.getVertexSource().orElseThrow(RuntimeException::new);
-		String fragment = source.getFragmentSource().orElseThrow(RuntimeException::new);
-
 		return new ClrwlProgram(name, isShadowPass, directives,
-							    vertex, fragment,
+							    source.vertex(), source.geometry(), source.fragment(),
 							    customUniforms, pipeline);
 	}
 

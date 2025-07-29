@@ -137,6 +137,15 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "clrwl_renderOrigin", "flw_renderOrigin");
 				root.replaceReferenceExpressions(transformer, "clrwl_cameraPos", "flw_cameraPos");
 
+				root.rename("clrwl_vertexPos", "flw_vertexPos");
+				root.rename("clrwl_vertexColor", "flw_vertexColor");
+				root.rename("clrwl_vertexTexCoord", "flw_vertexTexCoord");
+				root.rename("clrwl_vertexOverlay", "flw_vertexOverlay");
+				root.rename("clrwl_vertexLight", "flw_vertexLight");
+				root.rename("clrwl_vertexNormal", "flw_vertexNormal");
+				root.rename("clrwl_vertexTangent", "flw_vertexTangent");
+				root.rename("clrwl_distance", "flw_distance");
+
 				root.replaceReferenceExpressions(transformer, "clrwl_materialFragment", "_clrwl_materialFragment_hook");
 				root.replaceReferenceExpressions(transformer, "clrwl_shaderLight", "_clrwl_shaderLight_hook");
 
@@ -174,6 +183,14 @@ public class ClrwlTransformPatcher
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
 		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
+
+		return transformer.transform(vertex, parameters);
+	}
+
+	public static String patchGeometry(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	{
+		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
 
 		return transformer.transform(vertex, parameters);
 	}

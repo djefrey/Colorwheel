@@ -76,7 +76,8 @@ uniform mat3 _flw_normalMatrixUniform;
 
 uniform uint _flw_vertexOffset;
 
-void main() {
+void main()
+{
     _flw_unpackMaterialProperties(_flw_packedMaterial.y, flw_material);
 
     FlwInstance instance = _flw_unpackInstance(_flw_baseInstance + gl_InstanceID);
