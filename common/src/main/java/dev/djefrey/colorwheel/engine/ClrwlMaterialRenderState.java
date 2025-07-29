@@ -159,12 +159,19 @@ public final class ClrwlMaterialRenderState
 
         for (var entry : bufferBlendOverrides)
         {
-            IrisRenderSystem.enableBufferBlend(entry.index());
-            IrisRenderSystem.blendFuncSeparatei(entry.index(),
-                                                entry.blendMode().srcRgb(),
-                                                entry.blendMode().dstRgb(),
-                                                entry.blendMode().srcAlpha(),
-                                                entry.blendMode().dstAlpha());
+            if (entry.blendMode() == null)
+            {
+                IrisRenderSystem.disableBufferBlend(entry.index());
+            }
+            else
+            {
+                IrisRenderSystem.enableBufferBlend(entry.index());
+                IrisRenderSystem.blendFuncSeparatei(entry.index(),
+                        entry.blendMode().srcRgb(),
+                        entry.blendMode().dstRgb(),
+                        entry.blendMode().srcAlpha(),
+                        entry.blendMode().dstAlpha());
+            }
         }
     }
 
