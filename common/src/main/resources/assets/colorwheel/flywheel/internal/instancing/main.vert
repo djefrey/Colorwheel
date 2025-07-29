@@ -3,8 +3,6 @@
 #include "colorwheel:internal/fog_distance.glsl"
 
 #ifdef _FLW_CRUMBLING
-out vec2 _flw_crumblingTexCoord;
-
 const int _CLRWL_DOWN = 0;
 const int _CLRWL_UP = 1;
 const int _CLRWL_NORTH = 2;
@@ -93,7 +91,7 @@ void main() {
     flw_materialVertex();
 
     #ifdef _FLW_CRUMBLING
-    _flw_crumblingTexCoord = _clrwl_getCrumblingTexCoord();
+    flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
     #endif
 
     #ifdef _FLW_DEBUG
@@ -109,5 +107,5 @@ void main() {
     flw_vertexNormal = normalize(flw_vertexNormal);
     flw_distance = _clrwl_fogDistance(flw_vertexPos.xyz, flw_cameraPos, flw_fogShape);
 
-    _flw_shader_main();
+    _clrwl_shader_main();
 }

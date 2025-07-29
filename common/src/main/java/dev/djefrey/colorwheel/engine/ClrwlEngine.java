@@ -139,7 +139,7 @@ public class ClrwlEngine implements Engine
 			{
 				if (shadowContext.phase() == ShadowRenderContext.RenderPhase.SOLID)
 				{
-					ClrwlUniforms.update(context);
+					ClrwlUniforms.update(context, pack, dimension);
 					environmentStorage.flush();
 					drawManager.prepareFrame(lightStorage, environmentStorage);
 
@@ -152,7 +152,7 @@ public class ClrwlEngine implements Engine
 			}
 			else
 			{
-				ClrwlUniforms.update(context);
+				ClrwlUniforms.update(context, pack, dimension);
 				environmentStorage.flush();
 				drawManager.prepareFrame(lightStorage, environmentStorage);
 

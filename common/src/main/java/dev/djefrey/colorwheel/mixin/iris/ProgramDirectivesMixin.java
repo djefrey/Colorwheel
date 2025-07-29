@@ -17,14 +17,11 @@ import java.util.Set;
 @Mixin(ProgramDirectives.class)
 public class ProgramDirectivesMixin implements ProgramDirectivesAccessor
 {
-    @Unique
-    private boolean colorwheel$disableAutoFrag = false;
-
     @Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/programs/ProgramSource;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Ljava/util/Set;Lnet/irisshaders/iris/gl/blending/BlendModeOverride;)V",
             at = @At("RETURN"))
     private void injectInit(ProgramSource source, ShaderProperties properties, Set supportedRenderTargets, BlendModeOverride defaultBlendOverride, CallbackInfo ci)
     {
-        this.colorwheel$disableAutoFrag = colorwheel$containsFlagDirective(source.getFragmentSource(), "CLRWL_DISABLE_AUTO_FRAGCOLOR");
+
     }
 
     @Unique
@@ -49,11 +46,5 @@ public class ProgramDirectivesMixin implements ProgramDirectivesAccessor
             return line.isEmpty();
         }))
         .orElse(false);
-    }
-
-    @Override
-    public boolean colorwheel$isAutoFragColorDisable()
-    {
-        return colorwheel$disableAutoFrag;
     }
 }

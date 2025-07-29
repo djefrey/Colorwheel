@@ -63,18 +63,16 @@ public class ClrwlTransformParameters extends Parameters
 		return result;
 	}
 
-	public record Directives(boolean noAutoFragColor)
+	public record Directives()
 	{
 		public static Directives fromVertex(ProgramDirectives directives)
 		{
-			return new Directives(false);
+			return new Directives();
 		}
 
 		public static Directives fromFragment(ProgramDirectives directives)
 		{
-			var accessor = ((ProgramDirectivesAccessor) directives);
-
-			return new Directives(accessor.colorwheel$isAutoFragColorDisable());
+			return new Directives();
 		}
 	};
 }

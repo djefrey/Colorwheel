@@ -1,9 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.ClrwlVertex;
-import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.IrisShaderComponent;
-import dev.djefrey.colorwheel.Utils;
+import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
@@ -56,16 +53,16 @@ public class ClrwlPipelines
                 }
             })
             .vertex(ClrwlPipeline.vertexStage()
-                    .define("IS_FLYWHEEL")
-                    .onCompile((k, c) ->
-                    {
-                        var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.VERTEX);
-
-                        for (var ext : exts)
+                        .onCompile(ClrwlPipelines::setIrisDefines)
+                        .onCompile((k, c) ->
                         {
-                            c.enableExtension(ext);
-                        }
-                    })
+                            var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.VERTEX);
+
+                            for (var ext : exts)
+                            {
+                                c.enableExtension(ext);
+                            }
+                        })
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
                     .onCompile((k, c) -> setContextDefine(k.context(), c))
                     .onCompile((k, c) ->
@@ -79,7 +76,7 @@ public class ClrwlPipelines
                     .onCompile(ClrwlPipelines::setLightSmoothness)
                     .withResource(API_IMPL_VERT)
                     .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
-                    .with((k, c) -> new ExtendedInstanceShaderComponent(c.getLoader(), k.instanceType().vertexShader()))
+                    .withLoader((k, sources) -> new ExtendedInstanceShaderComponent(sources, k.instanceType().vertexShader()))
                     .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
                     .withLoader(($, sources) -> sources.get(ClrwlVertex.LAYOUT_SHADER))
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_VERT))
@@ -88,7 +85,7 @@ public class ClrwlPipelines
                     .withResource(MAIN_VERT)
                     .build())
             .fragment(ClrwlPipeline.fragmentStage()
-                    .define("IS_FLYWHEEL")
+                    .onCompile(ClrwlPipelines::setIrisDefines)
                     .enableExtension("GL_ARB_conservative_depth")
                     .onCompile((k, c) ->
                     {
@@ -140,6 +137,14 @@ public class ClrwlPipelines
                     .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.translucentCoeffs(), k.opaques(), k.ranks()))
                     .build())
             .build();
+
+    private static void setIrisDefines(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        if (c.getPackDirectives().isOldLighting())
+        {
+            c.define("CLRWL_OLD_LIGHTING");
+        }
+    }
 
     private static void setLightSmoothness(ClrwlShaderKey k, ClrwlCompilation c)
     {

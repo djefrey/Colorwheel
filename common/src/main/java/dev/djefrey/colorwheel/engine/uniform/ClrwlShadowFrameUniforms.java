@@ -21,7 +21,14 @@ import org.lwjgl.system.MemoryUtil;
 
 public final class ClrwlShadowFrameUniforms extends UniformWriter
 {
-	private static final int SIZE = 96 + 64 * 9 + 48 + 16 * 5 + 8 * 2 + 8 + 4 * 19;
+	private static final int SIZE = 96 	        		// Frustum
+								  + 32 	        		// Cull
+								  + 64 * 9      		// View + Projection
+								  + 64 * 4      		// Shadow View + Projection
+								  + 48 		    		// Normal
+								  + 5 * 16 + 2 * 8      // Camera
+								  + 4 * (15 + 1);     	// Remaining
+
 	public static final UniformBuffer BUFFER = new UniformBuffer(ClrwlUniforms.FRAME_INDEX, SIZE);
 
 	private static final Matrix4f VIEW = new Matrix4f();
@@ -34,14 +41,14 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 	private static final Matrix4f VIEW_PROJECTION_INVERSE = new Matrix4f();
 	private static final Matrix4f VIEW_PROJECTION_PREV = new Matrix4f();
 
+	private static final Matrix3f NORMAL = new Matrix3f();
+
 	private static final Vector3f CAMERA_POS = new Vector3f();
 	private static final Vector3f CAMERA_POS_PREV = new Vector3f();
 	private static final Vector3f CAMERA_LOOK = new Vector3f();
 	private static final Vector3f CAMERA_LOOK_PREV = new Vector3f();
 	private static final Vector2f CAMERA_ROT = new Vector2f();
 	private static final Vector2f CAMERA_ROT_PREV = new Vector2f();
-
-	private static final Matrix3f NORMAL = new Matrix3f();
 
 	private static boolean firstWrite = true;
 
@@ -156,6 +163,10 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		ptr = writeMat4(ptr, VIEW_PROJECTION);
 		ptr = writeMat4(ptr, VIEW_PROJECTION.invert(VIEW_PROJECTION_INVERSE));
 		ptr = writeMat4(ptr, VIEW_PROJECTION_PREV);
+		ptr = writeMat4(ptr, VIEW); // Shadow Matrices
+		ptr = writeMat4(ptr, VIEW_INVERSE);
+		ptr = writeMat4(ptr, PROJECTION);
+		ptr = writeMat4(ptr, PROJECTION_INVERSE);
 		ptr = writeMat3(ptr, NORMAL);
 		return ptr;
 	}

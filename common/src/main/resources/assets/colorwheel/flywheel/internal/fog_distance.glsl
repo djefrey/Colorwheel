@@ -1,3 +1,5 @@
+// https://github.com/Engine-Room/Flywheel/blob/dc5bc8e64976c69b38abb6965d5cd9033e5a8808/common/src/backend/resources/assets/flywheel/flywheel/internal/fog_distance.glsl
+
 float _clrwl_sphericalDistance(vec3 relativePos) {
     return length(relativePos);
 }

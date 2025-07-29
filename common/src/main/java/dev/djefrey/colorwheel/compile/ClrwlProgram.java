@@ -109,7 +109,7 @@ public class ClrwlProgram
 
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DIFFUSE.number, "flw_diffuseTex");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.OVERLAY.number, "flw_overlayTex");
-		samplerBuilder.addExternalSampler(ClrwlSamplers.LIGHT.number, "flw_lightTex");
+		// samplerBuilder.addExternalSampler(ClrwlSamplers.LIGHT.number, "flw_lightTex");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.CRUMBLING.number, "_flw_crumblingTex");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.INSTANCE_BUFFER.number, "_flw_instances");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.LIGHT_LUT.number, "_flw_lightLut");
@@ -126,7 +126,7 @@ public class ClrwlProgram
 		pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
 				isShadowPass ? pipeline::getFlippedBeforeShadow : pipeline::getFlippedAfterPrepare,
 				isShadowPass,
-				false, false, false); // All false as we'll bind Flywheel samplers
+				false, true, false); // Use Flywheel texture and overlay samplers
 		customUniforms.mapholderToPass(uniformBuilder, this);
 
 		this.uniforms = uniformBuilder.buildUniforms();

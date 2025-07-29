@@ -53,7 +53,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final List<ClrwlInstancedDraw> oitDraws = new ArrayList<>();
 
 	private final ClrwlPrograms programs;
-	private ClrwlProgramFramebuffers framebuffers;
+	private final ClrwlProgramFramebuffers framebuffers;
 
 	/**
 	 * A map of vertex types to their mesh pools.
