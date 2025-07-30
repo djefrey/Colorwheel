@@ -21,6 +21,7 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector4fc;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
 
@@ -48,6 +49,7 @@ public class ClrwlProgram
 	public final int normalMatrixUniform;
 	public final int blockEntityUniform;
 	public final int entityUniform;
+	public final int meshCenterUniform;
 
 	public static ImmutableSet<Integer> getReservedTextureUnits(Set<Integer> coeffs)
 	{
@@ -158,6 +160,7 @@ public class ClrwlProgram
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
 		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityId");
 		this.entityUniform = tryGetUniformLocation2("_clrwl_entityId");
+		this.meshCenterUniform = tryGetUniformLocation2("_clrwl_meshCenter");
 
 		ClrwlUniforms.setUniformBlockBinding(this);
 	}
@@ -173,7 +176,7 @@ public class ClrwlProgram
 							    customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual)
+	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector4fc boundingSphere)
 	{
 		GL20.glUseProgram(this.handle);
 
@@ -186,6 +189,7 @@ public class ClrwlProgram
 
 		setUniformS(blockEntityUniform, visual.getBlockEntity());
 		setUniformS(entityUniform, visual.getEntity());
+		setUniform(meshCenterUniform, boundingSphere.x(), boundingSphere.y(), boundingSphere.z());
 
 		samplers.update();
 		uniforms.update();
@@ -243,6 +247,10 @@ public class ClrwlProgram
 
 	private void setUniform(int index, int x, int y) {
 		GL31.glUniform2ui(index, x, y);
+	}
+
+	private void setUniform(int index, float x, float y, float z) {
+		GL31.glUniform3f(index, x, y, z);
 	}
 
 	private void setUniform(int index, Matrix3f mat) {

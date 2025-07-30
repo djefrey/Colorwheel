@@ -77,7 +77,7 @@ public class ClrwlPipelines
                     .onCompile(ClrwlPipelines::setLightSmoothness)
                     .withResource(API_IMPL_VERT)
                     .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
-                    .withLoader((k, sources) -> new ExtendedInstanceShaderComponent(sources, k.instanceType().vertexShader()))
+                    .withLoader((k, sources) -> sources.get(k.instanceType().vertexShader()))
                     .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
                     .withLoader(($, sources) -> sources.get(ClrwlVertex.LAYOUT_SHADER))
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_VERT))

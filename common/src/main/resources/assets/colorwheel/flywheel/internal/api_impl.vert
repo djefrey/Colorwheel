@@ -16,6 +16,7 @@ out ClrwlVertexData
 };
 
 vec2 flw_vertexMidTexCoord;
+vec4 flw_atMidBlock;
 
 FlwMaterial flw_material;
 

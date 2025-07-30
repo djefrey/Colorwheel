@@ -76,6 +76,8 @@ uniform mat3 _flw_normalMatrixUniform;
 
 uniform uint _flw_vertexOffset;
 
+uniform vec3 _clrwl_meshCenter;
+
 void main()
 {
     _flw_unpackMaterialProperties(_flw_packedMaterial.y, flw_material);
@@ -88,8 +90,38 @@ void main()
     #endif
 
     _clrwl_layoutVertex();
+
+    // --- Compute mesh center and vertex tangent
+
+    vec4 flw_vertexPos_bkp = flw_vertexPos;
+    vec4 flw_vertexColor_bkp = flw_vertexColor;
+    vec2 flw_vertexTexCoord_bkp = flw_vertexTexCoord;
+    ivec2 flw_vertexOverlay_bkp = flw_vertexOverlay;
+    vec2 flw_vertexLight_bkp = flw_vertexLight;
+    vec3 flw_vertexNormal_bkp = flw_vertexNormal;
+
+    flw_vertexPos = vec4(_clrwl_meshCenter, 1.0);
+    flw_vertexNormal = flw_vertexTangent.xyz;
+
+    flw_instanceVertex(instance);
+
+    vec4 transformedMeshCenter = flw_vertexPos;
+    float emission = flw_vertexLight_bkp.x;
+    flw_vertexTangent.xyz = flw_vertexNormal;
+
+    flw_vertexPos = flw_vertexPos_bkp;
+    flw_vertexColor = flw_vertexColor_bkp;
+    flw_vertexTexCoord = flw_vertexTexCoord_bkp;
+    flw_vertexOverlay = flw_vertexOverlay_bkp;
+    flw_vertexLight = flw_vertexLight_bkp;
+    flw_vertexNormal = flw_vertexNormal_bkp;
+
+    // ---
+
     flw_instanceVertex(instance);
     flw_materialVertex();
+
+    flw_atMidBlock = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, emission * 15.0);
 
     #ifdef _FLW_CRUMBLING
     flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();

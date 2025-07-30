@@ -78,7 +78,7 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "gl_Vertex", "flw_vertexPos");
 				root.replaceReferenceExpressions(transformer, "gl_Normal", "flw_vertexNormal");
 				root.replaceReferenceExpressions(transformer, "gl_Color", "flw_vertexColor");
-				root.replaceReferenceExpressions(transformer, "at_midBlock", "vec4(0.0)"); // Placeholder value for now
+				root.replaceReferenceExpressions(transformer, "at_midBlock", "flw_atMidBlock");
 				root.replaceReferenceExpressions(transformer, "at_tangent", "flw_vertexTangent");
 				root.replaceReferenceExpressions(transformer, "mc_Entity", "vec2(-1.0)");
 				root.replaceReferenceExpressions(transformer, "mc_midTexCoord", "vec4(flw_vertexMidTexCoord, 0.0, 1.0)");
