@@ -14,7 +14,6 @@ import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.blending.BlendModeFunction;
-import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
@@ -29,7 +28,6 @@ import org.lwjgl.opengl.GL46;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class ClrwlOitFramebuffers
 {

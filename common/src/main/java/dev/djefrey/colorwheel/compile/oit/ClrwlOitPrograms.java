@@ -5,7 +5,6 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.compile.ClrwlCompilation;
 import dev.djefrey.colorwheel.compile.ClrwlPipelineStage;
 import dev.djefrey.colorwheel.compile.ClrwlPipelines;
-import dev.djefrey.colorwheel.engine.ClrwlOitCoeffDirective;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.backend.compile.core.FailedCompilation;
 import dev.engine_room.flywheel.backend.compile.core.ProgramLinker;

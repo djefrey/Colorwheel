@@ -9,7 +9,8 @@ import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Mixin(PackDirectives.class)
 public class PackDirectivesMixin implements PackDirectivesAccessor

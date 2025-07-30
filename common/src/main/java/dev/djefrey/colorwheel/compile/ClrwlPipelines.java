@@ -3,9 +3,7 @@ package dev.djefrey.colorwheel.compile;
 import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
-import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.oit.*;
-import dev.djefrey.colorwheel.engine.ClrwlOitCoeffDirective;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.backend.BackendConfig;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
@@ -15,13 +13,9 @@ import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.material.CutoutShaders;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
-import net.irisshaders.iris.helpers.StringPair;
-import net.irisshaders.iris.shaderpack.preprocessor.JcppProcessor;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ClrwlPipelines

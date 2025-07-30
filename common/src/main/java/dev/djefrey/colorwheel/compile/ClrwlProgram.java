@@ -233,8 +233,8 @@ public class ClrwlProgram
 	public void free()
 	{
 		GL31.glDeleteProgram(this.handle);
-		this.vertex.destroy();;
-		this.fragment.destroy();
+		this.vertex.destroy();
+        this.fragment.destroy();
 	}
 
 	private void setUniformS(int index, int i) {

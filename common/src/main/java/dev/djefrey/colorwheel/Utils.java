@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 

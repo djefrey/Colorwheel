@@ -6,7 +6,6 @@ import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.ReferenceExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.binary.ArrayAccessExpression;
-import io.github.douira.glsl_transformer.ast.node.statement.Statement;
 import io.github.douira.glsl_transformer.ast.print.PrintType;
 import io.github.douira.glsl_transformer.ast.query.Root;
 import io.github.douira.glsl_transformer.ast.query.RootSupplier;
@@ -19,7 +18,6 @@ import net.irisshaders.iris.pipeline.transform.transformer.CommonTransformer;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;

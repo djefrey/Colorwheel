@@ -1,14 +1,9 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
-import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslUniform;
-import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
-import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 
 import java.util.Collection;
 import java.util.List;

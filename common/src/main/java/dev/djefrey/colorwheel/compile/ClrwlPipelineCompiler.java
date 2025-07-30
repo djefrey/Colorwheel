@@ -3,8 +3,6 @@ package dev.djefrey.colorwheel.compile;
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.djefrey.colorwheel.ClrwlProgramId;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import dev.engine_room.flywheel.api.material.Transparency;
-import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
 import dev.engine_room.flywheel.backend.compile.core.Compilation;

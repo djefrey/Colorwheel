@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
 import dev.engine_room.flywheel.api.backend.Backend;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
@@ -13,7 +12,10 @@ import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

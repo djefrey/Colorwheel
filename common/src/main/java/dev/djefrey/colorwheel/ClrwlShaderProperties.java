@@ -2,7 +2,9 @@ package dev.djefrey.colorwheel;
 
 import com.google.common.collect.ImmutableList;
 import net.irisshaders.iris.gl.IrisRenderSystem;
-import net.irisshaders.iris.gl.blending.*;
+import net.irisshaders.iris.gl.blending.BlendMode;
+import net.irisshaders.iris.gl.blending.BlendModeFunction;
+import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.option.OrderBackedProperties;
 import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
@@ -11,7 +13,6 @@ import net.irisshaders.iris.shaderpack.preprocessor.PropertiesPreprocessor;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
-import java.util.List;
 
 public class ClrwlShaderProperties
 {

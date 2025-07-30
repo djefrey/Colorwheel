@@ -5,7 +5,7 @@ public enum ClrwlProgramGroup
     GBUFFERS("gbuffers"),
     SHADOW("shadow");
 
-    private String name;
+    private final String name;
 
     ClrwlProgramGroup(String name)
     {

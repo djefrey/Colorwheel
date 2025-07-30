@@ -1,8 +1,6 @@
 package dev.djefrey.colorwheel.engine;
 
 import dev.engine_room.flywheel.api.backend.RenderContext;
-import dev.engine_room.flywheel.backend.engine.uniform.LevelUniforms;
-import dev.engine_room.flywheel.backend.engine.uniform.PlayerUniforms;
 
 public class ShadowUniforms
 {

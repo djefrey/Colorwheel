@@ -1,14 +1,9 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.material.*;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
-import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
-import net.irisshaders.iris.shaderpack.programs.ProgramSet;
-import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 
 public record ClrwlShaderKey(InstanceType<?> instanceType,
                              MaterialShaders material,

@@ -5,7 +5,6 @@ import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.*;
-import dev.engine_room.flywheel.lib.util.ResourceUtil;
 
 import java.util.Collection;
 import java.util.List;

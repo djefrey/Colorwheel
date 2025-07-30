@@ -20,7 +20,7 @@ import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.api.visualization.VisualEmbedding;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
-import dev.engine_room.flywheel.backend.engine.*;
+import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.GlStateTracker;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -201,9 +201,9 @@ public class ClrwlEngine implements Engine
 		return lightStorage;
 	}
 
-	public LevelAccessor level() { return level; };
+	public LevelAccessor level() { return level; }
 
-	public <I extends Instance>Instancer<I> instancer(ClrwlInstanceVisual visual, Environment environment, InstanceType<I> type, Model model, int bias)
+    public <I extends Instance>Instancer<I> instancer(ClrwlInstanceVisual visual, Environment environment, InstanceType<I> type, Model model, int bias)
 	{
 		return drawManager.getInstancer(visual, environment, type, model, bias);
 	}

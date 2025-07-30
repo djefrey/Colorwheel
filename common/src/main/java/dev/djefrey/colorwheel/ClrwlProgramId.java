@@ -17,11 +17,11 @@ public enum ClrwlProgramId
     SHADOW(ClrwlProgramGroup.SHADOW, "clrwl_shadow", null, false),
     SHADOW_TRANSLUCENT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_translucent", SHADOW, true);
 
-    private ClrwlProgramGroup group;
-    private String name;
+    private final ClrwlProgramGroup group;
+    private final String name;
     @Nullable
-    private ClrwlProgramId base;
-    private boolean afterTranslucent;
+    private final ClrwlProgramId base;
+    private final boolean afterTranslucent;
 
     ClrwlProgramId(ClrwlProgramGroup group, String name, ClrwlProgramId base, boolean afterTranslucent)
     {

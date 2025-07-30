@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
 import dev.engine_room.flywheel.api.material.Transparency;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.blending.AlphaTest;
@@ -74,5 +73,5 @@ public class ClrwlTransformParameters extends Parameters
 		{
 			return new Directives();
 		}
-	};
+	}
 }

@@ -56,5 +56,5 @@ public abstract class ShaderPackMixin implements ShaderPackAccessor
 		return colorwheel$environmentDefines;
 	}
 
-	public ClrwlShaderProperties colorwheel$getProperties() { return colorwheel$properties; };
+	public ClrwlShaderProperties colorwheel$getProperties() { return colorwheel$properties; }
 }

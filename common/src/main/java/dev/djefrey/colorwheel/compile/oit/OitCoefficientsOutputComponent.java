@@ -1,14 +1,10 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
-import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlFragDataOutComponent;
-import dev.djefrey.colorwheel.compile.GlslAssignment;
 import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
-import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 
 import java.util.Collection;
 import java.util.List;

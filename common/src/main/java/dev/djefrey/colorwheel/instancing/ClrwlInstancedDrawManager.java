@@ -1,10 +1,10 @@
 package dev.djefrey.colorwheel.instancing;
 
-import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.*;
-import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
+import dev.djefrey.colorwheel.ClrwlMeshPool;
+import dev.djefrey.colorwheel.ClrwlProgramId;
+import dev.djefrey.colorwheel.ClrwlSamplers;
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
@@ -23,21 +23,16 @@ import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.gl.IrisRenderSystem;
-import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
-import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.List;
 
 public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
 {
