@@ -1,6 +1,9 @@
 package dev.djefrey.colorwheel;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Utils
@@ -15,5 +18,18 @@ public class Utils
         return map.entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+    }
+
+    public static <T> Optional<T> findFirst(List<T> list, Predicate<T> predicate)
+    {
+        for (T e : list)
+        {
+            if (predicate.test(e))
+            {
+                return Optional.of(e);
+            }
+        }
+
+        return Optional.empty();
     }
 }

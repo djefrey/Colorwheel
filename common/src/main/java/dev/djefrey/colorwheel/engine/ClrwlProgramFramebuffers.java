@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlProgramId;
+import dev.djefrey.colorwheel.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
@@ -15,6 +16,7 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -85,26 +87,31 @@ public class ClrwlProgramFramebuffers
     }
 
     @Nullable
-    public ClrwlOitFramebuffers getOitFramebuffers(boolean isShadow, ClrwlOitPrograms oitPrograms, IrisRenderingPipeline pipeline,  ProgramSet programSet)
+    public ClrwlOitFramebuffers getOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms oitPrograms, IrisRenderingPipeline pipeline, ClrwlShaderProperties properties, ProgramDirectives directives)
     {
-        if (!isShadow)
+        switch (programGroup)
         {
-            if (gbuffersOitFramebuffer == null)
+            case GBUFFERS ->
             {
-                gbuffersOitFramebuffer = new ClrwlOitFramebuffers(oitPrograms, pipeline, false, programSet.getPackDirectives());
-            }
+                if (gbuffersOitFramebuffer == null)
+                {
+                    gbuffersOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, pipeline, properties, directives);
+                }
 
-            return gbuffersOitFramebuffer;
-        }
-        else
-        {
-            if (shadowOitFramebuffer == null)
+                return gbuffersOitFramebuffer;
+            }
+            case SHADOW ->
             {
-                shadowOitFramebuffer = new ClrwlOitFramebuffers(oitPrograms, pipeline, true, programSet.getPackDirectives());
-            }
+                if (shadowOitFramebuffer == null)
+                {
+                    shadowOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, pipeline, properties, directives);
+                }
 
-            return shadowOitFramebuffer;
+                return shadowOitFramebuffer;
+            }
         }
+
+        throw new RuntimeException("Unknown program group: " + programGroup);
     }
 
     public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)

@@ -1,10 +1,12 @@
 package dev.djefrey.colorwheel;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.blending.BlendModeFunction;
 import net.irisshaders.iris.gl.blending.BufferBlendInformation;
+import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.option.OrderBackedProperties;
 import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
@@ -18,6 +20,14 @@ public class ClrwlShaderProperties
 {
     private final Map<ClrwlProgramId, ClrwlBlendModeOverride> programBlendOverrides = new HashMap<>();
     private final Map<ClrwlProgramId, ArrayList<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
+
+    private boolean oitEnabled = false;
+
+    private int[] gbuffersOitCoeffRanks = new int[0];
+    private final List<ClrwlOitAccumulateOverride> gbuffersOitAccumulateOverrides = new ArrayList<>();
+
+    private int[] shadowOitCoeffRanks = new int[0];
+    private final List<ClrwlOitAccumulateOverride> shadowOitAccumulateOverrides = new ArrayList<>();
 
     public ClrwlShaderProperties()
     {
@@ -143,6 +153,176 @@ public class ClrwlShaderProperties
 
                 continue;
             }
+            else if (path[0].equals("oit"))
+            {
+                if (path.length == 1)
+                {
+                    var lower = value.trim().toLowerCase();
+
+                    oitEnabled = lower.equals("on") || lower.equals("true") || lower.equals("enabled");
+                    continue;
+                }
+
+                if (path.length < 3)
+                {
+                    Colorwheel.LOGGER.error("Invalid path: {}", String.join(",", path));
+                    continue;
+                }
+
+                if (path[1].equals("gbuffers"))
+                {
+                    if (path[2].equals("coefficientRanks") && path.length == 3)
+                    {
+                        parseCoefficientsRanks(value)
+                                .ifPresent(ranks -> gbuffersOitCoeffRanks = ranks);
+                    }
+                    else if (path[2].startsWith("colortex"))
+                    {
+                        int drawBuffer;
+
+                        try
+                        {
+                            drawBuffer = Integer.parseUnsignedInt(path[2].substring(8));
+                        }
+                        catch (NumberFormatException e)
+                        {
+                            Colorwheel.LOGGER.error("Invalid attachment: {}", path[2]);
+                            continue;
+                        }
+
+                        if (path.length == 3)
+                        {
+                            Optional<Integer> coefficientId;
+
+                            if (value.equals("frontmost"))
+                            {
+                                coefficientId = Optional.empty();
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    coefficientId = Optional.of(Integer.parseUnsignedInt(value));
+                                }
+                                catch (NumberFormatException e)
+                                {
+                                    Colorwheel.LOGGER.error("Invalid coefficient id: {}", value);
+                                    continue;
+                                }
+                            }
+
+                            Utils.findFirst(gbuffersOitAccumulateOverrides, t -> t.drawBuffer() == drawBuffer)
+                                    .ifPresentOrElse(t -> t.setCoefficientId(coefficientId),
+                                                     () -> gbuffersOitAccumulateOverrides.add(new ClrwlOitAccumulateOverride(drawBuffer, coefficientId)));
+
+                            continue;
+                        }
+                        else if (path.length == 4)
+                        {
+                            if (path[3].equals("format"))
+                            {
+                                try
+                                {
+                                    var format = InternalTextureFormat.valueOf(value);
+
+                                    Utils.findFirst(gbuffersOitAccumulateOverrides, t -> t.drawBuffer() == drawBuffer)
+                                            .ifPresentOrElse(t -> t.setFormat(format),
+                                                    () -> gbuffersOitAccumulateOverrides.add(new ClrwlOitAccumulateOverride(drawBuffer, format)));
+                                }
+                                catch (IllegalArgumentException e)
+                                {
+                                    Colorwheel.LOGGER.error("Unknown format: {}", value);
+                                    continue;
+                                }
+
+                                continue;
+                            }
+                        }
+                    }
+
+                    Colorwheel.LOGGER.error("Unknown OIT key: {}", path[2]);
+                    continue;
+                }
+                else if (path[1].equals("shadow"))
+                {
+                    if (path[2].equals("coefficientRanks") && path.length == 3)
+                    {
+                        parseCoefficientsRanks(value)
+                                .ifPresent(ranks -> shadowOitCoeffRanks = ranks);
+                    }
+                    else if (path[2].startsWith("shadowcolor"))
+                    {
+                        int drawBuffer;
+
+                        try
+                        {
+                            drawBuffer = Integer.parseUnsignedInt(path[2].substring(11));
+                        }
+                        catch (NumberFormatException e)
+                        {
+                            Colorwheel.LOGGER.error("Invalid attachment: {}", path[2]);
+                            continue;
+                        }
+
+                        if (path.length == 3)
+                        {
+                            Optional<Integer> coefficientId;
+
+                            if (value.equals("frontmost"))
+                            {
+                                coefficientId = Optional.empty();
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    coefficientId = Optional.of(Integer.parseUnsignedInt(value));
+                                }
+                                catch (NumberFormatException e)
+                                {
+                                    Colorwheel.LOGGER.error("Invalid coefficient id: {}", value);
+                                    continue;
+                                }
+                            }
+
+                            Utils.findFirst(shadowOitAccumulateOverrides, t -> t.drawBuffer() == drawBuffer)
+                                    .ifPresentOrElse(t -> t.setCoefficientId(coefficientId),
+                                                     () -> shadowOitAccumulateOverrides.add(new ClrwlOitAccumulateOverride(drawBuffer, coefficientId)));
+
+                            continue;
+                        }
+                        else if (path.length == 4)
+                        {
+                            if (path[3].equals("format"))
+                            {
+                                try
+                                {
+                                    var format = InternalTextureFormat.valueOf(value);
+
+                                    Utils.findFirst(shadowOitAccumulateOverrides, t -> t.drawBuffer() == drawBuffer)
+                                            .ifPresentOrElse(t -> t.setFormat(format),
+                                                             () -> shadowOitAccumulateOverrides.add(new ClrwlOitAccumulateOverride(drawBuffer, format)));
+                                }
+                                catch (IllegalArgumentException e)
+                                {
+                                    Colorwheel.LOGGER.error("Unknown format: {}", value);
+                                    continue;
+                                }
+
+                                continue;
+                            }
+                        }
+                    }
+
+                    Colorwheel.LOGGER.error("Unknown OIT key: {}", path[2]);
+                    continue;
+                }
+                else
+                {
+                    Colorwheel.LOGGER.error("Unknown program groug for OIT: {}", path[1]);
+                    continue;
+                }
+            }
         }
     }
 
@@ -173,6 +353,38 @@ public class ClrwlShaderProperties
         return Optional.of(new BlendMode(modeFcts[0], modeFcts[1], modeFcts[2], modeFcts[3]));
     }
 
+    private Optional<int[]> parseCoefficientsRanks(String value)
+    {
+        String[] rankStrs = value.split(",");
+        int[] ranks = new int[rankStrs.length];
+
+        for (int i = 0; i < rankStrs.length; i++)
+        {
+            String rankStr = rankStrs[i].trim();
+            int rank;
+
+            try
+            {
+                rank = Integer.parseUnsignedInt(rankStr);
+            }
+            catch (NumberFormatException e)
+            {
+                Colorwheel.LOGGER.error("Invalid OIT coefficients ranks: {}", value);
+                return Optional.empty();
+            }
+
+            if (rank == 0 || rank > 3)
+            {
+                Colorwheel.LOGGER.error("Invalid OIT coefficients ranks: {} (must be >= 1 && <= 3)", value);
+                return Optional.empty();
+            }
+
+            ranks[i] = rank;
+        }
+
+        return Optional.of(ranks);
+    }
+
     public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId)
     {
         return Optional.ofNullable(programBlendOverrides.get(programId));
@@ -188,5 +400,44 @@ public class ClrwlShaderProperties
         }
 
         return ImmutableList.copyOf(list);
+    }
+
+    public boolean isOitEnabled()
+    {
+        return oitEnabled;
+    }
+
+    public int[] getOitCoeffRanks(ClrwlProgramGroup group)
+    {
+        switch (group)
+        {
+            case GBUFFERS ->
+            {
+                return gbuffersOitCoeffRanks;
+            }
+            case SHADOW ->
+            {
+                return shadowOitCoeffRanks;
+            }
+        }
+
+        throw new RuntimeException("Unknown program group: " + group);
+    }
+
+    public List<ClrwlOitAccumulateOverride> getOitAccumulateOverrides(ClrwlProgramGroup group)
+    {
+        switch (group)
+        {
+            case GBUFFERS ->
+            {
+                return gbuffersOitAccumulateOverrides;
+            }
+            case SHADOW ->
+            {
+                return shadowOitAccumulateOverrides;
+            }
+        }
+
+        throw new RuntimeException("Unknown program group: " + group);
     }
 }

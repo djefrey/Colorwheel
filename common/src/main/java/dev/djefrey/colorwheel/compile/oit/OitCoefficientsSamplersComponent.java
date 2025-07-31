@@ -10,11 +10,11 @@ import java.util.List;
 
 public class OitCoefficientsSamplersComponent implements SourceComponent
 {
-    private final List<Integer> coeffs;
+    private final int coeffCount;
 
-    public OitCoefficientsSamplersComponent(List<Integer> coeffs)
+    public OitCoefficientsSamplersComponent(int coeffCount)
     {
-        this.coeffs = coeffs;
+        this.coeffCount = coeffCount;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class OitCoefficientsSamplersComponent implements SourceComponent
     {
         var builder = new GlslBuilder();
 
-        addSamplers(builder, coeffs);
+        addSamplers(builder, coeffCount);
 
         return builder.build();
     }
@@ -39,9 +39,9 @@ public class OitCoefficientsSamplersComponent implements SourceComponent
         return Colorwheel.rl("oit_coefficients_samplers").toString();
     }
 
-    public static void addSamplers(GlslBuilder builder, List<Integer> coeffs)
+    public static void addSamplers(GlslBuilder builder, int coeffCount)
     {
-        for (int i : coeffs)
+        for (int i = 0; i < coeffCount; i++)
         {
             var uniform = new GlslUniform()
                     .type("sampler2DArray")

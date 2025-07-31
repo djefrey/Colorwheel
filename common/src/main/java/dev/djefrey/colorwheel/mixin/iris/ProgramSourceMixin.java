@@ -2,6 +2,8 @@ package dev.djefrey.colorwheel.mixin.iris;
 
 import dev.djefrey.colorwheel.ShaderType;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
+import dev.djefrey.colorwheel.compile.ClrwlTransformPatcher;
+import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
@@ -12,9 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Mixin(ProgramSource.class)
 public class ProgramSourceMixin implements ProgramSourceAccessor
@@ -24,6 +24,9 @@ public class ProgramSourceMixin implements ProgramSourceAccessor
 
 	@Unique
 	BlendModeOverride colorwheel$blendMode;
+
+	@Unique
+	Map<ShaderType, Integer> colorwheel$shaderVersions;
 
 	@Unique
 	Map<ShaderType, List<String>> colorwheel$shaderExtensions;
@@ -39,12 +42,23 @@ public class ProgramSourceMixin implements ProgramSourceAccessor
 	}
 
 	@Override
+	public Optional<Integer> colorwheel$getShaderVersion(ShaderType type)
+	{
+		return Optional.ofNullable(this.colorwheel$shaderVersions.get(type));
+	}
+
+	@Override
 	public Map<ShaderType, List<String>> colorwheel$getShaderExtensions() { return colorwheel$shaderExtensions; }
 
 	@Inject(method = "<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lnet/irisshaders/iris/shaderpack/programs/ProgramSet;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/gl/blending/BlendModeOverride;)V",
 			at = @At("TAIL"))
 	private void injectInit(String name, String vertex, String geometry, String tess, String tessEval, String fragment, ProgramSet programs, ShaderProperties properties, BlendModeOverride blendModeOverride, CallbackInfo ci)
 	{
+		this.colorwheel$shaderVersions = new HashMap<>();
+		colorwheel$parseShaderVersion(vertex).ifPresent(v -> this.colorwheel$shaderVersions.put(ShaderType.VERTEX, v));
+		colorwheel$parseShaderVersion(geometry).ifPresent(v -> this.colorwheel$shaderVersions.put(ShaderType.GEOMETRY, v));
+		colorwheel$parseShaderVersion(fragment).ifPresent(v -> this.colorwheel$shaderVersions.put(ShaderType.FRAGMENT, v));
+
 		this.colorwheel$shaderExtensions = Map.of(
 				ShaderType.VERTEX,   colorwheel$parseShaderExtensions(vertex),
 				ShaderType.GEOMETRY, colorwheel$parseShaderExtensions(geometry),
@@ -52,6 +66,30 @@ public class ProgramSourceMixin implements ProgramSourceAccessor
 		);
 		this.colorwheel$shaderProperties = properties;
 		this.colorwheel$blendMode = blendModeOverride;
+	}
+
+	@Unique
+	private Optional<Integer> colorwheel$parseShaderVersion(String str)
+	{
+		if (str == null)
+		{
+			return Optional.empty();
+		}
+
+		var it = str.lines().iterator();
+
+		while (it.hasNext())
+		{
+			String line = it.next();
+			var matcher = ClrwlTransformPatcher.versionPattern.matcher(line);
+
+			if (matcher.matches())
+			{
+				return Optional.of(Integer.parseInt(matcher.group(1)));
+			}
+		}
+
+		return Optional.empty();
 	}
 
 	@Unique

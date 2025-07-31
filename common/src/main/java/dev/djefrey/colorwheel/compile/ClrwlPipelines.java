@@ -1,9 +1,9 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.*;
-import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.compile.oit.*;
+import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.backend.BackendConfig;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
@@ -144,7 +144,7 @@ public class ClrwlPipelines
             )
             .fragment(ClrwlOitCompositePipeline.fragmentStage()
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.translucentCoeffs(), k.opaques(), k.ranks()))
+                    .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.drawBuffers(), k.ranks(), k.overrides()))
                     .build())
             .build();
 
@@ -262,6 +262,10 @@ public class ClrwlPipelines
 
     private static SourceComponent getOitInouts(ClrwlShaderKey k, ClrwlCompilation c)
     {
+        var programGroup = k.isShadow()
+                ? ClrwlProgramGroup.SHADOW
+                : ClrwlProgramGroup.GBUFFERS;
+
         if (k.oit() == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE)
         {
             var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
@@ -270,19 +274,16 @@ public class ClrwlPipelines
         }
         else if (k.oit() == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
         {
-            PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
-            var ranks = directives.getCoefficientsRanks(k.isShadow());
-
+            var ranks = c.getProperties().getOitCoeffRanks(programGroup);
             var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
 
             return new OitCoefficientsOutputComponent(ranks, drawBuffers.length);
         }
         else if (k.oit() == ClrwlPipelineCompiler.OitMode.EVALUATE)
         {
-            PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
-            var coeffs = directives.getCoefficientsRanks(k.isShadow()).keySet().stream().sorted().toList();
+            var ranks = c.getProperties().getOitCoeffRanks(programGroup);
 
-            return new OitCoefficientsSamplersComponent(coeffs);
+            return new OitCoefficientsSamplersComponent(ranks.length);
         }
 
         return null;
@@ -290,6 +291,10 @@ public class ClrwlPipelines
 
     private static SourceComponent getPostShaderFragmentSource(ClrwlShaderKey k, ClrwlCompilation c)
     {
+        var programGroup = k.isShadow()
+                ? ClrwlProgramGroup.SHADOW
+                : ClrwlProgramGroup.GBUFFERS;
+
         switch (k.oit())
         {
             case DEPTH_RANGE ->
@@ -300,63 +305,36 @@ public class ClrwlPipelines
 
             case GENERATE_COEFFICIENTS ->
             {
-                PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
-                var ranks = directives.getCoefficientsRanks(k.isShadow());
-                var coeffs = directives.getTranslucentCoefficients(k.isShadow());
-                var renderTargets = Utils.reverse(directives.getTranslucentRenderTargets(k.isShadow()));
                 var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
+                var ranks = c.getProperties().getOitCoeffRanks(programGroup);
+                var overrides = c.getProperties().getOitAccumulateOverrides(programGroup);
 
-                Map<Integer, Integer> locations = new HashMap<>();
+                Map<Integer, Integer> coeffFrag = new HashMap<>();
 
                 for (int i = 0; i < drawBuffers.length; i++)
                 {
                     int buffer = drawBuffers[i];
+                    var maybeCoeffId = Utils.findFirst(overrides, e -> e.drawBuffer() == buffer)
+                            .flatMap(ClrwlOitAccumulateOverride::coefficientId);
 
-                    var acc = renderTargets.get(buffer);
-                    if (acc != null)
+                    if (maybeCoeffId.isPresent())
                     {
-                        locations.put(coeffs.get(acc), i);
-                        continue;
+                        coeffFrag.putIfAbsent(maybeCoeffId.get(), i);
                     }
                 }
 
                 c.define("CLRWL_POST_SHADER");
-                return new OitCollectCoeffsComponent(ranks, locations);
+                return new OitCollectCoeffsComponent(ranks, coeffFrag);
             }
 
             case EVALUATE ->
             {
-                PackDirectivesAccessor directives = (PackDirectivesAccessor) c.getPackDirectives();
-                var ranks = directives.getCoefficientsRanks(k.isShadow());
-                var translucentCoeffs = directives.getTranslucentCoefficients(k.isShadow());
-                var translucentRenderTargets = Utils.reverse(directives.getTranslucentRenderTargets(k.isShadow()));
-                var opaqueRenderTargets = Utils.reverse(directives.getOpaqueRenderTargets(k.isShadow()));
                 var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
-
-                Map<Integer, Integer> translucentLocations = new HashMap<>();
-                Map<Integer, Integer> opaqueLocations = new HashMap<>();
-
-                for (int i = 0; i < drawBuffers.length; i++)
-                {
-                    int buffer = drawBuffers[i];
-
-                    var acc = translucentRenderTargets.get(buffer);
-                    if (acc != null)
-                    {
-                        translucentLocations.put(acc, i);
-                        continue;
-                    }
-
-                    acc = opaqueRenderTargets.get(buffer);
-                    if (acc != null)
-                    {
-                        opaqueLocations.put(acc, i);
-                        continue;
-                    }
-                }
+                var ranks = c.getProperties().getOitCoeffRanks(programGroup);
+                var overrides = c.getProperties().getOitAccumulateOverrides(programGroup);
 
                 c.define("CLRWL_POST_SHADER");
-                return new OitEvaluateComponent(translucentLocations, opaqueLocations, translucentCoeffs, ranks);
+                return new OitEvaluateComponent(drawBuffers, ranks, overrides);
             }
         }
 

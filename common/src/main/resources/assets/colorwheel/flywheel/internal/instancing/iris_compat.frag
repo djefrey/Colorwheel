@@ -33,9 +33,9 @@ float _clrwl_linear_depth()
 
 #ifdef CLRWL_EVALUATE
 
-float _clrwl_opaque_transmittance_from_depth(float linear, vec2 range)
+float _clrwl_frontmost_transmittance_from_depth(float linear, vec2 range)
 {
-    return linear <= -range.x + 1e-4 ? 1.0 : 0.0;
+    return linear <= -range.x + 1e-5 ? 1.0 : 0.0;
 }
 
 #endif

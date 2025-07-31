@@ -1,9 +1,10 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
+import dev.djefrey.colorwheel.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlSamplers;
+import dev.djefrey.colorwheel.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
@@ -16,7 +17,6 @@ import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
@@ -51,7 +51,7 @@ public class ClrwlProgram
 	public final int entityUniform;
 	public final int meshCenterUniform;
 
-	public static ImmutableSet<Integer> getReservedTextureUnits(Set<Integer> coeffs)
+	public static ImmutableSet<Integer> getReservedTextureUnits(int coeffCount)
 	{
 		List<Integer> res = new ArrayList<>();
 
@@ -67,15 +67,15 @@ public class ClrwlProgram
 		res.add(ClrwlSamplers.DEPTH_RANGE.number);
 		res.add(ClrwlSamplers.NOISE.number);
 
-		for (int k : coeffs)
+		for (int i = 0; i < coeffCount; i++)
 		{
-			res.add(ClrwlSamplers.getCoefficient(k).number);
+			res.add(ClrwlSamplers.getCoefficient(i).number);
 		}
 
 		return ImmutableSet.copyOf(res);
 	}
 
-	private ClrwlProgram(String name, boolean isShadowPass, PackDirectives directives,
+	private ClrwlProgram(String name, boolean isShadowPass, ClrwlShaderProperties properties,
 						 String vertex, Optional<String> geometry, String fragment,
 						 CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
@@ -120,10 +120,10 @@ public class ClrwlProgram
 			throw err;
 		}
 
-		var oitCoeffs = ((PackDirectivesAccessor) directives).getCoefficientsRanks(isShadowPass).keySet();
+		var oitCoeffs = properties.getOitCoeffRanks(isShadowPass ? ClrwlProgramGroup.SHADOW : ClrwlProgramGroup.GBUFFERS);
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, this.handle);
-		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs));
+		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs.length));
 		ProgramImages.Builder   imageBuilder   = ProgramImages.builder(this.handle);
 
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DIFFUSE.number, "flw_diffuseTex");
@@ -136,9 +136,9 @@ public class ClrwlProgram
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DEPTH_RANGE.number, "_flw_depthRange");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.NOISE.number, "_flw_blueNoise");
 
-		for (int k : oitCoeffs)
+		for (int i = 0; i < oitCoeffs.length; i++)
 		{
-			samplerBuilder.addExternalSampler(ClrwlSamplers.getCoefficient(k).number, "clrwl_coefficients" + k);
+			samplerBuilder.addExternalSampler(ClrwlSamplers.getCoefficient(i).number, "clrwl_coefficients" + i);
 		}
 
 		customUniforms.assignTo(uniformBuilder);
@@ -169,9 +169,9 @@ public class ClrwlProgram
 		return GL20.glGetUniformLocation(this.handle, name);
 	}
 
-	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ClrwlProgramSource source, PackDirectives directives, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ClrwlProgramSource source, ClrwlShaderProperties properties, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
-		return new ClrwlProgram(name, isShadowPass, directives,
+		return new ClrwlProgram(name, isShadowPass, properties,
 							    source.vertex(), source.geometry(), source.fragment(),
 							    customUniforms, pipeline);
 	}

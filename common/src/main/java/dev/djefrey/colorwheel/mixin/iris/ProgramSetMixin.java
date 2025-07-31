@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import dev.djefrey.colorwheel.ClrwlProgramId;
-import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
@@ -82,8 +81,6 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	private void colorwheel$locateClrwlDirectives()
 	{
 		DispatchingDirectiveHolder packDirectiveHolder = new DispatchingDirectiveHolder();
-
-		((PackDirectivesAccessor) packDirectives).colorwheel$acceptColorwheelDirectives(packDirectiveHolder);
 
 		for (ProgramSource source : programSrcs.values())
 		{

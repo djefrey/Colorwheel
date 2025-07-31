@@ -2,7 +2,9 @@ package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.djefrey.colorwheel.ClrwlProgramId;
+import dev.djefrey.colorwheel.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
 import dev.engine_room.flywheel.backend.compile.core.Compilation;
@@ -70,6 +72,7 @@ public class ClrwlPipelineCompiler
 		{
 			ProgramSet programSet = pack.getProgramSet(dimension);
 			ProgramSetAccessor programAccessor = (ProgramSetAccessor) programSet;
+			ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
 			boolean isShadow = key.isShadow();
 
 			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
@@ -92,7 +95,7 @@ public class ClrwlPipelineCompiler
 
 			var customSource = new ClrwlProgramSource(name, vertex, geometry, fragment);
 
-			return ClrwlProgram.createProgram(name, isShadow, customSource, programSet.getPackDirectives(), irisPipeline.getCustomUniforms(), irisPipeline);
+			return ClrwlProgram.createProgram(name, isShadow, customSource, properties, irisPipeline.getCustomUniforms(), irisPipeline);
 		}
 
 		return null;
@@ -114,8 +117,9 @@ public class ClrwlPipelineCompiler
 	{
 		ProgramSet programSet = pack.getProgramSet(dimension);
 		PackDirectives directives = programSet.getPackDirectives();
+		ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
 
-		var compile = new ClrwlCompilation(irisPipeline, directives, irisSources, sources);
+		var compile = new ClrwlCompilation(irisPipeline, directives, properties, irisSources, sources);
 
 		compile.version(GlCompat.MAX_GLSL_VERSION);
 

@@ -5,6 +5,7 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.compile.ClrwlCompilation;
 import dev.djefrey.colorwheel.compile.ClrwlPipelineStage;
 import dev.djefrey.colorwheel.compile.ClrwlPipelines;
+import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.backend.compile.core.FailedCompilation;
 import dev.engine_room.flywheel.backend.compile.core.ProgramLinker;
@@ -33,9 +34,9 @@ public class ClrwlOitPrograms
 
     private final Map<ClrwlOitCompositeShaderKey, GlProgram> compositeProgramCache = new HashMap<>();
 
-    public GlProgram getOitCompositeProgram(Map<Integer, Integer> translucentCoeffs, List<Integer> opaques, Map<Integer, Integer> ranks)
+    public GlProgram getOitCompositeProgram(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides)
     {
-        ClrwlOitCompositeShaderKey key = new ClrwlOitCompositeShaderKey(translucentCoeffs, opaques, ranks);
+        ClrwlOitCompositeShaderKey key = new ClrwlOitCompositeShaderKey(drawBuffers, ranks, overrides);
 
         return compositeProgramCache.computeIfAbsent(key, this::compileComposite);
     }
@@ -54,19 +55,16 @@ public class ClrwlOitPrograms
 
         program.setSamplerBinding("_flw_depthRange", ClrwlSamplers.DEPTH_RANGE);
 
-        for (var k : key.translucentCoeffs().keySet())
+        for (int i = 0; i < key.ranks().length; i++)
         {
-            program.setSamplerBinding("_clrwl_accumulate" + k, ClrwlSamplers.getAccumulate(k));
+            program.setSamplerBinding("clrwl_coefficients" + i, ClrwlSamplers.getCoefficient(i));
         }
 
-        for (var k : key.opaques())
-        {
-            program.setSamplerBinding("_clrwl_opaque" + k, ClrwlSamplers.getAccumulate(key.translucentCoeffs().size() + k));
-        }
+        var drawBuffers = key.drawBuffers();
 
-        for (var k : key.ranks().keySet())
+        for (int i = 0; i < drawBuffers.length; i++)
         {
-            program.setSamplerBinding("clrwl_coefficients" + k, ClrwlSamplers.getCoefficient(k));
+            program.setSamplerBinding("_clrwl_accumulate" + drawBuffers[i], ClrwlSamplers.getAccumulate(i));
         }
 
         GlProgram.unbind();
@@ -76,7 +74,7 @@ public class ClrwlOitPrograms
 
     private <K> ShaderResult compileStage(String name, ClrwlPipelineStage<K> stage, K key)
     {
-        var compile = new ClrwlCompilation(null, null, null, sources);
+        var compile = new ClrwlCompilation(null, null, null, null, sources);
 
         compile.version(GlCompat.MAX_GLSL_VERSION);
 
