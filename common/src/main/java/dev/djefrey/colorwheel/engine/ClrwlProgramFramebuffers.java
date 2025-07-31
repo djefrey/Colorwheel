@@ -117,14 +117,21 @@ public class ClrwlProgramFramebuffers
 
     public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
     {
-        return bufferBlendOverrides.computeIfAbsent(programId, (key) ->
+        var programSetAccessor = ((ProgramSetAccessor) programSet);
+        var realProgram = programSetAccessor.colorwheel$getRealClrwlProgram(programId);
+
+        if (realProgram.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        return bufferBlendOverrides.computeIfAbsent(realProgram.get(), (key) ->
         {
             var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-            var programSetAccessor = ((ProgramSetAccessor) programSet);
             var maybeSrc = programSetAccessor.colorwheel$getClrwlProgramSource(key);
 
             return maybeSrc
-                    .map(src -> computeBufferBlendOff(src, properties.getBufferBlendModeOverrides(key)))
+                    .map(src -> computeBufferBlendOff(src, properties.getBufferBlendModeOverrides(realProgram.get())))
                     .orElse(Collections.emptyList());
         });
     }
