@@ -80,18 +80,21 @@ public class ClrwlPipelineCompiler
 			var contextName = key.context().nameLowerCase();
 			var oitName = key.oit().name;
 
-			ClrwlProgramId programId = ClrwlProgramId.fromTransparency(key.transparency(), isShadow);
-			String name = String.format(programId.programName() + "_%s_%s", instanceName, materialName);
-			ProgramSource sources = programAccessor.colorwheel$getClrwlProgramSource(programId).orElseThrow();
+			ClrwlProgramId baseProgramId = ClrwlProgramId.fromTransparency(key.transparency(), isShadow);
+			ClrwlProgramId realProgramId = programAccessor.colorwheel$getRealClrwlProgram(baseProgramId).orElseThrow();
 
-			var shaderPath = key.getPath(Iris.getCurrentPackName());
+			String name = String.format("%s/%s/%s_%s%s", realProgramId.programName(), instanceName, materialName, contextName, oitName);
+			ProgramSource sources = programAccessor.colorwheel$getClrwlProgramSource(realProgramId).orElseThrow();
+
 			var vertex = compileStage(pipeline.vertex(), key, irisPipeline, sources);
 			var geometry = compileOptionalStage(pipeline.geometry(), key, irisPipeline, sources);
 			var fragment = compileStage(pipeline.fragment(), key, irisPipeline, sources);
 
-			dumpSources("/pipeline/vert/" + shaderPath + ".vsh", vertex);
-			geometry.ifPresent(sh -> dumpSources("/pipeline/geom/" + shaderPath + ".gsh", sh));
-			dumpSources("/pipeline/frag/" + shaderPath + ".fsh", fragment);
+			var basePath = "/pipeline/" + Iris.getCurrentPackName() + "/" + realProgramId.programName() + "/" + key.getPath();
+
+			dumpSources(basePath + ".vsh", vertex);
+			geometry.ifPresent(sh -> dumpSources(basePath + ".gsh", sh));
+			dumpSources(basePath + ".fsh", fragment);
 
 			var customSource = new ClrwlProgramSource(name, vertex, geometry, fragment);
 
@@ -201,7 +204,9 @@ public class ClrwlPipelineCompiler
 
 	private static void dumpSources(String fileName, String source)
 	{
-		if (!Compilation.DUMP_SHADER_SOURCE)
+		boolean shouldDump = Compilation.DUMP_SHADER_SOURCE || Iris.getIrisConfig().areDebugOptionsEnabled();
+
+		if (!shouldDump)
 		{
 			return;
 		}

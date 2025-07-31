@@ -20,15 +20,12 @@ public record ClrwlShaderKey(InstanceType<?> instanceType,
         return new ClrwlShaderKey(instanceType, material.shaders(), material.fog(), material.cutout(), material.light(), material.transparency(), context, isShadow, oit);
     }
 
-    public String getPath(String packName)
+    public String getPath()
     {
         var instanceName = ResourceUtil.toDebugFileNameNoExtension(instanceType.vertexShader());
         var materialName = ResourceUtil.toDebugFileNameNoExtension(material.vertexSource());
         var contextName = context.nameLowerCase();
 
-        return packName
-                + '/' + (isShadow ? "shadow" : "color")
-                + '/' + instanceName
-                + '/' + materialName + '_' + contextName + oit.name;
+        return instanceName + '/' + materialName + '_' + contextName + oit.name;
     }
 }

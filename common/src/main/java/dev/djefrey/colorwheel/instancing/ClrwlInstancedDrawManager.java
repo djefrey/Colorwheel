@@ -275,13 +275,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 			catch (Exception e)
 			{
-				if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
-				{
-					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
-				}
-
-				brokenShaders.add(key);
-                Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(getShaderPackName()), e);
+				handleBrokenShader(key, programId, e);
 				continue;
 			}
 
@@ -324,13 +318,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 			catch (Exception e)
 			{
-				if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
-				{
-					Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
-				}
-
-				brokenShaders.add(key);
-				Colorwheel.LOGGER.error("Could not compile shader: " + key.getPath(getShaderPackName()), e);
+				handleBrokenShader(key, isShadow ? ClrwlProgramId.SHADOW_TRANSLUCENT : ClrwlProgramId.GBUFFERS_TRANSLUCENT, e);
 				continue;
 			}
 
@@ -427,13 +415,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 						}
 						catch (Exception e)
 						{
-							if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
-							{
-								Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
-							}
-
-							brokenShaders.add(shaderKey);
-							Colorwheel.LOGGER.error("Could not compile shader: " + shaderKey.getPath(getShaderPackName()), e);
+							handleBrokenShader(shaderKey, ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, e);
 							continue;
 						}
 
@@ -450,6 +432,21 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
+	}
+
+	private void handleBrokenShader(ClrwlShaderKey key, ClrwlProgramId baseProgramId, Exception e)
+	{
+		if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
+		{
+			Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
+		}
+
+		brokenShaders.add(key);
+
+		ClrwlProgramId realProgramId = ((ProgramSetAccessor) programSet).colorwheel$getRealClrwlProgram(baseProgramId).orElse(baseProgramId);
+		String shaderPath = realProgramId.programName() + "/" + key.getPath();
+
+		Colorwheel.LOGGER.error("Could not compile shader: " + shaderPath, e);
 	}
 
 	@Override
