@@ -35,7 +35,7 @@ float _clrwl_linear_depth()
 
 float _clrwl_frontmost_transmittance_from_depth(float linear, vec2 range)
 {
-    return linear <= -range.x + 1e-5 ? 1.0 : 0.0;
+    return linear <= -range.x + 2e-5 ? 1.0 : 0.0;
 }
 
 #endif
