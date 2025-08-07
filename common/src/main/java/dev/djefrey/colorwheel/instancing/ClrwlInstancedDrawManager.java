@@ -113,8 +113,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			translucentDraws.clear();
 			oitDraws.clear();
 
-			var isOitEnabled = ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled();
-
 			for (var draw : allDraws)
 			{
 				if (draw.material().transparency() == Transparency.TRANSLUCENT)
@@ -123,14 +121,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				}
 				else if (draw.material().transparency() == Transparency.ORDER_INDEPENDENT)
 				{
-					if (isOitEnabled)
-					{
-						oitDraws.add(draw);
-					}
-					else
-					{
-						translucentDraws.add(draw);
-					}
+					oitDraws.add(draw);
 				}
 				else
 				{
@@ -197,45 +188,54 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 					? ClrwlProgramId.GBUFFERS_TRANSLUCENT
 					: ClrwlProgramId.SHADOW_TRANSLUCENT;
 
-			var maybeSrc = ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(program);
+			var isOitEnabled = ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled(program.group());
 
-			if (maybeSrc.isEmpty())
+			if (isOitEnabled)
 			{
-				return;
-			}
+				var maybeSrc = ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(program);
 
-			var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-			var directives = maybeSrc.get().getDirectives();
+				if (maybeSrc.isEmpty())
+				{
+					return;
+				}
 
-			var framebuffer = framebuffers.getFramebuffer(program, irisPipeline, programSet);
-			var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), irisPipeline, properties, directives);
-			var blendOverride = framebuffers.getBlendModeOverride(program, pack, programSet).orElse(null);
-			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program, pack, programSet);
+				var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+				var directives = maybeSrc.get().getDirectives();
 
-			if (framebuffer == null || oitFramebuffer == null)
-			{
-				return;
-			}
+				var framebuffer = framebuffers.getFramebuffer(program, irisPipeline, programSet);
+				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), irisPipeline, properties, directives);
+				var blendOverride = framebuffers.getBlendModeOverride(program, pack, programSet).orElse(null);
+				var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program, pack, programSet);
 
-			oitFramebuffer.prepare();
+				if (framebuffer == null || oitFramebuffer == null)
+				{
+					return;
+				}
 
-			oitFramebuffer.prepareDepthRange();
-			submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.DEPTH_RANGE);
+				oitFramebuffer.prepare();
 
-			if (oitFramebuffer.prepareRenderTransmittance())
-			{
-				submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
-			}
+				oitFramebuffer.prepareDepthRange();
+				submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.DEPTH_RANGE);
 
-//			oitFramebuffer.renderDepthFromTransmittance();
+				if (oitFramebuffer.prepareRenderTransmittance())
+				{
+					submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
+				}
+
+//				oitFramebuffer.renderDepthFromTransmittance();
 //
-//			// Need to bind this again because we just drew a full screen quad for OIT.
-//			vao.bindForDraw();
+//				// Need to bind this again because we just drew a full screen quad for OIT.
+//				vao.bindForDraw();
 
-			oitFramebuffer.prepareAccumulate();
-			submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
+				oitFramebuffer.prepareAccumulate();
+				submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
 
-			oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides);
+				oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides);
+			}
+			else
+			{
+				submitDraws(oitDraws, isShadow);
+			}
 		}
 
 		ClrwlMaterialRenderState.reset();

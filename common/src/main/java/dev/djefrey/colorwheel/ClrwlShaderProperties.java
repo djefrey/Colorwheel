@@ -21,11 +21,11 @@ public class ClrwlShaderProperties
     private final Map<ClrwlProgramId, ClrwlBlendModeOverride> programBlendOverrides = new HashMap<>();
     private final Map<ClrwlProgramId, ArrayList<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
 
-    private boolean oitEnabled = false;
-
+    private boolean gbuffersOitEnabled = false;
     private int[] gbuffersOitCoeffRanks = new int[0];
     private final List<ClrwlOitAccumulateOverride> gbuffersOitAccumulateOverrides = new ArrayList<>();
 
+    private boolean shadowOitEnabled = false;
     private int[] shadowOitCoeffRanks = new int[0];
     private final List<ClrwlOitAccumulateOverride> shadowOitAccumulateOverrides = new ArrayList<>();
 
@@ -157,21 +157,20 @@ public class ClrwlShaderProperties
             {
                 if (path.length == 1)
                 {
-                    var lower = value.trim().toLowerCase();
+                    var on = value.trim().equalsIgnoreCase("true");
 
-                    oitEnabled = lower.equals("on") || lower.equals("true") || lower.equals("enabled");
-                    continue;
-                }
-
-                if (path.length < 3)
-                {
-                    Colorwheel.LOGGER.error("Invalid path: {}", String.join(",", path));
+                    gbuffersOitEnabled = on;
+                    shadowOitEnabled = on;
                     continue;
                 }
 
                 if (path[1].equals("gbuffers"))
                 {
-                    if (path[2].equals("coefficientRanks") && path.length == 3)
+                    if (path.length == 2)
+                    {
+                        gbuffersOitEnabled = value.trim().equalsIgnoreCase("true");
+                    }
+                    else if (path[2].equals("coefficientRanks") && path.length == 3)
                     {
                         parseCoefficientsRanks(value)
                                 .ifPresent(ranks -> gbuffersOitCoeffRanks = ranks);
@@ -245,7 +244,11 @@ public class ClrwlShaderProperties
                 }
                 else if (path[1].equals("shadow"))
                 {
-                    if (path[2].equals("coefficientRanks") && path.length == 3)
+                    if (path.length == 2)
+                    {
+                        shadowOitEnabled = value.trim().equalsIgnoreCase("true");
+                    }
+                    else if (path[2].equals("coefficientRanks") && path.length == 3)
                     {
                         parseCoefficientsRanks(value)
                                 .ifPresent(ranks -> shadowOitCoeffRanks = ranks);
@@ -402,9 +405,21 @@ public class ClrwlShaderProperties
         return ImmutableList.copyOf(list);
     }
 
-    public boolean isOitEnabled()
+    public boolean isOitEnabled(ClrwlProgramGroup group)
     {
-        return oitEnabled;
+        switch (group)
+        {
+            case GBUFFERS ->
+            {
+                return gbuffersOitEnabled;
+            }
+            case SHADOW ->
+            {
+                return shadowOitEnabled;
+            }
+        }
+
+        throw new RuntimeException("Unknown program group: " + group);
     }
 
     public int[] getOitCoeffRanks(ClrwlProgramGroup group)
