@@ -21,6 +21,8 @@ public class ClrwlShaderProperties
     private final Map<ClrwlProgramId, ClrwlBlendModeOverride> programBlendOverrides = new HashMap<>();
     private final Map<ClrwlProgramId, ArrayList<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
 
+    private boolean shadowEnabled = true;
+
     private boolean gbuffersOitEnabled = false;
     private int[] gbuffersOitCoeffRanks = new int[0];
     private final List<ClrwlOitAccumulateOverride> gbuffersOitAccumulateOverrides = new ArrayList<>();
@@ -59,7 +61,14 @@ public class ClrwlShaderProperties
                 continue;
             }
 
-            if (path[0].equals("blend"))
+            if (path[0].equals("shadow"))
+            {
+                if (path.length == 2 && path[1].equals("enabled"))
+                {
+                    shadowEnabled = value.equalsIgnoreCase("true");
+                }
+            }
+            else if (path[0].equals("blend"))
             {
                 if (path.length == 2)
                 {
@@ -403,6 +412,11 @@ public class ClrwlShaderProperties
         }
 
         return ImmutableList.copyOf(list);
+    }
+
+    public boolean shouldRenderShadow()
+    {
+        return shadowEnabled;
     }
 
     public boolean isOitEnabled(ClrwlProgramGroup group)

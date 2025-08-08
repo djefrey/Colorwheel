@@ -9,6 +9,7 @@
     "BlockMaterialMappingMixin",
     "IrisMixin",
     "IrisRenderingPipelineMixin",
+    "PackShadowDirectivesMixin",
     "ProgramDirectivesMixin",
     "ProgramSetMixin",
     "ProgramSourceMixin",
@@ -16,7 +17,6 @@
     "ShaderPackMixin",
     "ShaderPackSourceNamesMixin",
     "ShadowRendererMixin",
-    "ShadowRenderingStateMixin",
     "ShadowRenderTargetsMixin"
   ],
   "injectors": {

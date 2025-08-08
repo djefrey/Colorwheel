@@ -1,7 +1,9 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import dev.djefrey.colorwheel.ClrwlProgramId;
+import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.parsing.ConstDirectiveParser;
@@ -37,7 +39,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 	@Unique
 	@Final
-	private Map<ClrwlProgramId, ProgramSource> programSrcs = new HashMap<>();
+	private Map<ClrwlProgramId, ProgramSource> colorwheel$programSrcs = new HashMap<>();
 
 	@Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/include/AbsolutePackPath;Ljava/util/function/Function;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/shaderpack/ShaderPack;)V",
 			at = @At("RETURN"))
@@ -71,10 +73,18 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		{
 			callReadProgramSource(directory, sourceProvider, program.programName(), (ProgramSet) (Object) this, shaderProperties, false)
 					.requireValid()
-					.ifPresent(programSource -> programSrcs.put(program, programSource));
+					.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
 		}
 
 		colorwheel$locateClrwlDirectives();
+
+		var clrwlProperties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+
+		if (clrwlProperties != null)
+		{
+			// Handle ProgramSet overrides
+			((PackShadowDirectivesAccessor) this.packDirectives.getShadowDirectives()).colorwheel$setFlywheelShadowRendering(clrwlProperties.shouldRenderShadow());
+		}
 	}
 
 	@Unique
@@ -82,7 +92,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	{
 		DispatchingDirectiveHolder packDirectiveHolder = new DispatchingDirectiveHolder();
 
-		for (ProgramSource source : programSrcs.values())
+		for (ProgramSource source : colorwheel$programSrcs.values())
 		{
 			if (source == null)
 			{
@@ -105,7 +115,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 		while (cur != null)
 		{
-			if (programSrcs.containsKey(cur))
+			if (colorwheel$programSrcs.containsKey(cur))
 			{
 				return Optional.of(cur);
 			}
@@ -122,7 +132,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 		while (cur != null)
 		{
-			var nullableSrc = programSrcs.get(cur);
+			var nullableSrc = colorwheel$programSrcs.get(cur);
 
 			if (nullableSrc != null)
 			{
