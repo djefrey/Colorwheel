@@ -95,7 +95,7 @@ void clrwl_computeDiscard(vec4 color)
     #endif
 }
 
-void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLight, out vec4 fragOverlay)
+void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLight, out float ao, out vec4 fragOverlay)
 {
     flw_sampleColor = sampleColor;
     flw_fragColor = flw_sampleColor * flw_vertexColor;
@@ -103,7 +103,13 @@ void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLi
     flw_fragOverlay = flw_vertexOverlay;
 
     _clrwl_materialFragment_hook();
+
+    vec4 fragColorBfLight = flw_fragColor;
+
     _clrwl_shaderLight_hook();
+
+    vec3 fragColorLightRatio = flw_fragColor.rgb / fragColorBfLight.rgb;
+    ao = clamp(max(max(fragColorLightRatio.r, fragColorLightRatio.g), fragColorLightRatio.b), 0.0, 1.0);
 
     clrwl_computeDiscard(flw_fragColor);
 
