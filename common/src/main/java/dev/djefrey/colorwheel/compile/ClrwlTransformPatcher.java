@@ -3,6 +3,7 @@ package dev.djefrey.colorwheel.compile;
 import dev.engine_room.flywheel.api.material.Transparency;
 import io.github.douira.glsl_transformer.ast.node.Identifier;
 import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
+import io.github.douira.glsl_transformer.ast.node.Version;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.ReferenceExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.binary.ArrayAccessExpression;
@@ -56,6 +57,8 @@ public class ClrwlTransformPatcher
 							"No #version directive found in source code! See debugging.md for more information.");
 				}
 
+				transformer.getLexer().version = Version.fromNumber(Integer.parseInt(versionMatcher.group(1)));
+
 				input = versionMatcher.replaceAll(""); // Remove version tag, replaced by Flywheel's one
 
 				Matcher extensionMatcher = extensionPattern.matcher(input);  // Remove all extensions
@@ -76,10 +79,10 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "gl_Vertex", "flw_vertexPos");
 				root.replaceReferenceExpressions(transformer, "gl_Normal", "flw_vertexNormal");
 				root.replaceReferenceExpressions(transformer, "gl_Color", "flw_vertexColor");
-				root.replaceReferenceExpressions(transformer, "at_midBlock", "flw_atMidBlock");
-				root.replaceReferenceExpressions(transformer, "at_tangent", "flw_vertexTangent");
+				root.replaceReferenceExpressions(transformer, "at_midBlock", "clrwl_vertexMidMesh");
+				root.replaceReferenceExpressions(transformer, "at_tangent", "clrwl_vertexTangent");
 				root.replaceReferenceExpressions(transformer, "mc_Entity", "vec2(-1.0)");
-				root.replaceReferenceExpressions(transformer, "mc_midTexCoord", "vec4(flw_vertexMidTexCoord, 0.0, 1.0)");
+				root.replaceReferenceExpressions(transformer, "mc_midTexCoord", "vec4(clrwl_vertexMidTexCoord, 0.0, 1.0)");
 
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(flw_vertexTexCoord, 0.0, 1.0)");
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(flw_vertexLight, 0.0, 1.0)");
@@ -88,17 +91,6 @@ public class ClrwlTransformPatcher
 				root.rename("blockEntityId", "_clrwl_blockEntityId");
 				root.rename("entityId", "_clrwl_entityId");
 				root.replaceReferenceExpressions(transformer, "entityColor", "clrwl_overlayColor");
-
-				if (!parameters.isCrumbling())
-				{
-					root.replaceReferenceExpressions(transformer, "tex", "flw_diffuseTex");
-					root.replaceReferenceExpressions(transformer, "gtexture", "flw_diffuseTex");
-				}
-				else
-				{
-					root.replaceReferenceExpressions(transformer, "tex", "_flw_crumblingTex");
-					root.replaceReferenceExpressions(transformer, "gtexture", "_flw_crumblingTex");
-				}
 
 				root.replaceReferenceExpressions(transformer, "gl_ModelViewMatrix", "flw_view");
 				root.replaceReferenceExpressions(transformer, "modelViewMatrix", "flw_view");
@@ -141,7 +133,6 @@ public class ClrwlTransformPatcher
 				root.rename("clrwl_vertexOverlay", "flw_vertexOverlay");
 				root.rename("clrwl_vertexLight", "flw_vertexLight");
 				root.rename("clrwl_vertexNormal", "flw_vertexNormal");
-				root.rename("clrwl_vertexTangent", "flw_vertexTangent");
 				root.rename("clrwl_distance", "flw_distance");
 
 				root.replaceReferenceExpressions(transformer, "clrwl_materialFragment", "_clrwl_materialFragment_hook");
@@ -149,28 +140,47 @@ public class ClrwlTransformPatcher
 
 				// TODO: remove duplicated uniforms
 
-				var oit = parameters.getOit();
-
-				if (oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE
-				||  oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
+				if (parameters.type == PatchShaderType.FRAGMENT)
 				{
-					Map<ArrayAccessExpression, Long> toReplace = new HashMap<>();
-
-					for (Identifier id : root.identifierIndex.get("gl_FragData"))
+					if (root.identifierIndex.has("gl_FragColor"))
 					{
-						var access = id.getAncestor(ArrayAccessExpression.class);
-						var idx = ((LiteralExpression) access.getRight()).getInteger();
-
-						toReplace.put(access, idx);
+						root.replaceReferenceExpressions(transformer, "gl_FragColor", "gl_FragData[0]");
 					}
 
-					for (var kv : toReplace.entrySet())
+					var oit = parameters.getOit();
+
+					if (oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE
+							||  oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
 					{
-						kv.getKey().replaceByAndDelete(new ReferenceExpression(new Identifier("clrwl_FragData" + kv.getValue())));
+						Map<ArrayAccessExpression, Long> toReplace = new HashMap<>();
+
+						for (Identifier id : root.identifierIndex.get("gl_FragData"))
+						{
+							var access = id.getAncestor(ArrayAccessExpression.class);
+							var idx = ((LiteralExpression) access.getRight()).getInteger();
+
+							toReplace.put(access, idx);
+						}
+
+						for (var kv : toReplace.entrySet())
+						{
+							kv.getKey().replaceByAndDelete(new ReferenceExpression(new Identifier("clrwl_FragData" + kv.getValue())));
+						}
 					}
 				}
 
 				CommonTransformer.transform(transformer, tree, root, parameters, false);
+
+				if (!parameters.isCrumbling())
+				{
+					root.replaceReferenceExpressions(transformer, "tex", "flw_diffuseTex");
+					root.replaceReferenceExpressions(transformer, "gtexture", "flw_diffuseTex");
+				}
+				else
+				{
+					root.replaceReferenceExpressions(transformer, "tex", "_flw_crumblingTex");
+					root.replaceReferenceExpressions(transformer, "gtexture", "_flw_crumblingTex");
+				}
 
 				root.rename("main", "_clrwl_shader_main");
 			});

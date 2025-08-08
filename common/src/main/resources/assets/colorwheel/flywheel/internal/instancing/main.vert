@@ -101,13 +101,13 @@ void main()
     vec3 flw_vertexNormal_bkp = flw_vertexNormal;
 
     flw_vertexPos = vec4(_clrwl_meshCenter, 1.0);
-    flw_vertexNormal = flw_vertexTangent.xyz;
+    flw_vertexNormal = clrwl_vertexTangent.xyz;
 
     flw_instanceVertex(instance);
 
     vec4 transformedMeshCenter = flw_vertexPos;
     float emission = flw_vertexLight_bkp.x;
-    flw_vertexTangent.xyz = flw_vertexNormal;
+    clrwl_vertexTangent.xyz = flw_vertexNormal;
 
     flw_vertexPos = flw_vertexPos_bkp;
     flw_vertexColor = flw_vertexColor_bkp;
@@ -121,7 +121,7 @@ void main()
     flw_instanceVertex(instance);
     flw_materialVertex();
 
-    flw_atMidBlock = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, emission * 15.0);
+    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, emission * 15.0);
 
     #ifdef _FLW_CRUMBLING
     flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
@@ -134,7 +134,7 @@ void main()
     #ifdef FLW_EMBEDDED
     flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
     flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
-    flw_vertexTangent = vec4(_flw_normalMatrix * flw_vertexTangent.xyz, flw_vertexTangent.w);
+    clrwl_vertexTangent = vec4(_flw_normalMatrix * clrwl_vertexTangent.xyz, clrwl_vertexTangent.w);
     #endif
 
     flw_vertexNormal = normalize(flw_vertexNormal);

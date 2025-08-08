@@ -8,7 +8,7 @@ in ClrwlVertexData
     flat ivec2 flw_vertexOverlay;
     vec2 flw_vertexLight;
     vec3 flw_vertexNormal;
-    vec4 flw_vertexTangent;
+    vec4 clrwl_vertexTangent;
 
     float flw_distance;
 } clrwl_in[3];
@@ -21,7 +21,7 @@ out ClrwlVertexData
     flat ivec2 flw_vertexOverlay;
     vec2 flw_vertexLight;
     vec3 flw_vertexNormal;
-    vec4 flw_vertexTangent;
+    vec4 clrwl_vertexTangent;
 
     float flw_distance;
 } clrwl_out;

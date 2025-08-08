@@ -4,8 +4,8 @@ in vec2 _flw_aTexCoord;
 in vec2 _flw_aOverlay;
 in vec2 _flw_aLight;
 in vec3 _flw_aNormal;
-in vec4 _flw_aTangent;
-in vec2 _flw_aMidTexCoord;
+in vec4 _clrwl_aTangent;
+in vec2 _clrwl_aMidTexCoord;
 
 void _clrwl_layoutVertex() {
     flw_vertexPos = vec4(_flw_aPos, 1.0);
@@ -16,6 +16,6 @@ void _clrwl_layoutVertex() {
     flw_vertexOverlay = ivec2(_flw_aOverlay);
     flw_vertexLight = _flw_aLight / 256.0;
     flw_vertexNormal = _flw_aNormal;
-    flw_vertexTangent = _flw_aTangent;
-    flw_vertexMidTexCoord = _flw_aMidTexCoord;
+    clrwl_vertexTangent = _clrwl_aTangent;
+    clrwl_vertexMidTexCoord = _clrwl_aMidTexCoord;
 }

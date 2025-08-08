@@ -10,13 +10,13 @@ out ClrwlVertexData
     flat ivec2 flw_vertexOverlay;
     vec2 flw_vertexLight;
     vec3 flw_vertexNormal;
-    vec4 flw_vertexTangent;
+    vec4 clrwl_vertexTangent;
 
     float flw_distance;
 };
 
-vec2 flw_vertexMidTexCoord;
-vec4 flw_atMidBlock;
+vec2 clrwl_vertexMidTexCoord;
+vec4 clrwl_vertexMidMesh;
 
 FlwMaterial flw_material;
 
