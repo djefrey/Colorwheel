@@ -7,28 +7,31 @@ import java.util.Optional;
 
 public enum ClrwlProgramId
 {
-    GBUFFERS(ClrwlProgramGroup.GBUFFERS, "clrwl_gbuffers", null, false),
-    GBUFFERS_ADDITIVE(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_additive", GBUFFERS, false),
-    GBUFFERS_GLINT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_glint", GBUFFERS, false),
-    GBUFFERS_LIGHTNING(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_lightning", GBUFFERS, false),
-    GBUFFERS_DAMAGEDBLOCK(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_damagedblock", GBUFFERS, false),
-    GBUFFERS_TRANSLUCENT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_translucent", GBUFFERS, true),
+    GBUFFERS(ClrwlProgramGroup.GBUFFERS, "clrwl_gbuffers", null, false, null),
+    GBUFFERS_ADDITIVE(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_additive", GBUFFERS, false, null),
+    GBUFFERS_GLINT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_glint", GBUFFERS, false, null),
+    GBUFFERS_LIGHTNING(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_lightning", GBUFFERS, false, null),
+    GBUFFERS_DAMAGEDBLOCK(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_damagedblock", GBUFFERS, false, null),
+    GBUFFERS_TRANSLUCENT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_translucent", GBUFFERS, true, null),
 
-    SHADOW(ClrwlProgramGroup.SHADOW, "clrwl_shadow", null, false),
-    SHADOW_TRANSLUCENT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_translucent", SHADOW, true);
+    SHADOW(ClrwlProgramGroup.SHADOW, "clrwl_shadow", null, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_TRANSLUCENT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_translucent", SHADOW, true, ClrwlBlendModeOverride.OFF);
 
     private final ClrwlProgramGroup group;
     private final String name;
     @Nullable
     private final ClrwlProgramId base;
     private final boolean afterTranslucent;
+    @Nullable
+    private final ClrwlBlendModeOverride defaultBlendOverride;
 
-    ClrwlProgramId(ClrwlProgramGroup group, String name, ClrwlProgramId base, boolean afterTranslucent)
+    ClrwlProgramId(ClrwlProgramGroup group, String name, ClrwlProgramId base, boolean afterTranslucent, @Nullable ClrwlBlendModeOverride defaultBlendOverride)
     {
         this.group = group;
         this.name = name;
         this.base = base;
         this.afterTranslucent = afterTranslucent;
+        this.defaultBlendOverride = defaultBlendOverride;
     }
 
     public ClrwlProgramGroup group()
@@ -50,6 +53,11 @@ public enum ClrwlProgramId
     public boolean afterTranslucent()
     {
         return afterTranslucent;
+    }
+
+    public Optional<ClrwlBlendModeOverride> defaultBlendOverride()
+    {
+        return Optional.ofNullable(defaultBlendOverride);
     }
 
     public static ClrwlProgramId[] gbuffers()

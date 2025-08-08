@@ -119,7 +119,7 @@ public class ClrwlProgramFramebuffers
         var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
         var realProgramId = ((ProgramSetAccessor) programSet).colorwheel$getRealClrwlProgram(programId);
 
-        return realProgramId.flatMap(properties::getBlendModeOverride);
+        return realProgramId.flatMap(properties::getBlendModeOverride).or(programId::defaultBlendOverride);
     }
 
     public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
