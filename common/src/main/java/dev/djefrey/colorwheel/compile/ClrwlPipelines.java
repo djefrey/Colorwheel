@@ -48,6 +48,7 @@ public class ClrwlPipelines
                 }
             })
             .vertex(ClrwlPipeline.vertexStage()
+                        .define("IS_COLORWHEEL")
                         .onCompile(ClrwlPipelines::setIrisDefines)
                         .onCompile((k, c) ->
                         {
@@ -80,6 +81,7 @@ public class ClrwlPipelines
                     .withResource(MAIN_VERT)
                     .build())
             .geometry(ClrwlPipeline.geometryStage()
+                    .define("IS_COLORWHEEL")
                     .onCompile(ClrwlPipelines::setIrisDefines)
                     .onCompile((k, c) ->
                     {
@@ -95,6 +97,7 @@ public class ClrwlPipelines
                     .withResource(MAIN_GEOM)
                     .build())
             .fragment(ClrwlPipeline.fragmentStage()
+                    .define("IS_COLORWHEEL")
                     .onCompile(ClrwlPipelines::setIrisDefines)
                     .enableExtension("GL_ARB_conservative_depth")
                     .onCompile((k, c) ->

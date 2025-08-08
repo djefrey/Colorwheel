@@ -17,7 +17,8 @@
     "ShaderPackMixin",
     "ShaderPackSourceNamesMixin",
     "ShadowRendererMixin",
-    "ShadowRenderTargetsMixin"
+    "ShadowRenderTargetsMixin",
+    "StandardMacrosMixin"
   ],
   "injectors": {
     "defaultRequire": 1
