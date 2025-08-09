@@ -49,6 +49,13 @@ public class ClrwlPipelines
             })
             .vertex(ClrwlPipeline.vertexStage()
                         .define("IS_COLORWHEEL")
+                        .onCompile((k, c) ->
+                        {
+                            if (k.isDebugEnabled())
+                            {
+                                c.define("_FLW_DEBUG");
+                            }
+                        })
                         .onCompile(ClrwlPipelines::setIrisDefines)
                         .onCompile((k, c) ->
                         {
@@ -82,6 +89,13 @@ public class ClrwlPipelines
                     .build())
             .geometry(ClrwlPipeline.geometryStage()
                     .define("IS_COLORWHEEL")
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isDebugEnabled())
+                        {
+                            c.define("_FLW_DEBUG");
+                        }
+                    })
                     .onCompile(ClrwlPipelines::setIrisDefines)
                     .onCompile((k, c) ->
                     {
@@ -98,6 +112,13 @@ public class ClrwlPipelines
                     .build())
             .fragment(ClrwlPipeline.fragmentStage()
                     .define("IS_COLORWHEEL")
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isDebugEnabled())
+                        {
+                            c.define("_FLW_DEBUG");
+                        }
+                    })
                     .onCompile(ClrwlPipelines::setIrisDefines)
                     .enableExtension("GL_ARB_conservative_depth")
                     .onCompile((k, c) ->

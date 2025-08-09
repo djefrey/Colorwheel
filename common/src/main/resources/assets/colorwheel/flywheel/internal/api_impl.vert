@@ -13,6 +13,7 @@ out ClrwlVertexData
     vec4 clrwl_vertexTangent;
 
     float flw_distance;
+    flat uvec2 clrwl_debugIds;
 };
 
 vec2 clrwl_vertexMidTexCoord;

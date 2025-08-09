@@ -13,6 +13,7 @@ in ClrwlVertexData
     vec4 clrwl_vertexTangent;
 
     float flw_distance;
+    flat uvec2 clrwl_debugIds;
 };
 
 vec4 flw_sampleColor;

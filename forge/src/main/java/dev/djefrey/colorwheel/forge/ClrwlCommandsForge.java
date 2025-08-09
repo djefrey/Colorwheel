@@ -2,6 +2,9 @@ package dev.djefrey.colorwheel.forge;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowFrameUniforms;
+import dev.djefrey.colorwheel.engine.uniform.DebugMode;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -16,6 +19,35 @@ public class ClrwlCommandsForge
 
         ForgeConfigSpec.BooleanValue alertIncompatiblePack = ClrwlConfigForge.INSTANCE.client.alertIncompatiblePack;
         ForgeConfigSpec.BooleanValue alertBrokenPack = ClrwlConfigForge.INSTANCE.client.alertBrokenPack;
+
+        var debug = Commands.literal("debug");
+
+        debug.then(Commands.literal("shader")
+                .then(Commands.argument("mode", DebugMode.CommandArgument.INSTANCE)
+                    .executes(ctx ->
+                    {
+                        DebugMode mode = ctx.getArgument("mode", DebugMode.class);
+                        ClrwlFrameUniforms.debugMode(mode);
+                        return Command.SINGLE_SUCCESS;
+                    })));
+
+        debug.then(Commands.literal("frustum")
+                .then(Commands.literal("capture")
+                    .executes(ctx ->
+                    {
+                        ClrwlFrameUniforms.captureFrustum();
+                        ClrwlShadowFrameUniforms.captureFrustum();
+                        return Command.SINGLE_SUCCESS;
+                    }))
+                .then(Commands.literal("unpause"))
+                    .executes(ctx ->
+                    {
+                        ClrwlFrameUniforms.unpauseFrustum();
+                        ClrwlShadowFrameUniforms.unpauseFrustum();
+                        return Command.SINGLE_SUCCESS;
+                    }));
+
+        command.then(debug);
 
         command.then(Commands.literal("alertIncompatiblePack")
                 .executes(ctx ->

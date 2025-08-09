@@ -2,6 +2,7 @@
 #include "colorwheel:internal/depth.glsl"
 #include "colorwheel:internal/diffuse.glsl"
 #include "colorwheel:internal/oit/wavelet.glsl"
+#include "colorwheel:internal/colorizer.glsl"
 
 vec4 clrwl_overlayColor = vec4(0.0);
 
@@ -95,6 +96,39 @@ void clrwl_computeDiscard(vec4 color)
     #endif
 }
 
+void clrwl_getDebugColor(inout vec4 color)
+{
+    #ifdef _FLW_DEBUG
+    switch (_flw_debugMode)
+    {
+        case 1u:
+            color = vec4(flw_vertexNormal * .5 + .5, 1.);
+            break;
+        case 2u:
+            color = vec4(clrwl_vertexTangent.xyz * .5 + .5, 1.);
+            break;
+        case 3u:
+            color = mix(vec4(1.0, 0.0, 0.0, 1.0), vec4(0.0, 0.0, 1.0, 0.0), clrwl_vertexTangent.w * .5 + .5);
+            break;
+        case 4u:
+            color = _flw_id2Color(clrwl_debugIds.x);
+            break;
+        case 5u:
+            color = vec4(vec2((flw_fragLight * 15.0 + 0.5) / 16.), 0., 1.);
+            break;
+        case 6u:
+            color = vec4(flw_fragOverlay / 16., 0., 1.);
+            break;
+        case 7u:
+            color = vec4(vec3(_clrwl_diffuseFactor()), 1.);
+            break;
+        case 8u:
+            color = _flw_id2Color(clrwl_debugIds.y);
+            break;
+    }
+    #endif
+}
+
 void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLight, out float ao, out vec4 fragOverlay)
 {
     flw_sampleColor = sampleColor;
@@ -112,6 +146,7 @@ void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLi
     ao = clamp(max(max(fragColorLightRatio.r, fragColorLightRatio.g), fragColorLightRatio.b), 0.0, 1.0);
 
     clrwl_computeDiscard(flw_fragColor);
+    clrwl_getDebugColor(flw_fragColor);
 
     fragColor = flw_fragColor;
     fragLight = flw_fragLight;

@@ -12,6 +12,7 @@ import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;

@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.material.*;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
@@ -13,11 +14,12 @@ public record ClrwlShaderKey(InstanceType<?> instanceType,
                              Transparency transparency,
                              ContextShader context,
                              boolean isShadow,
+                             boolean isDebugEnabled,
                              ClrwlPipelineCompiler.OitMode oit)
 {
     public static ClrwlShaderKey fromMaterial(InstanceType<?> instanceType, Material material, ContextShader context, boolean isShadow, ClrwlPipelineCompiler.OitMode oit)
     {
-        return new ClrwlShaderKey(instanceType, material.shaders(), material.fog(), material.cutout(), material.light(), material.transparency(), context, isShadow, oit);
+        return new ClrwlShaderKey(instanceType, material.shaders(), material.fog(), material.cutout(), material.light(), material.transparency(), context, isShadow, ClrwlFrameUniforms.debugOn(), oit);
     }
 
     public String getPath()
@@ -25,7 +27,8 @@ public record ClrwlShaderKey(InstanceType<?> instanceType,
         var instanceName = ResourceUtil.toDebugFileNameNoExtension(instanceType.vertexShader());
         var materialName = ResourceUtil.toDebugFileNameNoExtension(material.vertexSource());
         var contextName = context.nameLowerCase();
+        var debug = isDebugEnabled ? "_debug" : "";
 
-        return instanceName + '/' + materialName + '_' + contextName + oit.name;
+        return instanceName + '/' + materialName + '_' + contextName + oit.name + debug;
     }
 }

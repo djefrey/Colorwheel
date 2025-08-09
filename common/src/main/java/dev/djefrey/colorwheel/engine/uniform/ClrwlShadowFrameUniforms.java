@@ -4,7 +4,6 @@ import dev.djefrey.colorwheel.ShadowRenderContext;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
-import dev.engine_room.flywheel.backend.engine.uniform.DebugMode;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
 import net.minecraft.Util;
@@ -52,15 +51,10 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 
 	private static boolean firstWrite = true;
 
-	private static int debugMode = DebugMode.OFF.ordinal();
 	private static boolean frustumPaused = false;
 	private static boolean frustumCapture = false;
 
 	private ClrwlShadowFrameUniforms() {
-	}
-
-	public static void debugMode(DebugMode mode) {
-		debugMode = mode.ordinal();
 	}
 
 	public static void captureFrustum() {
@@ -130,7 +124,7 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 
 		ptr = writeCameraIn(ptr, camera);
 
-		ptr = writeInt(ptr, debugMode);
+		ptr = writeInt(ptr, DebugMode.OFF.ordinal());
 
 		// OIT noise factor
 		ptr = writeFloat(ptr, 0.07f);
@@ -343,9 +337,5 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		MemoryUtil.memPutFloat(ptr + 84, pzZ);
 		MemoryUtil.memPutFloat(ptr + 88, nzW);
 		MemoryUtil.memPutFloat(ptr + 92, pzW);
-	}
-
-	public static boolean debugOn() {
-		return debugMode != DebugMode.OFF.ordinal();
 	}
 }

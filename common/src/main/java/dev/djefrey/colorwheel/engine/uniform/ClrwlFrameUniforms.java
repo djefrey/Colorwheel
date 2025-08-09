@@ -3,7 +3,6 @@ package dev.djefrey.colorwheel.engine.uniform;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
-import dev.engine_room.flywheel.backend.engine.uniform.DebugMode;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;

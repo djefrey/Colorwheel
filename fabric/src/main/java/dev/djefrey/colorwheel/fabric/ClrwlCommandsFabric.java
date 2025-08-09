@@ -3,6 +3,9 @@ package dev.djefrey.colorwheel.fabric;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowFrameUniforms;
+import dev.djefrey.colorwheel.engine.uniform.DebugMode;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.commands.CommandBuildContext;
@@ -13,6 +16,35 @@ public class ClrwlCommandsFabric
     public static void registerClientCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext buildContext)
     {
         LiteralArgumentBuilder<FabricClientCommandSource> command = ClientCommandManager.literal("colorwheel");
+
+        var debug = ClientCommandManager.literal("debug");
+
+        debug.then(ClientCommandManager.literal("shader")
+                .then(ClientCommandManager.argument("mode", DebugMode.CommandArgument.INSTANCE)
+                        .executes(ctx ->
+                        {
+                            DebugMode mode = ctx.getArgument("mode", DebugMode.class);
+                            ClrwlFrameUniforms.debugMode(mode);
+                            return Command.SINGLE_SUCCESS;
+                        })));
+
+        debug.then(ClientCommandManager.literal("frustum")
+                .then(ClientCommandManager.literal("capture")
+                        .executes(ctx ->
+                        {
+                            ClrwlFrameUniforms.captureFrustum();
+                            ClrwlShadowFrameUniforms.captureFrustum();
+                            return Command.SINGLE_SUCCESS;
+                        }))
+                .then(ClientCommandManager.literal("unpause"))
+                .executes(ctx ->
+                {
+                    ClrwlFrameUniforms.unpauseFrustum();
+                    ClrwlShadowFrameUniforms.unpauseFrustum();
+                    return Command.SINGLE_SUCCESS;
+                }));
+
+        command.then(debug);
 
         command.then(ClientCommandManager.literal("alertIncompatiblePack")
                 .executes(ctx ->

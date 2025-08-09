@@ -11,6 +11,7 @@ in ClrwlVertexData
     vec4 clrwl_vertexTangent;
 
     float flw_distance;
+    vec2 flw_debugIds;
 } clrwl_in[3];
 
 out ClrwlVertexData
@@ -24,6 +25,7 @@ out ClrwlVertexData
     vec4 clrwl_vertexTangent;
 
     float flw_distance;
+    flat uvec2 clrwl_debugIds;
 } clrwl_out;
 
 uniform sampler2D flw_diffuseTex;

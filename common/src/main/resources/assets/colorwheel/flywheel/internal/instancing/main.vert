@@ -127,10 +127,6 @@ void main()
     flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
     #endif
 
-    #ifdef _FLW_DEBUG
-    _flw_ids = uvec2(stableInstanceID, modelID);
-    #endif
-
     #ifdef FLW_EMBEDDED
     flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
     flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
@@ -139,6 +135,7 @@ void main()
 
     flw_vertexNormal = normalize(flw_vertexNormal);
     flw_distance = _clrwl_fogDistance(flw_vertexPos.xyz, flw_cameraPos, flw_fogShape);
+    clrwl_debugIds = uvec2(gl_InstanceID, _flw_vertexOffset);
 
     _clrwl_shader_main();
 }
