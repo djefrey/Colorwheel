@@ -30,7 +30,7 @@ public class ClrwlTransformPatcher
 	public static final Pattern versionPattern = Pattern.compile("^.*#version\\h+(\\d+)\\V*", Pattern.DOTALL);
 	public static final Pattern extensionPattern = Pattern.compile("^.*#extension\\s+([a-zA-Z0-9_]+)\\s+:\\s+([a-zA-Z0-9_]+)", Pattern.DOTALL);
 
-	private static final String LIGHTMAP_SCALE = "0.935543854"; // 0.966793854 - 0.03125
+	private static final String LIGHTMAP_SCALE = "1.0";
 	private static final String LIGHTMAP_OFFSET = "0.03125";
 	private static final String LIGHTMAP_MATRIX = String.format("mat4(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
 				LIGHTMAP_SCALE, "0.0",			  "0.0", "0.0",

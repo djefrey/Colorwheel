@@ -149,6 +149,6 @@ void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLi
     clrwl_getDebugColor(flw_fragColor);
 
     fragColor = flw_fragColor;
-    fragLight = flw_fragLight;
+    fragLight = flw_fragLight + 1.0 / 32.0;
     fragOverlay = clrwl_overlayColor;
 }
