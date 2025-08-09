@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.instancing;
 
-import dev.djefrey.colorwheel.ClrwlMeshPool;
+import dev.djefrey.colorwheel.engine.ClrwlMeshPool;
 import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.engine.GroupKey;

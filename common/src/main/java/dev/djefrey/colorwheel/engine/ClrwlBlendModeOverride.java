@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.engine;
 
 import net.irisshaders.iris.gl.blending.BlendMode;
 import org.jetbrains.annotations.Nullable;

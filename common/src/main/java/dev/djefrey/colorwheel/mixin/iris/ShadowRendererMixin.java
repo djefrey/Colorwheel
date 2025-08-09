@@ -2,7 +2,7 @@ package dev.djefrey.colorwheel.mixin.iris;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.ShadowRenderContext;
+import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRendererAccessor;
 import dev.engine_room.flywheel.api.backend.RenderContext;

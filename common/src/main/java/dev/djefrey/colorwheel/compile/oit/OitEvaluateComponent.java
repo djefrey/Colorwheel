@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.Utils;
+import dev.djefrey.colorwheel.util.Utils;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
@@ -11,7 +11,6 @@ import dev.engine_room.flywheel.backend.glsl.generate.GlslStmt;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class OitEvaluateComponent implements SourceComponent
 {

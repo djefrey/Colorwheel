@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.util;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

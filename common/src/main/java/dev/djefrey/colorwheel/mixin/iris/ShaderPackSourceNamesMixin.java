@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.ClrwlProgramId;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import net.irisshaders.iris.shaderpack.include.ShaderPackSourceNames;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;

@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
-import dev.djefrey.colorwheel.ShadowRenderContext;
+import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import net.irisshaders.iris.shaderpack.ShaderPack;

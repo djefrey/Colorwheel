@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.util;
 
 import java.util.List;
 import java.util.Map;

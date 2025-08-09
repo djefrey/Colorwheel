@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.Utils;
+import dev.djefrey.colorwheel.util.Utils;
 import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
@@ -10,7 +10,6 @@ import dev.engine_room.flywheel.backend.glsl.generate.*;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class OitCompositeComponent implements SourceComponent

@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.instancing;
 
-import dev.djefrey.colorwheel.ClrwlMeshPool;
-import dev.djefrey.colorwheel.ClrwlProgramId;
+import dev.djefrey.colorwheel.engine.ClrwlMeshPool;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
@@ -12,7 +12,6 @@ import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
-import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;

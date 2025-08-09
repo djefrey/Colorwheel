@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.accessors;
 
-import dev.djefrey.colorwheel.ClrwlProgramId;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;

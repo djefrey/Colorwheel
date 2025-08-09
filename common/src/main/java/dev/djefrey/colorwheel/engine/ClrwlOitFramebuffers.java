@@ -5,6 +5,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.backend.NoiseTextures;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
@@ -24,7 +27,6 @@ import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL46;
 
 import java.util.List;
-import java.util.Map;
 
 public class ClrwlOitFramebuffers
 {

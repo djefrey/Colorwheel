@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import net.irisshaders.iris.helpers.StringPair;

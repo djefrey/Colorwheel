@@ -1,8 +1,8 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
-import dev.djefrey.colorwheel.ClrwlProgramId;
-import dev.djefrey.colorwheel.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;

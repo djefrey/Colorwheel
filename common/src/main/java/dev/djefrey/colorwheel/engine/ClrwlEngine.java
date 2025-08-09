@@ -2,7 +2,6 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.ShadowRenderContext;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;

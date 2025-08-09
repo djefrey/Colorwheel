@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;

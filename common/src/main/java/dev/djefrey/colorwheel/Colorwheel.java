@@ -2,6 +2,8 @@ package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
+import dev.djefrey.colorwheel.util.AccumulateTimer;
 import dev.engine_room.flywheel.api.backend.Backend;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;

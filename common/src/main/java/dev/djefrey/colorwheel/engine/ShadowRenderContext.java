@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.engine_room.flywheel.api.backend.RenderContext;

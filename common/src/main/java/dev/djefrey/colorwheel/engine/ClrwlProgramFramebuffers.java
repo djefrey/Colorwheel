@@ -1,10 +1,9 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.ClrwlBlendModeOverride;
-import dev.djefrey.colorwheel.ClrwlProgramGroup;
-import dev.djefrey.colorwheel.ClrwlProgramId;
-import dev.djefrey.colorwheel.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;

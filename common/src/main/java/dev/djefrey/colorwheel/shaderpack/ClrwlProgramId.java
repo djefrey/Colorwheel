@@ -1,5 +1,6 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.shaderpack;
 
+import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.engine_room.flywheel.api.material.Transparency;
 import org.jetbrains.annotations.Nullable;
 

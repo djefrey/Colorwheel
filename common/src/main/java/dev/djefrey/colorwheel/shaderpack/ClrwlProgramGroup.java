@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.shaderpack;
 
 public enum ClrwlProgramGroup
 {

@@ -1,9 +1,9 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
-import dev.djefrey.colorwheel.ClrwlProgramGroup;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlSamplers;
-import dev.djefrey.colorwheel.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
@@ -28,7 +28,6 @@ import org.lwjgl.opengl.GL31;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public class ClrwlProgram
 {

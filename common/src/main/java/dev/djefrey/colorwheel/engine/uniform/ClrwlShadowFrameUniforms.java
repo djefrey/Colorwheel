@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
-import dev.djefrey.colorwheel.ShadowRenderContext;
+import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
