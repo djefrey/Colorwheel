@@ -11,10 +11,13 @@ public enum ClrwlProgramId
     GBUFFERS_ADDITIVE(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_additive", GBUFFERS, false, null),
     GBUFFERS_GLINT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_glint", GBUFFERS, false, null),
     GBUFFERS_LIGHTNING(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_lightning", GBUFFERS, false, null),
-    GBUFFERS_DAMAGEDBLOCK(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_damagedblock", GBUFFERS, false, null),
     GBUFFERS_TRANSLUCENT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_translucent", GBUFFERS, true, null),
+    GBUFFERS_DAMAGEDBLOCK(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_damagedblock", GBUFFERS, false, null),
 
     SHADOW(ClrwlProgramGroup.SHADOW, "clrwl_shadow", null, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_ADDITIVE(ClrwlProgramGroup.SHADOW,"clrwl_shadow_additive", SHADOW, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_GLINT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_glint", SHADOW, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_LIGHTNING(ClrwlProgramGroup.SHADOW,"clrwl_shadow_lightning", SHADOW, false, ClrwlBlendModeOverride.OFF),
     SHADOW_TRANSLUCENT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_translucent", SHADOW, true, ClrwlBlendModeOverride.OFF);
 
     private final ClrwlProgramGroup group;
@@ -67,7 +70,7 @@ public enum ClrwlProgramId
 
     public static ClrwlProgramId[] shadow()
     {
-        return new ClrwlProgramId[] { SHADOW, SHADOW_TRANSLUCENT };
+        return new ClrwlProgramId[] { SHADOW, SHADOW_ADDITIVE, SHADOW_GLINT, SHADOW_LIGHTNING, SHADOW_TRANSLUCENT };
     }
 
     public static Optional<ClrwlProgramId> fromName(String name)
@@ -114,19 +117,39 @@ public enum ClrwlProgramId
                     return ClrwlProgramId.GBUFFERS_TRANSLUCENT;
                 }
             }
-
-            throw new RuntimeException("Unknown transparency: " + transparency);
         }
         else
         {
-            if (transparency != Transparency.TRANSLUCENT && transparency != Transparency.ORDER_INDEPENDENT)
+            switch (transparency)
             {
-                return ClrwlProgramId.SHADOW;
-            }
-            else
-            {
-                return ClrwlProgramId.SHADOW_TRANSLUCENT;
+                case OPAQUE ->
+                {
+                    return ClrwlProgramId.SHADOW;
+                }
+                case ADDITIVE ->
+                {
+                    return ClrwlProgramId.SHADOW_ADDITIVE;
+                }
+                case LIGHTNING ->
+                {
+                    return ClrwlProgramId.SHADOW_LIGHTNING;
+                }
+                case GLINT ->
+                {
+                    return ClrwlProgramId.SHADOW_GLINT;
+                }
+                case TRANSLUCENT, ORDER_INDEPENDENT ->
+                {
+                    return ClrwlProgramId.SHADOW_TRANSLUCENT;
+                }
+                case CRUMBLING ->
+                {
+                    // Should never happen
+                    return ClrwlProgramId.SHADOW;
+                }
             }
         }
+
+        throw new RuntimeException("Unknown transparency: " + transparency);
     }
 }
