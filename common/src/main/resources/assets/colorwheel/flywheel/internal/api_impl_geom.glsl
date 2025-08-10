@@ -10,7 +10,6 @@ in ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
-    float flw_distance;
     vec2 flw_debugIds;
 } clrwl_in[3];
 
@@ -24,7 +23,6 @@ out ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
-    float flw_distance;
     flat uvec2 clrwl_debugIds;
 } clrwl_out;
 

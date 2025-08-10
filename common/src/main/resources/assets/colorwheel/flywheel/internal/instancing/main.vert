@@ -1,6 +1,5 @@
 #include "flywheel:internal/packed_material.glsl"
 #include "flywheel:internal/instancing/light.glsl"
-#include "colorwheel:internal/fog_distance.glsl"
 
 #ifdef _FLW_CRUMBLING
 const int _CLRWL_DOWN = 0;
@@ -134,7 +133,6 @@ void main()
     #endif
 
     flw_vertexNormal = normalize(flw_vertexNormal);
-    flw_distance = _clrwl_fogDistance(flw_vertexPos.xyz, flw_cameraPos, flw_fogShape);
     clrwl_debugIds = uvec2(gl_InstanceID, _flw_vertexOffset);
 
     _clrwl_shader_main();

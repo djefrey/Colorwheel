@@ -12,11 +12,11 @@ in ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
-    float flw_distance;
     flat uvec2 clrwl_debugIds;
 };
 
 vec4 flw_sampleColor;
+float flw_distance;
 
 FlwMaterial flw_material;
 
