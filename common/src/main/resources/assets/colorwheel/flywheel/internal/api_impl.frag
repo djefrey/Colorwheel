@@ -2,18 +2,21 @@
 #include "flywheel:internal/api_impl.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
-in vec4 flw_vertexPos;
-in vec4 flw_vertexColor;
-in vec2 flw_vertexTexCoord;
-flat in ivec2 flw_vertexOverlay;
-in vec2 flw_vertexLight;
-in vec3 flw_vertexNormal;
-in vec4 flw_vertexTangent;
-in vec2 flw_vertexMidTexCoord;
+in ClrwlVertexData
+{
+    vec4 flw_vertexPos;
+    vec4 flw_vertexColor;
+    vec2 flw_vertexTexCoord;
+    flat ivec2 flw_vertexOverlay;
+    vec2 flw_vertexLight;
+    vec3 flw_vertexNormal;
+    vec4 clrwl_vertexTangent;
 
-in float flw_distance;
+    flat uvec2 clrwl_debugIds;
+};
 
 vec4 flw_sampleColor;
+float flw_distance;
 
 FlwMaterial flw_material;
 
@@ -24,4 +27,3 @@ vec2 flw_fragLight;
 
 uniform sampler2D flw_diffuseTex;
 uniform sampler2D flw_overlayTex;
-uniform sampler2D flw_lightTex;

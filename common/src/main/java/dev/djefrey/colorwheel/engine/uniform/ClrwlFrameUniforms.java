@@ -3,9 +3,13 @@ package dev.djefrey.colorwheel.engine.uniform;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
-import dev.engine_room.flywheel.backend.engine.uniform.DebugMode;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
+import net.irisshaders.iris.shaderpack.ShaderPack;
+import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
+import net.irisshaders.iris.shadows.ShadowMatrices;
+import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -20,7 +24,14 @@ import org.lwjgl.system.MemoryUtil;
 
 public final class ClrwlFrameUniforms extends UniformWriter
 {
-	private static final int SIZE = 96 + 64 * 9 + 48 + 16 * 5 + 8 * 2 + 8 + 4 * 19;
+	private static final int SIZE = 96 	        		// Frustum
+								  + 32 	        		// Cull
+								  + 64 * 9      		// View + Projection
+								  + 64 * 4      		// Shadow View + Projection
+								  + 48 		    		// Normal
+								  + 5 * 16 + 2 * 8      // Camera
+								  + 4 * (15 + 1);     	// Remaining
+
 	public static final UniformBuffer BUFFER = new UniformBuffer(ClrwlUniforms.FRAME_INDEX, SIZE);
 
 	private static final Matrix4f VIEW = new Matrix4f();
@@ -33,14 +44,19 @@ public final class ClrwlFrameUniforms extends UniformWriter
 	private static final Matrix4f VIEW_PROJECTION_INVERSE = new Matrix4f();
 	private static final Matrix4f VIEW_PROJECTION_PREV = new Matrix4f();
 
+	private static final Matrix4f SHADOW_VIEW = new Matrix4f();
+	private static final Matrix4f SHADOW_VIEW_INVERSE = new Matrix4f();
+	private static final Matrix4f SHADOW_PROJECTION = new Matrix4f();
+	private static final Matrix4f SHADOW_PROJECTION_INVERSE = new Matrix4f();
+
+	private static final Matrix3f NORMAL = new Matrix3f();
+
 	private static final Vector3f CAMERA_POS = new Vector3f();
 	private static final Vector3f CAMERA_POS_PREV = new Vector3f();
 	private static final Vector3f CAMERA_LOOK = new Vector3f();
 	private static final Vector3f CAMERA_LOOK_PREV = new Vector3f();
 	private static final Vector2f CAMERA_ROT = new Vector2f();
 	private static final Vector2f CAMERA_ROT_PREV = new Vector2f();
-
-	private static final Matrix3f NORMAL = new Matrix3f();
 
 	private static boolean firstWrite = true;
 
@@ -64,7 +80,10 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		frustumPaused = false;
 	}
 
-	public static void update(RenderContext context) {
+	public static void update(RenderContext context, ShaderPack pack, NamespacedId dimension)
+	{
+		PackDirectives directives = pack.getProgramSet(dimension).getPackDirectives();
+
 		long ptr = BUFFER.ptr();
 		setPrev();
 
@@ -82,15 +101,27 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		VIEW_PROJECTION.set(context.viewProjection());
 		VIEW_PROJECTION.translate(-camX, -camY, -camZ);
 
-		CAMERA_POS.set(camX, camY, camZ);
-		CAMERA_LOOK.set(camera.getLookVector());
-		CAMERA_ROT.set(camera.getXRot(), camera.getYRot());
+		var shadowModelView = ShadowRenderer.createShadowModelView(directives.getSunPathRotation(),
+																   directives.getShadowDirectives().getIntervalSize(),
+																   directives.getShadowDirectives().getNearPlane(),
+																   directives.getShadowDirectives().getFarPlane());
+		var shadowProjection = ShadowMatrices.createOrthoMatrix(directives.getShadowDirectives().getDistance(),
+																directives.getShadowDirectives().getNearPlane(),
+																directives.getShadowDirectives().getFarPlane());
+
+		SHADOW_VIEW.set(shadowModelView.last().pose());
+		SHADOW_VIEW.translate(-camX, -camY, -camZ);
+		SHADOW_PROJECTION.set(shadowProjection);
 
 		Matrix4f normal = new Matrix4f(context.modelView())
 				.translate(-camX, -camY, -camZ)
 				.invert()
 				.transpose();
 		normal.get3x3(NORMAL);
+
+		CAMERA_POS.set(camX, camY, camZ);
+		CAMERA_LOOK.set(camera.getLookVector());
+		CAMERA_ROT.set(camera.getXRot(), camera.getYRot());
 
 		if (firstWrite) {
 			setPrev();
@@ -156,6 +187,10 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		ptr = writeMat4(ptr, VIEW_PROJECTION);
 		ptr = writeMat4(ptr, VIEW_PROJECTION.invert(VIEW_PROJECTION_INVERSE));
 		ptr = writeMat4(ptr, VIEW_PROJECTION_PREV);
+		ptr = writeMat4(ptr, SHADOW_VIEW);
+		ptr = writeMat4(ptr, SHADOW_VIEW.invert(SHADOW_VIEW_INVERSE));
+		ptr = writeMat4(ptr, SHADOW_PROJECTION);
+		ptr = writeMat4(ptr, SHADOW_PROJECTION.invert(SHADOW_PROJECTION_INVERSE));
 		ptr = writeMat3(ptr, NORMAL);
 		return ptr;
 	}

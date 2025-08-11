@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.engine;
 
 import dev.engine_room.flywheel.lib.math.DataPacker;
 import dev.engine_room.flywheel.lib.vertex.AbstractVertexView;

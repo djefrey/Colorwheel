@@ -1,3 +1,4 @@
 #include "colorwheel:internal/uniform/frame.glsl"
+#include "colorwheel:internal/uniform/level.glsl"
 #include "colorwheel:internal/uniform/options.glsl"
 #include "colorwheel:internal/uniform/iris.glsl"

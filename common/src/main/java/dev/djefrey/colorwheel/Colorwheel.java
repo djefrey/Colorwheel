@@ -1,8 +1,9 @@
 package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
+import dev.djefrey.colorwheel.util.AccumulateTimer;
 import dev.engine_room.flywheel.api.backend.Backend;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;
@@ -13,7 +14,10 @@ import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +32,7 @@ public final class Colorwheel {
 
     public static final Backend IRIS_INSTANCING = SimpleBackend.builder()
             .engineFactory(level -> new ClrwlEngine(level, 256))
-            .priority(450)
+            .priority(2001) // Take priority over Iris Flywheel Compat: if the shaderpack is compatible, there are no reason to use irisflw
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(rl("instancing"));
 
@@ -58,7 +62,7 @@ public final class Colorwheel {
 
         String name = Iris.getCurrentPackName();
         ProgramSet programSet = pack.get().getProgramSet(Iris.getCurrentDimension());
-        var isCompatible = ((ProgramSetAccessor) programSet).colorwheel$getClrwlGbuffers().isPresent();
+        var isCompatible = ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(ClrwlProgramId.GBUFFERS).isPresent();
 
         if (!isCompatible)
         {

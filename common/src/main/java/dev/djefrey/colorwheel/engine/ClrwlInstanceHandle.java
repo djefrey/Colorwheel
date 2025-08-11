@@ -3,7 +3,6 @@ package dev.djefrey.colorwheel.engine;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceHandle;
 import dev.engine_room.flywheel.backend.engine.AbstractInstancer;
-import dev.engine_room.flywheel.backend.engine.InstanceHandleImpl;
 import org.jetbrains.annotations.UnknownNullability;
 
 public class ClrwlInstanceHandle<I extends Instance> implements InstanceHandle

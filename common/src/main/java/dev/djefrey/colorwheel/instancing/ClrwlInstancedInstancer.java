@@ -1,12 +1,9 @@
 package dev.djefrey.colorwheel.instancing;
 
-import dev.djefrey.colorwheel.engine.ClrwlAbstractInstancer;
 import dev.djefrey.colorwheel.engine.ClrwlBaseInstancer;
 import dev.djefrey.colorwheel.engine.ClrwlInstancerKey;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceWriter;
-import dev.engine_room.flywheel.backend.engine.BaseInstancer;
-import dev.engine_room.flywheel.backend.engine.InstancerKey;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.buffer.GlBuffer;
 import dev.engine_room.flywheel.backend.gl.buffer.GlBufferUsage;

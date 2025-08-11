@@ -9,7 +9,6 @@ import dev.engine_room.flywheel.api.instance.InstancerProvider;
 import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.api.visualization.VisualEmbedding;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
-import dev.engine_room.flywheel.backend.engine.EngineImpl;
 import dev.engine_room.flywheel.backend.engine.embed.EmbeddingUniforms;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;

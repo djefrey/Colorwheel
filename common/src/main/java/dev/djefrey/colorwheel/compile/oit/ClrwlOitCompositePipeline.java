@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.compile.oit;
 
+import dev.djefrey.colorwheel.ShaderType;
 import dev.djefrey.colorwheel.compile.ClrwlPipelineStage;
-import dev.engine_room.flywheel.backend.gl.shader.ShaderType;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 
 import java.util.Objects;

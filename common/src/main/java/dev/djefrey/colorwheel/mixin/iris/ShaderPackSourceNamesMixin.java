@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import net.irisshaders.iris.shaderpack.include.ShaderPackSourceNames;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -21,9 +22,9 @@ public abstract class ShaderPackSourceNamesMixin
 			remap = false)
 	private static void injectPotentialStats(CallbackInfoReturnable<ImmutableList<String>> cir, ImmutableList.Builder<String> builder)
 	{
-		callAddStarts(builder, "clrwl_gbuffers");
-		callAddStarts(builder, "clrwl_gbuffers_translucent");
-		callAddStarts(builder, "clrwl_shadow");
-		callAddStarts(builder, "clrwl_damagedblock");
+		for (var programId : ClrwlProgramId.values())
+		{
+			callAddStarts(builder, programId.programName());
+		}
 	}
 }

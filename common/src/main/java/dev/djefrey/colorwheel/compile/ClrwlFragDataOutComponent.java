@@ -4,7 +4,6 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 

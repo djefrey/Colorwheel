@@ -13,13 +13,13 @@ import java.util.Map;
 
 public class OitCollectCoeffsComponent implements SourceComponent
 {
-    private final Map<Integer, Integer> ranks;
-    private final Map<Integer, Integer> fragdata;
+    private final int[] ranks;
+    private final Map<Integer, Integer> coeffFrag;
 
-    public OitCollectCoeffsComponent(Map<Integer, Integer> ranks, Map<Integer, Integer> fragdata)
+    public OitCollectCoeffsComponent(int[] ranks, Map<Integer, Integer> coeffFrag)
     {
         this.ranks = ranks;
-        this.fragdata = fragdata;
+        this.coeffFrag = coeffFrag;
     }
 
     @Override
@@ -41,18 +41,16 @@ public class OitCollectCoeffsComponent implements SourceComponent
         body.add(GlslStmt.raw("float depth_adjustment = _clrwl_tented_blue_noise(flw_depth) * _flw_oitNoise;"));
         body.add(GlslStmt.raw(""));
 
-        var sorted = ranks.keySet().stream().sorted().toList();
-
-        for (int k : sorted)
+        for (int i = 0; i < ranks.length; i++)
         {
-            int rank = ranks.get(k);
-            int frag = fragdata.get(k);
+            int rank = ranks[i];
+            int frag = coeffFrag.get(i);
             int depth = 1 << (rank - 1);
 
-            String name = "clrwl_coeffs" + k;
+            String name = "clrwl_coeffs" + i;
             String fragData = "clrwl_FragData" + frag;
-            String transmittance = "transmittance" + k;
-            String adjusted_depth = "adjusted_depth" + k;
+            String transmittance = "transmittance" + i;
+            String adjusted_depth = "adjusted_depth" + i;
 
             body.add(GlslStmt.raw("float " + transmittance + " = 1.0 - " + fragData + ".a;"));
             body.add(GlslStmt.raw("float " + adjusted_depth + " = flw_depth;"));

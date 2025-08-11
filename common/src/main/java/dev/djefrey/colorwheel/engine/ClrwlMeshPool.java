@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.engine;
 
 import dev.engine_room.flywheel.api.model.Mesh;
 import dev.engine_room.flywheel.backend.engine.IndexPool;
@@ -12,6 +12,7 @@ import dev.engine_room.flywheel.lib.model.QuadMesh;
 import dev.engine_room.flywheel.lib.model.RetexturedMesh;
 import net.irisshaders.iris.vertices.NormalHelper;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector4fc;
 import org.lwjgl.opengl.GL32;
 
 import java.util.ArrayList;
@@ -254,6 +255,11 @@ public class ClrwlMeshPool {
 
 		public boolean isInvalid() {
 			return mesh.vertexCount() == 0 || baseVertex == INVALID_BASE_VERTEX || isDeleted();
+		}
+
+		public Vector4fc boundingSphere()
+		{
+			return mesh.boundingSphere();
 		}
 
 		public void draw(int instanceCount) {

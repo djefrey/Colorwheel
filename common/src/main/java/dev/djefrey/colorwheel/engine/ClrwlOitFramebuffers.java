@@ -2,27 +2,31 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.djefrey.colorwheel.ClrwlSamplers;
-import dev.djefrey.colorwheel.Utils;
+import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
-import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.backend.NoiseTextures;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
 import net.irisshaders.iris.gl.IrisRenderSystem;
+import net.irisshaders.iris.gl.blending.BlendMode;
+import net.irisshaders.iris.gl.blending.BlendModeFunction;
+import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.shaderpack.properties.PackDirectives;
+import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.targets.RenderTargets;
 import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL46;
 
 import java.util.List;
-import java.util.Map;
 
 public class ClrwlOitFramebuffers
 {
@@ -30,13 +34,15 @@ public class ClrwlOitFramebuffers
     public static final int[] DEPTH_RANGE_DRAW_BUFFERS = {GL46.GL_COLOR_ATTACHMENT0};
     public static final int[] DEPTH_ONLY_DRAW_BUFFERS = {};
 
+    private final int[] programDrawBuffers;
+
     private int[] renderTransmittanceDrawBuffers;
     private int[] accumulateDrawBuffers;
 
+    private final ClrwlProgramGroup programGroup;
     private final ClrwlOitPrograms programs;
     private final IrisRenderingPipeline irisPipeline;
-    private final boolean isShadow;
-    private final PackDirectives directives;
+    private final ClrwlShaderProperties properties;
 
     private final int vao;
 
@@ -50,12 +56,13 @@ public class ClrwlOitFramebuffers
     private int lastWidth = -1;
     private int lastHeight = -1;
 
-    public ClrwlOitFramebuffers(ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, boolean isShadow, PackDirectives directives)
+    public ClrwlOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, ClrwlShaderProperties properties, ProgramDirectives directives)
     {
+        this.programGroup = programGroup;
         this.programs = programs;
         this.irisPipeline = irisPipeline;
-        this.isShadow = isShadow;
-        this.directives = directives;
+        this.properties = properties;
+        this.programDrawBuffers = directives.getDrawBuffers();
 
         if (GlCompat.SUPPORTS_DSA)
         {
@@ -127,22 +134,29 @@ public class ClrwlOitFramebuffers
         int width;
         int height;
 
-        if (!isShadow)
+        switch (programGroup)
         {
-            // TODO: not sure that this is the correct way to acccess the render targets
-            RenderTargets targets = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getGbuffersRenderTargets();
+            case GBUFFERS ->
+            {
+                RenderTargets targets = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getGbuffersRenderTargets();
 
-            depthTexture = targets.getDepthTexture();
-            width = targets.getCurrentWidth();
-            height = targets.getCurrentHeight();
-        }
-        else
-        {
-            ShadowRenderTargets targets = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getShadowRenderTargets();
+                depthTexture = targets.getDepthTexture();
+                width = targets.getCurrentWidth();
+                height = targets.getCurrentHeight();
+            }
+            case SHADOW ->
+            {
+                ShadowRenderTargets targets = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getShadowRenderTargets();
 
-            depthTexture = targets.getDepthTexture().getTextureId();
-            width = targets.getResolution();
-            height = targets.getResolution();
+                depthTexture = targets.getDepthTexture().getTextureId();
+                width = targets.getResolution();
+                height = targets.getResolution();
+            }
+
+            default ->
+            {
+                throw new RuntimeException("Unknown program group: " + programGroup);
+            }
         }
 
         maybeResizeFBOS(width, height);
@@ -180,7 +194,7 @@ public class ClrwlOitFramebuffers
     /**
      * Render out the min and max depth per fragment.
      */
-    public void depthRange()
+    public void prepareDepthRange()
     {
         // No depth writes, but we'll still use the depth test.
         RenderSystem.depthMask(false);
@@ -207,11 +221,11 @@ public class ClrwlOitFramebuffers
     /**
      * Generate the coefficients to the transmittance function.
      */
-    public void renderTransmittance()
+    public boolean prepareRenderTransmittance()
     {
-        if (coeffsFbo == -1) // Only opaques
+        if (coeffsFbo == -1) // Only frontmost fragments
         {
-            return;
+            return false;
         }
 
         GlStateManager._glBindFramebuffer(GL32.GL_FRAMEBUFFER, coeffsFbo);
@@ -238,6 +252,8 @@ public class ClrwlOitFramebuffers
             RenderSystem.clearColor(0, 0, 0, 0);
             RenderSystem.clear(GL32.GL_COLOR_BUFFER_BIT, false);
         }
+
+        return true;
     }
 
     /**
@@ -275,7 +291,7 @@ public class ClrwlOitFramebuffers
     /**
      * Sample the transmittance function and accumulate.
      */
-    public void accumulate()
+    public void prepareAccumulate()
     {
         GlStateManager._glBindFramebuffer(GL32.GL_FRAMEBUFFER, mainFbo);
 
@@ -306,7 +322,7 @@ public class ClrwlOitFramebuffers
     /**
      * Composite the accumulated luminance onto the main framebuffer.
      */
-    public void composite(GlFramebuffer target, List<Integer> bufferBlendOff)
+    public void composite(GlFramebuffer target, @Nullable ClrwlBlendModeOverride blendModeOverride, List<BufferBlendInformation> bufferBlendOverrides)
     {
         target.bind();
 
@@ -316,22 +332,55 @@ public class ClrwlOitFramebuffers
         // If Neo gets wavelet OIT we can use their hooks to be correct with everything.
         RenderSystem.depthMask(true);
         RenderSystem.colorMask(true, true, true, true);
-        RenderSystem.enableBlend();
 
-        // We rely on the blend func to achieve:
-        // final color = (1 - transmittance_total) * sum(color_f * alpha_f * transmittance_f) / sum(alpha_f * transmittance_f)
-        //			+ color_dst * transmittance_total
-        //
-        // Though note that the alpha value we emit in the fragment shader is actually (1. - transmittance_total).
-        // The extra inversion step is so we can have a sane alpha value written out for the fabulous blit shader to consume.
-        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-        RenderSystem.blendEquation(GL32.GL_FUNC_ADD);
-        RenderSystem.depthFunc(GL32.GL_ALWAYS);
+        BlendMode blendMode;
 
-        for (var buffer : bufferBlendOff)
+        if (blendModeOverride == null)
         {
-            IrisRenderSystem.disableBufferBlend(buffer);
+            // We rely on the blend func to achieve:
+            // final color = (1 - transmittance_total) * sum(color_f * alpha_f * transmittance_f) / sum(alpha_f * transmittance_f)
+            //			+ color_dst * transmittance_total
+            //
+            // Though note that the alpha value we emit in the fragment shader is actually (1. - transmittance_total).
+            // The extra inversion step is so we can have a sane alpha value written out for the fabulous blit shader to consume.
+
+            blendMode = new BlendMode(
+                BlendModeFunction.SRC_ALPHA.getGlId(),
+                BlendModeFunction.ONE_MINUS_SRC_ALPHA.getGlId(),
+                BlendModeFunction.ONE.getGlId(),
+                BlendModeFunction.ONE_MINUS_SRC_ALPHA.getGlId()
+            );
         }
+        else
+        {
+            blendMode = blendModeOverride.blendMode();
+        }
+
+        if (blendMode == null)
+        {
+            RenderSystem.disableBlend();
+        }
+        else
+        {
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
+            RenderSystem.blendEquation(GL32.GL_FUNC_ADD);
+        }
+
+        for (var entry : bufferBlendOverrides)
+        {
+            if (entry.blendMode() == null)
+            {
+                IrisRenderSystem.disableBufferBlend(entry.index());
+            }
+            else
+            {
+                IrisRenderSystem.enableBufferBlend(entry.index());
+                IrisRenderSystem.blendFuncSeparatei(entry.index(), entry.blendMode().srcRgb(), entry.blendMode().dstRgb(), entry.blendMode().srcAlpha(), entry.blendMode().dstAlpha());
+            }
+        }
+
+        RenderSystem.depthFunc(GL32.GL_ALWAYS);
 
         for (int i = 0; i < accumulate.length; i++)
         {
@@ -339,11 +388,10 @@ public class ClrwlOitFramebuffers
             RenderSystem.bindTexture(accumulate[i]);
         }
 
-        Map<Integer, Integer> translucentCoeffs = getTranslucentCoefficientsMap();
-        List<Integer> opaques = getOpaqueAccumulateBuffers();
-        Map<Integer, Integer> ranks = getCoefficientRanks();
+        var ranks = properties.getOitCoeffRanks(programGroup);
+        var overrides = properties.getOitAccumulateOverrides(programGroup);
 
-        programs.getOitCompositeProgram(translucentCoeffs, opaques, ranks)
+        programs.getOitCompositeProgram(programDrawBuffers, ranks, overrides)
                 .bind();
 
         drawFullscreenQuad();
@@ -374,66 +422,48 @@ public class ClrwlOitFramebuffers
 
     private void resizeMainFBO(int width, int height)
     {
-        var translucents = getTranslucentAccumulateBuffers();
-        var opaques = getOpaqueAccumulateBuffers();
+        var overrides = properties.getOitAccumulateOverrides(programGroup);
+        var accumulateCnt = programDrawBuffers.length;
 
-        var accumulateCnt = translucents.size() + opaques.size();
+        mainFbo = GL46.glCreateFramebuffers();
+        accumulate = new int[accumulateCnt];
+        accumulateDrawBuffers = new int[accumulateCnt];
 
         if (GlCompat.SUPPORTS_DSA)
         {
-            mainFbo = GL46.glCreateFramebuffers();
-            accumulate = new int[accumulateCnt];
-
             depthBounds = GL46.glCreateTextures(GL46.GL_TEXTURE_2D);
 
             GL46.glTextureStorage2D(depthBounds, 1, GL32.GL_RG32F, width, height);
 
-            for (int i = 0; i < translucents.size(); i++)
+            for (int i = 0; i < accumulateCnt; i++)
             {
-                int id = translucents.get(i);
-                var format = getTranslucentAccumulateFormat(id);
+                var drawBuffer = programDrawBuffers[i];
+                var format = InternalTextureFormat.RGBA8;
+
+                var maybeOverride = Utils.findFirst(overrides, e -> e.drawBuffer() == drawBuffer);
+
+                if (maybeOverride.isPresent())
+                {
+                    format  = maybeOverride.get().format();
+                }
+
                 int buffer = GL46.glCreateTextures(GL46.GL_TEXTURE_2D);
 
                 GL46.glTextureStorage2D(buffer, 1, format.getGlFormat(), width, height);
                 accumulate[i] = buffer;
             }
 
-            for (int i = 0; i < opaques.size(); i++)
-            {
-                int id = opaques.get(i);
-                var format = getOpaqueAccumulateFormat(id);
-                int buffer = GL46.glCreateTextures(GL46.GL_TEXTURE_2D);
-
-                GL46.glTextureStorage2D(buffer, 1, format.getGlFormat(), width, height);
-                accumulate[translucents.size() + i] = buffer;
-            }
-
             GL46.glNamedFramebufferTexture(mainFbo, GL32.GL_COLOR_ATTACHMENT0, depthBounds, 0);
 
-            accumulateDrawBuffers = new int[accumulateCnt];
-
-            for (int i = 0; i < translucents.size(); i++)
+            for (int i = 0; i < accumulateCnt; i++)
             {
-                int id = i;
-
-                GL46.glNamedFramebufferTexture(mainFbo, GL32.GL_COLOR_ATTACHMENT1 + id, accumulate[id], 0);
-                accumulateDrawBuffers[id] = GL32.GL_COLOR_ATTACHMENT1 + id;
-            }
-
-            for (int i = 0; i < opaques.size(); i++)
-            {
-                int id = translucents.size() + i;
-
-                GL46.glNamedFramebufferTexture(mainFbo, GL32.GL_COLOR_ATTACHMENT1 + id, accumulate[id], 0);
-                accumulateDrawBuffers[id] = GL32.GL_COLOR_ATTACHMENT1 + id;
+                GL46.glNamedFramebufferTexture(mainFbo, GL32.GL_COLOR_ATTACHMENT1 + i, accumulate[i], 0);
+                accumulateDrawBuffers[i] = GL32.GL_COLOR_ATTACHMENT1 + i;
             }
         }
         else
         {
-            mainFbo = GL46.glGenFramebuffers();
-
             depthBounds = GL32.glGenTextures();
-            accumulate = new int[accumulateCnt];
 
             GlTextureUnit.T0.makeActive();
             RenderSystem.bindTexture(0);
@@ -446,10 +476,18 @@ public class ClrwlOitFramebuffers
             GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_S, GL32.GL_CLAMP_TO_EDGE);
             GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_T, GL32.GL_CLAMP_TO_EDGE);
 
-            for (int i = 0; i < translucents.size(); i++)
+            for (int i = 0; i < accumulateCnt; i++)
             {
-                int id = translucents.get(i);
-                var format = getTranslucentAccumulateFormat(id);
+                var drawBuffer = programDrawBuffers[i];
+                var format = InternalTextureFormat.RGBA8;
+
+                var maybeOverride = Utils.findFirst(overrides, e -> e.drawBuffer() == drawBuffer);
+
+                if (maybeOverride.isPresent())
+                {
+                    format  = maybeOverride.get().format();
+                }
+
                 int buffer = GL32.glGenTextures();
 
                 GL32.glBindTexture(GL32.GL_TEXTURE_2D, buffer);
@@ -463,51 +501,22 @@ public class ClrwlOitFramebuffers
                 accumulate[i] = buffer;
             }
 
-            for (int i = 0; i < opaques.size(); i++)
-            {
-                int id = opaques.get(i);
-                var format = getOpaqueAccumulateFormat(id);
-                int buffer = GL32.glGenTextures();
-
-                GL32.glBindTexture(GL32.GL_TEXTURE_2D, buffer);
-                GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, format.getGlFormat(), width, height, 0, format.getPixelFormat().getGlFormat(), GL32.GL_BACK, 0);
-
-                GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_NEAREST);
-                GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_NEAREST);
-                GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_S, GL32.GL_CLAMP_TO_EDGE);
-                GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_T, GL32.GL_CLAMP_TO_EDGE);
-
-                accumulate[translucents.size() + i] = buffer;
-            }
-
             GlStateManager._glBindFramebuffer(GL32.GL_FRAMEBUFFER, mainFbo);
 
             GL46.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, depthBounds, 0);
 
-            accumulateDrawBuffers = new int[accumulateCnt];
-
-            for (int i = 0; i < translucents.size(); i++)
+            for (int i = 0; i < accumulateCnt; i++)
             {
-                int id = i;
-
-                GL46.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT1 + id, accumulate[id], 0);
-                accumulateDrawBuffers[id] = GL32.GL_COLOR_ATTACHMENT1 + id;
-            }
-
-            for (int i = 0; i < opaques.size(); i++)
-            {
-                int id = translucents.size() + i;
-
-                GL46.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT1 + id, accumulate[id], 0);
-                accumulateDrawBuffers[id] = GL32.GL_COLOR_ATTACHMENT1 + id;
+                GL46.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT1 + i, accumulate[i], 0);
+                accumulateDrawBuffers[i] = GL32.GL_COLOR_ATTACHMENT1 + i;
             }
         }
     }
 
     private void resizeCoeffsFBO(int width, int height)
     {
-        var coeffs = getCoefficientsBuffers();
-        var coeffCnt = coeffs.size();
+        var coeffRanks = properties.getOitCoeffRanks(programGroup);
+        var coeffCnt = coeffRanks.length;
 
         if (coeffCnt == 0) // Only opaques
         {
@@ -523,8 +532,7 @@ public class ClrwlOitFramebuffers
 
             for (int i = 0; i < coeffCnt; i++)
             {
-                int id = coeffs.get(i);
-                int rank = getCoefficientRank(id);
+                int rank = coeffRanks[i];
                 int buffer = GL46.glCreateTextures(GL46.GL_TEXTURE_2D_ARRAY);
                 int depth = Utils.divRoundUp(1 << (rank + 1), 4);
 
@@ -538,8 +546,7 @@ public class ClrwlOitFramebuffers
 
             for (int i = 0; i < coeffCnt; i++)
             {
-                int id = coeffs.get(i);
-                int rank = getCoefficientRank(id);
+                int rank = coeffRanks[i];
                 int depth = Utils.divRoundUp(1 << (rank + 1), 4);
 
                 for (int j = 0; j < depth; j++)
@@ -560,8 +567,7 @@ public class ClrwlOitFramebuffers
 
             for (int i = 0; i < coeffCnt; i++)
             {
-                int id = coeffs.get(i);
-                int rank = getCoefficientRank(id);
+                int rank = coeffRanks[i];
                 int buffer = GL32.glGenTextures();
                 int depth = Utils.divRoundUp(1 << (rank + 1), 4);
 
@@ -584,8 +590,7 @@ public class ClrwlOitFramebuffers
 
             for (int i = 0; i < coeffCnt; i++)
             {
-                int id = coeffs.get(i);
-                int rank = getCoefficientRank(id);
+                int rank = coeffRanks[i];
                 int depth = Utils.divRoundUp(1 << (rank + 1), 4);
 
                 for (int j = 0; j < depth; j++)
@@ -596,76 +601,5 @@ public class ClrwlOitFramebuffers
                 }
             }
         }
-    }
-
-    private Map<Integer, Integer> getTranslucentCoefficientsMap()
-    {
-        return ((PackDirectivesAccessor) directives).getTranslucentCoefficients(isShadow);
-    }
-
-    private Map<Integer, Integer> getCoefficientRanks()
-    {
-        return ((PackDirectivesAccessor) directives).getCoefficientsRanks(isShadow);
-    }
-
-    private List<Integer> getCoefficientsBuffers()
-    {
-        return ((PackDirectivesAccessor) directives).getTranslucentCoefficients(isShadow).values().stream().sorted().toList();
-    }
-
-    private List<Integer> getTranslucentAccumulateBuffers()
-    {
-        return ((PackDirectivesAccessor) directives).getTranslucentRenderTargets(isShadow).keySet().stream().sorted().toList();
-    }
-
-    private List<Integer> getOpaqueAccumulateBuffers()
-    {
-        return ((PackDirectivesAccessor) directives).getOpaqueRenderTargets(isShadow).keySet().stream().sorted().toList();
-    }
-
-    private InternalTextureFormat getTranslucentAccumulateFormat(int id)
-    {
-        var format = ((PackDirectivesAccessor) directives).getTranslucentAccumulateFormats(isShadow).get(id);
-
-        if (format == null)
-        {
-            return InternalTextureFormat.RGBA16F;
-        }
-
-        return format;
-    }
-
-    private InternalTextureFormat getOpaqueAccumulateFormat(int id)
-    {
-        var format = ((PackDirectivesAccessor) directives).getOpaqueAccumulateFormats(isShadow).get(id);
-
-        if (format == null)
-        {
-            return InternalTextureFormat.RGBA16F;
-        }
-
-        return format;
-    }
-
-    private int getCoefficientRank(int id)
-    {
-        var rank = ((PackDirectivesAccessor) directives).getCoefficientsRanks(isShadow).get(id);
-
-        if (rank == null)
-        {
-            return 3;
-        }
-
-        return rank;
-    }
-
-    private int getTranslucentRenderTarget(int id)
-    {
-        return ((PackDirectivesAccessor) directives).getTranslucentRenderTargets(isShadow).get(id);
-    }
-
-    private int getOpaqueRenderTarget(int id)
-    {
-        return ((PackDirectivesAccessor) directives).getOpaqueRenderTargets(isShadow).get(id);
     }
 }

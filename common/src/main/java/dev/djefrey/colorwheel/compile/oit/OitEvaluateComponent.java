@@ -1,6 +1,8 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.util.Utils;
+import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBlock;
@@ -9,21 +11,18 @@ import dev.engine_room.flywheel.backend.glsl.generate.GlslStmt;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class OitEvaluateComponent implements SourceComponent
 {
-    private final Map<Integer, Integer> translucents;
-    private final Map<Integer, Integer> opaques;
-    private final Map<Integer, Integer> translucentCoeffs;
-    private final Map<Integer, Integer> ranks;
+    private int[] drawBuffers;
+    private int[] ranks;
+    private List<ClrwlOitAccumulateOverride> overrides;
 
-    public OitEvaluateComponent(Map<Integer, Integer> translucents, Map<Integer, Integer> opaques, Map<Integer, Integer> translucentCoeffs, Map<Integer, Integer> ranks)
+    public OitEvaluateComponent(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides)
     {
-        this.translucents = translucents;
-        this.opaques = opaques;
-        this.translucentCoeffs = translucentCoeffs;
+        this.drawBuffers = drawBuffers;
         this.ranks = ranks;
+        this.overrides = overrides;
     }
 
     @Override
@@ -45,48 +44,37 @@ public class OitEvaluateComponent implements SourceComponent
         body.add(GlslStmt.raw("float depth_adjustment = _clrwl_tented_blue_noise(flw_depth) * _flw_oitNoise;"));
         body.add(GlslStmt.raw(""));
 
-        var sortedTranslucents = translucents.keySet().stream().sorted().toList();
-        var sortedOpaques = opaques.keySet().stream().sorted().toList();
+        String transmittance_from_depth = "depth_transmittance";
+        body.add(GlslStmt.raw("float " + transmittance_from_depth + " = _clrwl_frontmost_transmittance_from_depth(linearDepth, depthRange);"));
 
-        for (var k : sortedTranslucents)
+        for (int i = 0; i < drawBuffers.length; i++)
         {
-            int location = translucents.get(k);
-            Integer coeffId = translucentCoeffs.get(k);
+            int drawBuffer = drawBuffers[i];
+            String outName = "iris_FragData" + i;
 
-            if (coeffId == null)
+            var maybeCoeffId = Utils.findFirst(overrides, e -> e.drawBuffer() == drawBuffer)
+                    .flatMap(ClrwlOitAccumulateOverride::coefficientId);
+
+            if (maybeCoeffId.isPresent())
             {
-                coeffId = 0;
+                int coeffId = maybeCoeffId.get();
+                int rank = ranks[coeffId];
+
+                String transmittance = "transmittance" + drawBuffer;
+                String coeffs = "clrwl_coefficients" + coeffId;
+                String depth = "depth" + drawBuffer;
+                String correctedTransmittance = "correctedTransmittance" + drawBuffer;
+
+                body.add(GlslStmt.raw("float " + transmittance + " = 1. - " + outName + ".a;"));
+                body.add(GlslStmt.raw("float " + depth + " = flw_depth;"));
+                // Don't do the depth adjustment if this fragment is opaque.
+                body.add(GlslStmt.raw("if (" + transmittance + " > 1e-5) { " + depth + " -= depth_adjustment; }"));
+                body.add(GlslStmt.raw("float " + correctedTransmittance + " = _clrwl_signal_corrected_transmittance(" + coeffs + ", " + depth + ", " + transmittance + ", " + rank + ");"));
+                body.add(GlslStmt.raw(outName + ".rgb *= " + outName + ".a;"));
+                body.add(GlslStmt.raw(outName + " *= " + correctedTransmittance + ";"));
             }
-
-            int rank = ranks.get(coeffId);
-
-            String outName = "iris_FragData" + location;
-            String transmittance = "transmittance" + k;
-            String coeffs = "clrwl_coefficients" + coeffId;
-            String depth = "depth" + k;
-            String correctedTransmittance = "correctedTransmittance" + k;
-
-            body.add(GlslStmt.raw("float " + transmittance + " = 1. - " + outName + ".a;"));
-            body.add(GlslStmt.raw("float " + depth + " = flw_depth;"));
-            // Don't do the depth adjustment if this fragment is opaque.
-            body.add(GlslStmt.raw("if (" + transmittance + " > 1e-5) { " + depth + " -= depth_adjustment; }"));
-            body.add(GlslStmt.raw("float " + correctedTransmittance + " = _clrwl_signal_corrected_transmittance(" + coeffs + ", " + depth + ", " + transmittance + ", " + rank + ");"));
-            body.add(GlslStmt.raw(outName + ".rgb *= " + outName + ".a;"));
-            body.add(GlslStmt.raw(outName + " *= " + correctedTransmittance + ";"));
-        }
-
-        if (!opaques.isEmpty())
-        {
-            String transmittance_from_depth = "depth_transmittance";
-
-            body.add(GlslStmt.raw("float " + transmittance_from_depth + " = _clrwl_opaque_transmittance_from_depth(linearDepth, depthRange);"));
-
-            for (var k : sortedOpaques)
+            else // Frontmost
             {
-                int location = opaques.get(k);
-
-                String outName = "iris_FragData" + location;
-
                 body.add(GlslStmt.raw(outName + " *= " + transmittance_from_depth +";"));
             }
         }

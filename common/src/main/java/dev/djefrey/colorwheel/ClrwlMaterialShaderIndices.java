@@ -1,11 +1,8 @@
 package dev.djefrey.colorwheel;
 
-import dev.djefrey.colorwheel.compile.ClrwlPipeline;
-import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.api.material.FogShader;
-import dev.engine_room.flywheel.backend.compile.PipelineCompiler;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

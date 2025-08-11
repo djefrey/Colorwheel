@@ -1,7 +1,9 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.engine_room.flywheel.api.material.Transparency;
 import io.github.douira.glsl_transformer.ast.node.Identifier;
 import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
+import io.github.douira.glsl_transformer.ast.node.Version;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.ReferenceExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.binary.ArrayAccessExpression;
@@ -25,8 +27,17 @@ import java.util.regex.Pattern;
 public class ClrwlTransformPatcher
 {
 	private static final SingleASTTransformer<ClrwlTransformParameters> transformer;
-	private static final Pattern versionPattern = Pattern.compile("^.*#version\\s+(\\d+)", Pattern.DOTALL);
-	private static final Pattern extensionPattern = Pattern.compile("^.*#extension\\s+([a-zA-Z0-9_]+)\\s+:\\s+([a-zA-Z0-9_]+)", Pattern.DOTALL);
+	public static final Pattern versionPattern = Pattern.compile("^.*#version\\h+(\\d+)\\V*", Pattern.DOTALL);
+	public static final Pattern extensionPattern = Pattern.compile("^.*#extension\\s+([a-zA-Z0-9_]+)\\s+:\\s+([a-zA-Z0-9_]+)", Pattern.DOTALL);
+
+	private static final String LIGHTMAP_SCALE = "1.0";
+	private static final String LIGHTMAP_OFFSET = "0.03125";
+	private static final String LIGHTMAP_MATRIX = String.format("mat4(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+				LIGHTMAP_SCALE, "0.0",			  "0.0", "0.0",
+				"0.0", 			LIGHTMAP_SCALE,   "0.0", "0.0",
+				"0.0", 			"0.0", 			  "1.0", "0.0",
+				LIGHTMAP_OFFSET, LIGHTMAP_OFFSET, "0.0", "1.0"
+			);
 
 	static
 	{
@@ -46,6 +57,8 @@ public class ClrwlTransformPatcher
 							"No #version directive found in source code! See debugging.md for more information.");
 				}
 
+				transformer.getLexer().version = Version.fromNumber(Integer.parseInt(versionMatcher.group(1)));
+
 				input = versionMatcher.replaceAll(""); // Remove version tag, replaced by Flywheel's one
 
 				Matcher extensionMatcher = extensionPattern.matcher(input);  // Remove all extensions
@@ -63,24 +76,100 @@ public class ClrwlTransformPatcher
 
 			root.indexBuildSession(() ->
 			{
-				root.replaceExpressionMatches(transformer, CommonTransformer.glTextureMatrix0, "mat4(1.0)");
-				root.replaceExpressionMatches(transformer, CommonTransformer.glTextureMatrix1, "mat4(1.0)");
-				root.replaceExpressionMatches(transformer, CommonTransformer.glTextureMatrix2, "mat4(1.0)");
+				root.replaceReferenceExpressions(transformer, "gl_Vertex", "flw_vertexPos");
+				root.replaceReferenceExpressions(transformer, "gl_Normal", "flw_vertexNormal");
+				root.replaceReferenceExpressions(transformer, "gl_Color", "flw_vertexColor");
+				root.replaceReferenceExpressions(transformer, "at_midBlock", "clrwl_vertexMidMesh");
+				root.replaceReferenceExpressions(transformer, "at_tangent", "clrwl_vertexTangent");
+				root.replaceReferenceExpressions(transformer, "mc_Entity", "vec2(-1.0)");
+				root.replaceReferenceExpressions(transformer, "mc_midTexCoord", "vec4(clrwl_vertexMidTexCoord, 0.0, 1.0)");
 
-				root.rename("gl_MultiTexCoord2", "gl_MultiTexCoord1");
-
-				root.replaceReferenceExpressions(transformer, "gl_Vertex", "vec4(_flw_aPos, 1.0)");
-				root.replaceReferenceExpressions(transformer, "gl_Normal", "_flw_aNormal");
-				root.replaceReferenceExpressions(transformer, "gl_Color", "_flw_aColor");
-				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(_flw_aTexCoord, 0.0, 1.0)");
-				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(_flw_aLight, 0.0, 1.0)");
-				root.replaceReferenceExpressions(transformer, "at_tangent", "_flw_aTangent");
-				root.replaceReferenceExpressions(transformer, "mc_midTexCoord", "_flw_aMidTexCoord");
-
-//				root.replaceReferenceExpressions(transformer, "gl_NormalMatrix", "clrwl_normal");
+				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(flw_vertexTexCoord, 0.0, 1.0)");
+				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(flw_vertexLight, 0.0, 1.0)");
+				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord2",  "vec4(flw_vertexLight, 0.0, 1.0)");
 
 				root.rename("blockEntityId", "_clrwl_blockEntityId");
 				root.rename("entityId", "_clrwl_entityId");
+				root.replaceReferenceExpressions(transformer, "entityColor", "clrwl_overlayColor");
+
+				root.replaceReferenceExpressions(transformer, "gl_ModelViewMatrix", "flw_view");
+				root.replaceReferenceExpressions(transformer, "modelViewMatrix", "flw_view");
+				root.replaceReferenceExpressions(transformer, "gl_ModelViewMatrixInverse", "flw_viewInverse");
+				root.replaceReferenceExpressions(transformer, "modelViewMatrixInverse", "flw_viewInverse");
+
+				root.replaceReferenceExpressions(transformer, "gl_ProjectionMatrix", "flw_projection");
+				root.replaceReferenceExpressions(transformer, "projectionMatrix", "flw_projection");
+				root.replaceReferenceExpressions(transformer, "gl_ProjectionMatrixInverse", "flw_projectionInverse");
+				root.replaceReferenceExpressions(transformer, "projectionMatrixInverse", "flw_projectionInverse	");
+
+				root.replaceReferenceExpressions(transformer, "gl_ModelViewProjectionMatrix", "flw_viewProjection");
+				root.replaceReferenceExpressions(transformer, "modelViewProjectionMatrix", "flw_viewProjection");
+				root.replaceReferenceExpressions(transformer, "gl_ModelViewProjectionMatrixInverse", "flw_viewProjectionInverse");
+				root.replaceReferenceExpressions(transformer, "modelViewProjectionMatrixInverse", "flw_viewProjectionInverse");
+
+				root.replaceExpressionMatches(transformer, CommonTransformer.glTextureMatrix0, "mat4(1.0)");
+				root.replaceReferenceExpressions(transformer, "textureMatrix", "mat4(1.0)");
+				root.replaceExpressionMatches(transformer, CommonTransformer.glTextureMatrix1, LIGHTMAP_MATRIX);
+				root.replaceExpressionMatches(transformer, CommonTransformer.glTextureMatrix2, LIGHTMAP_MATRIX);
+
+				root.replaceReferenceExpressions(transformer, "gl_NormalMatrix", "clrwl_normal");
+				root.replaceReferenceExpressions(transformer, "normalMatrix", "clrwl_normal");
+
+				root.replaceReferenceExpressions(transformer, "clrwl_view", "flw_view");
+				root.replaceReferenceExpressions(transformer, "clrwl_viewInverse", "flw_viewInverse");
+				root.replaceReferenceExpressions(transformer, "clrwl_viewPrev", "flw_viewPrev");
+				root.replaceReferenceExpressions(transformer, "clrwl_projection", "flw_projection");
+				root.replaceReferenceExpressions(transformer, "clrwl_projectionInverse", "flw_projectionInverse");
+				root.replaceReferenceExpressions(transformer, "clrwl_projectionPrev", "flw_projectionPrev");
+				root.replaceReferenceExpressions(transformer, "clrwl_viewProjection", "flw_viewProjection");
+				root.replaceReferenceExpressions(transformer, "clrwl_viewProjectionInverse", "flw_viewProjectionInverse");
+				root.replaceReferenceExpressions(transformer, "clrwl_viewProjectionPrev", "flw_viewProjectionPrev");
+				root.replaceReferenceExpressions(transformer, "clrwl_renderOrigin", "flw_renderOrigin");
+				root.replaceReferenceExpressions(transformer, "clrwl_cameraPos", "flw_cameraPos");
+
+				root.rename("clrwl_vertexPos", "flw_vertexPos");
+				root.rename("clrwl_vertexColor", "flw_vertexColor");
+				root.rename("clrwl_vertexTexCoord", "flw_vertexTexCoord");
+				root.rename("clrwl_vertexOverlay", "flw_vertexOverlay");
+				root.rename("clrwl_vertexLight", "flw_vertexLight");
+				root.rename("clrwl_vertexNormal", "flw_vertexNormal");
+				root.rename("clrwl_distance", "flw_distance");
+
+				root.replaceReferenceExpressions(transformer, "clrwl_materialFragment", "_clrwl_materialFragment_hook");
+				root.replaceReferenceExpressions(transformer, "clrwl_shaderLight", "_clrwl_shaderLight_hook");
+
+				// TODO: remove duplicated uniforms
+
+				if (parameters.type == PatchShaderType.FRAGMENT)
+				{
+					if (root.identifierIndex.has("gl_FragColor"))
+					{
+						root.replaceReferenceExpressions(transformer, "gl_FragColor", "gl_FragData[0]");
+					}
+
+					var oit = parameters.getOit();
+
+					if (oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE
+							||  oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
+					{
+						Map<ArrayAccessExpression, Long> toReplace = new HashMap<>();
+
+						for (Identifier id : root.identifierIndex.get("gl_FragData"))
+						{
+							var access = id.getAncestor(ArrayAccessExpression.class);
+							var idx = ((LiteralExpression) access.getRight()).getInteger();
+
+							toReplace.put(access, idx);
+						}
+
+						for (var kv : toReplace.entrySet())
+						{
+							kv.getKey().replaceByAndDelete(new ReferenceExpression(new Identifier("clrwl_FragData" + kv.getValue())));
+						}
+					}
+				}
+
+				CommonTransformer.transform(transformer, tree, root, parameters, false);
 
 				if (!parameters.isCrumbling())
 				{
@@ -93,62 +182,31 @@ public class ClrwlTransformPatcher
 					root.replaceReferenceExpressions(transformer, "gtexture", "_flw_crumblingTex");
 				}
 
-				// TODO: remove duplicated uniforms
-
-				var oit = parameters.getOit();
-				String colorFragData;
-
-				if (oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE
-				||  oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
-				{
-					Map<ArrayAccessExpression, Long> toReplace = new HashMap<>();
-
-					for (Identifier id : root.identifierIndex.get("gl_FragData"))
-					{
-						var access = id.getAncestor(ArrayAccessExpression.class);
-						var idx = ((LiteralExpression) access.getRight()).getInteger();
-
-						toReplace.put(access, idx);
-					}
-
-					for (var kv : toReplace.entrySet())
-					{
-						kv.getKey().replaceByAndDelete(new ReferenceExpression(new Identifier("clrwl_FragData" + kv.getValue())));
-					}
-
-					colorFragData = "clrwl_FragData0";
-				}
-				else
-				{
-					colorFragData = "iris_FragData0";
-				}
-
-				CommonTransformer.transform(transformer, tree, root, parameters, false);
-
-				root.rename("main", "_flw_shader_main");
-
-				if (parameters.type == PatchShaderType.FRAGMENT && !parameters.directives().noAutoFragColor() && root.identifierIndex.has(colorFragData))
-				{
-					// Insert assign to ensure that discard test is correct
-					var statement = transformer.parseStatement(root, "flw_fragColor = " + colorFragData + ";");
-					tree.appendFunctionBody("_flw_shader_main", statement);
-				}
+				root.rename("main", "_clrwl_shader_main");
 			});
 		});
 	}
 
-	public static String patchVertex(String vertex, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchVertex(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, isCrumbling, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
 
 		return transformer.transform(vertex, parameters);
 	}
 
-	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchGeometry(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	{
+		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
+
+		return transformer.transform(vertex, parameters);
+	}
+
+	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromFragment(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, isCrumbling, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, transparency, directives, textureMap);
 
 		return transformer.transform(fragment, parameters);
 	}

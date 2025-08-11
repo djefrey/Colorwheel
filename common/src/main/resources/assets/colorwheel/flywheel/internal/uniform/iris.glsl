@@ -24,7 +24,6 @@ uniform bool iris_is_sneaking;
 uniform bool iris_is_on_ground;
 
 #define flw_eyePos (iris_eyePosition)
-// flw_fovOption
 #define flw_eyeBrightness (vec2(iris_eyeBrightness / 15))
 #define flw_heldLight ((float) (iris_heldBlockLightValue / 15))
 #define flw_playerEyeInFluid (iris_isEyeInWater)
@@ -63,9 +62,9 @@ uniform float iris_ambientLight;
 #define flw_sunAngle (iris_sunAngle)
 // flw_moonBrightness
 #define flw_moonPhase ((uint) iris_moonPhase)
-// flw_isRaining
+#define flw_isRaining (iris_rainStrength > 0.0)
 #define flw_rainLevel (iris_rainStrength)
-// flw_isThundering
+#define flw_isThundering (iris_thunderStrength > 0.0)
 #define flw_thunderLevel (iris_thunderStrength)
 // flw_skyDarken
 #define flw_constantAmbientLight (iris_ambientLight)

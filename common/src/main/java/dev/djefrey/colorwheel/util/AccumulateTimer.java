@@ -1,6 +1,5 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.util;
 
-import java.util.Timer;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;

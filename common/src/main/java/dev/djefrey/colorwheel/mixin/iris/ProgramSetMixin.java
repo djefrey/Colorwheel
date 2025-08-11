@@ -1,8 +1,9 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.accessors.PackDirectivesAccessor;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
+import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import net.irisshaders.iris.gl.blending.BlendModeOverride;
+import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.parsing.ConstDirectiveParser;
@@ -11,7 +12,6 @@ import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.ShaderProperties;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,8 +21,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -38,20 +38,8 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	public abstract ProgramSource callReadProgramSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties, boolean readTessellation);
 
 	@Unique
-	@Nullable
-	private ProgramSource clrwl_gbuffers;
-
-	@Unique
-	@Nullable
-	private ProgramSource clrwl_gbuffers_translucent;
-
-	@Unique
-	@Nullable
-	private ProgramSource clrwl_shadow;
-
-	@Unique
-	@Nullable
-	private ProgramSource clrwl_damagedblock;
+	@Final
+	private Map<ClrwlProgramId, ProgramSource> colorwheel$programSrcs = new HashMap<>();
 
 	@Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/include/AbsolutePackPath;Ljava/util/function/Function;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/shaderpack/ShaderPack;)V",
 			at = @At("RETURN"))
@@ -81,29 +69,30 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 //			return builder.toString();
 //		};
 
-		this.clrwl_gbuffers = callReadProgramSource(directory, sourceProvider, "clrwl_gbuffers", (ProgramSet) (Object) this, shaderProperties, false);
-		this.clrwl_gbuffers_translucent = callReadProgramSource(directory, sourceProvider, "clrwl_gbuffers_translucent", (ProgramSet) (Object) this, shaderProperties, false);
-		this.clrwl_shadow = callReadProgramSource(directory, sourceProvider, "clrwl_shadow",  (ProgramSet) (Object) this, shaderProperties, false);
-		this.clrwl_damagedblock = callReadProgramSource(directory, sourceProvider, "clrwl_damagedblock", (ProgramSet) (Object) this, shaderProperties, false);
+		for (var program : ClrwlProgramId.values())
+		{
+			callReadProgramSource(directory, sourceProvider, program.programName(), (ProgramSet) (Object) this, shaderProperties, false)
+					.requireValid()
+					.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
+		}
 
 		colorwheel$locateClrwlDirectives();
+
+		var clrwlProperties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+
+		if (clrwlProperties != null)
+		{
+			// Handle ProgramSet overrides
+			((PackShadowDirectivesAccessor) this.packDirectives.getShadowDirectives()).colorwheel$setFlywheelShadowRendering(clrwlProperties.shouldRenderShadow());
+		}
 	}
 
 	@Unique
 	private void colorwheel$locateClrwlDirectives()
 	{
-		List<ProgramSource> clrwlPrograms = new ArrayList<>();
-
-		clrwlPrograms.add(this.clrwl_gbuffers);
-		clrwlPrograms.add(this.clrwl_gbuffers_translucent);
-		clrwlPrograms.add(this.clrwl_shadow);
-		clrwlPrograms.add(this.clrwl_damagedblock);
-
 		DispatchingDirectiveHolder packDirectiveHolder = new DispatchingDirectiveHolder();
 
-		((PackDirectivesAccessor) packDirectives).colorwheel$acceptColorwheelDirectives(packDirectiveHolder);
-
-		for (ProgramSource source : clrwlPrograms)
+		for (ProgramSource source : colorwheel$programSrcs.values())
 		{
 			if (source == null)
 			{
@@ -120,44 +109,39 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 	}
 
-	public Optional<ProgramSource> colorwheel$getClrwlGbuffers()
+	public Optional<ClrwlProgramId> colorwheel$getRealClrwlProgram(ClrwlProgramId programId)
 	{
-		if (clrwl_gbuffers == null)
+		ClrwlProgramId cur = programId;
+
+		while (cur != null)
 		{
-			return Optional.empty();
+			if (colorwheel$programSrcs.containsKey(cur))
+			{
+				return Optional.of(cur);
+			}
+
+			cur = cur.base();
 		}
 
-        return clrwl_gbuffers.requireValid();
+		return Optional.empty();
 	}
 
-	public Optional<ProgramSource> colorwheel$getClrwlGbuffersTranslucent()
+	public Optional<ProgramSource> colorwheel$getClrwlProgramSource(ClrwlProgramId programId)
 	{
-		if (clrwl_gbuffers_translucent == null)
+		ClrwlProgramId cur = programId;
+
+		while (cur != null)
 		{
-			return Optional.empty();
+			var nullableSrc = colorwheel$programSrcs.get(cur);
+
+			if (nullableSrc != null)
+			{
+				return Optional.of(nullableSrc);
+			}
+
+			cur = cur.base();
 		}
 
-		return clrwl_gbuffers_translucent.requireValid();
-	}
-
-	public Optional<ProgramSource> colorwheel$getClrwlShadow()
-	{
-		if (clrwl_shadow == null)
-		{
-			return Optional.empty();
-		}
-
-		return clrwl_shadow.requireValid();
-	}
-
-
-	public Optional<ProgramSource> colorwheel$getClrwlDamagedblock()
-	{
-		if (clrwl_damagedblock == null)
-		{
-			return Optional.empty();
-		}
-
-		return clrwl_damagedblock.requireValid();
+		return Optional.empty();
 	}
 }

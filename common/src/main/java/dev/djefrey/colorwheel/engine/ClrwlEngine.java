@@ -2,7 +2,6 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.ShadowRenderContext;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
@@ -20,7 +19,7 @@ import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.api.visualization.VisualEmbedding;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
-import dev.engine_room.flywheel.backend.engine.*;
+import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.GlStateTracker;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -139,7 +138,7 @@ public class ClrwlEngine implements Engine
 			{
 				if (shadowContext.phase() == ShadowRenderContext.RenderPhase.SOLID)
 				{
-					ClrwlUniforms.update(context);
+					ClrwlUniforms.update(context, pack, dimension);
 					environmentStorage.flush();
 					drawManager.prepareFrame(lightStorage, environmentStorage);
 
@@ -152,7 +151,7 @@ public class ClrwlEngine implements Engine
 			}
 			else
 			{
-				ClrwlUniforms.update(context);
+				ClrwlUniforms.update(context, pack, dimension);
 				environmentStorage.flush();
 				drawManager.prepareFrame(lightStorage, environmentStorage);
 
@@ -201,9 +200,9 @@ public class ClrwlEngine implements Engine
 		return lightStorage;
 	}
 
-	public LevelAccessor level() { return level; };
+	public LevelAccessor level() { return level; }
 
-	public <I extends Instance>Instancer<I> instancer(ClrwlInstanceVisual visual, Environment environment, InstanceType<I> type, Model model, int bias)
+    public <I extends Instance>Instancer<I> instancer(ClrwlInstanceVisual visual, Environment environment, InstanceType<I> type, Model model, int bias)
 	{
 		return drawManager.getInstancer(visual, environment, type, model, bias);
 	}

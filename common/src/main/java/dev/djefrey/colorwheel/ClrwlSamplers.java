@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel;
 
 import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
-import org.lwjgl.opengl.GL32;
 
 public class ClrwlSamplers
 {

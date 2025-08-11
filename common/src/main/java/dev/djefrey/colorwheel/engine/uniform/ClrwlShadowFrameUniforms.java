@@ -1,10 +1,9 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
-import dev.djefrey.colorwheel.ShadowRenderContext;
+import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
-import dev.engine_room.flywheel.backend.engine.uniform.DebugMode;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
 import net.minecraft.Util;
@@ -21,7 +20,14 @@ import org.lwjgl.system.MemoryUtil;
 
 public final class ClrwlShadowFrameUniforms extends UniformWriter
 {
-	private static final int SIZE = 96 + 64 * 9 + 48 + 16 * 5 + 8 * 2 + 8 + 4 * 19;
+	private static final int SIZE = 96 	        		// Frustum
+								  + 32 	        		// Cull
+								  + 64 * 9      		// View + Projection
+								  + 64 * 4      		// Shadow View + Projection
+								  + 48 		    		// Normal
+								  + 5 * 16 + 2 * 8      // Camera
+								  + 4 * (15 + 1);     	// Remaining
+
 	public static final UniformBuffer BUFFER = new UniformBuffer(ClrwlUniforms.FRAME_INDEX, SIZE);
 
 	private static final Matrix4f VIEW = new Matrix4f();
@@ -34,6 +40,8 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 	private static final Matrix4f VIEW_PROJECTION_INVERSE = new Matrix4f();
 	private static final Matrix4f VIEW_PROJECTION_PREV = new Matrix4f();
 
+	private static final Matrix3f NORMAL = new Matrix3f();
+
 	private static final Vector3f CAMERA_POS = new Vector3f();
 	private static final Vector3f CAMERA_POS_PREV = new Vector3f();
 	private static final Vector3f CAMERA_LOOK = new Vector3f();
@@ -41,19 +49,12 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 	private static final Vector2f CAMERA_ROT = new Vector2f();
 	private static final Vector2f CAMERA_ROT_PREV = new Vector2f();
 
-	private static final Matrix3f NORMAL = new Matrix3f();
-
 	private static boolean firstWrite = true;
 
-	private static int debugMode = DebugMode.OFF.ordinal();
 	private static boolean frustumPaused = false;
 	private static boolean frustumCapture = false;
 
 	private ClrwlShadowFrameUniforms() {
-	}
-
-	public static void debugMode(DebugMode mode) {
-		debugMode = mode.ordinal();
 	}
 
 	public static void captureFrustum() {
@@ -123,7 +124,7 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 
 		ptr = writeCameraIn(ptr, camera);
 
-		ptr = writeInt(ptr, debugMode);
+		ptr = writeInt(ptr, DebugMode.OFF.ordinal());
 
 		// OIT noise factor
 		ptr = writeFloat(ptr, 0.07f);
@@ -156,6 +157,10 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		ptr = writeMat4(ptr, VIEW_PROJECTION);
 		ptr = writeMat4(ptr, VIEW_PROJECTION.invert(VIEW_PROJECTION_INVERSE));
 		ptr = writeMat4(ptr, VIEW_PROJECTION_PREV);
+		ptr = writeMat4(ptr, VIEW); // Shadow Matrices
+		ptr = writeMat4(ptr, VIEW_INVERSE);
+		ptr = writeMat4(ptr, PROJECTION);
+		ptr = writeMat4(ptr, PROJECTION_INVERSE);
 		ptr = writeMat3(ptr, NORMAL);
 		return ptr;
 	}
@@ -332,9 +337,5 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		MemoryUtil.memPutFloat(ptr + 84, pzZ);
 		MemoryUtil.memPutFloat(ptr + 88, nzW);
 		MemoryUtil.memPutFloat(ptr + 92, pzW);
-	}
-
-	public static boolean debugOn() {
-		return debugMode != DebugMode.OFF.ordinal();
 	}
 }

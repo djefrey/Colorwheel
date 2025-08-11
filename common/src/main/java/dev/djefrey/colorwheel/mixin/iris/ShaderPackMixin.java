@@ -1,7 +1,8 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.ShaderPack;
@@ -9,6 +10,7 @@ import net.irisshaders.iris.shaderpack.include.IncludeGraph;
 import net.irisshaders.iris.shaderpack.include.IncludeProcessor;
 import net.irisshaders.iris.shaderpack.option.ProfileSet;
 import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -40,6 +42,8 @@ public abstract class ShaderPackMixin implements ShaderPackAccessor
 	@Shadow
 	private static Optional<String> loadProperties(Path shaderPath, String name) { return Optional.empty(); }
 
+	@Shadow @Final private ProgramSet base;
+
 	@Inject(method = "<init>(Ljava/nio/file/Path;Ljava/util/Map;Lcom/google/common/collect/ImmutableList;Z)V",
 			at = @At("RETURN"),
 			locals = LocalCapture.CAPTURE_FAILEXCEPTION)
@@ -49,6 +53,8 @@ public abstract class ShaderPackMixin implements ShaderPackAccessor
 		this.colorwheel$properties = loadProperties(root, "colorwheel.properties")
 				.map((str) -> new ClrwlShaderProperties(str, shaderPackOptions, finalEnvironmentDefines1))
 				.orElseGet(ClrwlShaderProperties::new);
+
+		((PackShadowDirectivesAccessor) this.base.getPackDirectives().getShadowDirectives()).colorwheel$setFlywheelShadowRendering(colorwheel$getProperties().shouldRenderShadow());
 	}
 
 	public ImmutableList<StringPair> colorwheel$getEnvironmentDefines()
@@ -56,5 +62,5 @@ public abstract class ShaderPackMixin implements ShaderPackAccessor
 		return colorwheel$environmentDefines;
 	}
 
-	public ClrwlShaderProperties colorwheel$getProperties() { return colorwheel$properties; };
+	public ClrwlShaderProperties colorwheel$getProperties() { return colorwheel$properties; }
 }

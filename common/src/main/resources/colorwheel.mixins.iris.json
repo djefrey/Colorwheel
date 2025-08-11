@@ -9,7 +9,7 @@
     "BlockMaterialMappingMixin",
     "IrisMixin",
     "IrisRenderingPipelineMixin",
-    "PackDirectivesMixin",
+    "PackShadowDirectivesMixin",
     "ProgramDirectivesMixin",
     "ProgramSetMixin",
     "ProgramSourceMixin",
@@ -17,8 +17,8 @@
     "ShaderPackMixin",
     "ShaderPackSourceNamesMixin",
     "ShadowRendererMixin",
-    "ShadowRenderingStateMixin",
-    "ShadowRenderTargetsMixin"
+    "ShadowRenderTargetsMixin",
+    "StandardMacrosMixin"
   ],
   "injectors": {
     "defaultRequire": 1

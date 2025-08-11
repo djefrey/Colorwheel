@@ -1,12 +1,9 @@
 package dev.djefrey.colorwheel.compile.oit;
 
-import dev.djefrey.colorwheel.engine.ClrwlOitCoeffDirective;
+import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 
 import java.util.List;
-import java.util.Map;
 
-public record ClrwlOitCompositeShaderKey(Map<Integer, Integer> translucentCoeffs,
-                                         List<Integer> opaques,
-                                         Map<Integer, Integer> ranks)
+public record ClrwlOitCompositeShaderKey(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides)
 {
 }

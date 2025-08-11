@@ -2,7 +2,6 @@ package dev.djefrey.colorwheel.engine;
 
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.engine_room.flywheel.api.material.*;
-import dev.engine_room.flywheel.backend.MaterialShaderIndices;
 import net.minecraft.util.Mth;
 
 // Materials are unpacked in "flywheel:flywheel/internal/packed_material.glsl"

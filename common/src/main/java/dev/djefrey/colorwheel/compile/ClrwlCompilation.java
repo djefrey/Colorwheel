@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
@@ -20,13 +21,15 @@ public class ClrwlCompilation
 
     private final IrisRenderingPipeline pipeline;
     private final PackDirectives directives;
+    private final ClrwlShaderProperties properties;
     private final ProgramSource irisSources;
     private final ShaderSources sourceLoader;
 
-    public ClrwlCompilation(IrisRenderingPipeline pipeline, PackDirectives directives, ProgramSource irisSources, ShaderSources sourceLoader)
+    public ClrwlCompilation(IrisRenderingPipeline pipeline, PackDirectives directives, ClrwlShaderProperties properties, ProgramSource irisSources, ShaderSources sourceLoader)
     {
         this.pipeline = pipeline;
         this.directives = directives;
+        this.properties = properties;
         this.irisSources = irisSources;
         this.sourceLoader = sourceLoader;
     }
@@ -101,6 +104,12 @@ public class ClrwlCompilation
     public PackDirectives getPackDirectives()
     {
         return directives;
+    }
+
+    @Nullable
+    public ClrwlShaderProperties getProperties()
+    {
+        return properties;
     }
 
     @Nullable

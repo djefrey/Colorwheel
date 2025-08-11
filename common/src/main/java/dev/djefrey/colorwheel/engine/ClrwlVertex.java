@@ -1,5 +1,6 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.engine;
 
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.engine_room.flywheel.api.layout.FloatRepr;
 import dev.engine_room.flywheel.api.layout.Layout;
 import dev.engine_room.flywheel.api.layout.LayoutBuilder;

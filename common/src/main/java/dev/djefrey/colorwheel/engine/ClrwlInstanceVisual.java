@@ -3,7 +3,7 @@ package dev.djefrey.colorwheel.engine;
 public record ClrwlInstanceVisual(Type type, int irisId)
 {
     private static final int UNDEFINED_ID = -1;
-    private static final ClrwlInstanceVisual UNDEFINED = new ClrwlInstanceVisual(Type.UNDEFINIED, UNDEFINED_ID);
+    private static final ClrwlInstanceVisual UNDEFINED = new ClrwlInstanceVisual(Type.UNDEFINED, UNDEFINED_ID);
 
     public static ClrwlInstanceVisual undefined()
     {
@@ -46,9 +46,9 @@ public record ClrwlInstanceVisual(Type type, int irisId)
         {
             switch (type)
             {
-                case UNDEFINIED ->
+                case UNDEFINED ->
                 {
-                    return rhs.type == Type.UNDEFINIED;
+                    return rhs.type == Type.UNDEFINED;
                 }
                 case BLOCKENTITY ->
                 {
@@ -72,7 +72,7 @@ public record ClrwlInstanceVisual(Type type, int irisId)
 
         result = prime * result + this.type.hashCode();
 
-        if (type != Type.UNDEFINIED)
+        if (type != Type.UNDEFINED)
         {
             result = prime * result + this.irisId;
         }
@@ -82,7 +82,7 @@ public record ClrwlInstanceVisual(Type type, int irisId)
 
     public enum Type
     {
-        UNDEFINIED,
+        UNDEFINED,
         BLOCKENTITY,
         ENTITY
     }
