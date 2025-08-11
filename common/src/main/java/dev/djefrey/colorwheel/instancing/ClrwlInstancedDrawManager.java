@@ -24,6 +24,7 @@ import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
@@ -32,6 +33,7 @@ import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.network.chat.Component;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
@@ -152,6 +154,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
+		setPhase(RenderingPhase.SOLID, isShadow);
+
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
 		TextureBinder.bindLightAndOverlay();
@@ -171,6 +175,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		}
 
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
+
+		setPhase(RenderingPhase.TRANSLUCENT, isShadow);
 
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
@@ -212,6 +218,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 					return;
 				}
 
+				setPhase(RenderingPhase.OIT_DEPTH_RANGE, isShadow);
+
 				oitFramebuffer.prepare();
 
 				oitFramebuffer.prepareDepthRange();
@@ -219,6 +227,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 				if (oitFramebuffer.prepareRenderTransmittance())
 				{
+					setPhase(RenderingPhase.OIT_COEFFICIENTS, isShadow);
 					submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
 				}
 
@@ -227,13 +236,18 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 //				// Need to bind this again because we just drew a full screen quad for OIT.
 //				vao.bindForDraw();
 
+				setPhase(RenderingPhase.OIT_ACCUMULATE, isShadow);
+
 				oitFramebuffer.prepareAccumulate();
 				submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
+
+				setPhase(RenderingPhase.OIT_COMPOSITE, isShadow);
 
 				oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides);
 			}
 			else
 			{
+				setPhase(RenderingPhase.TRANSLUCENT, isShadow);
 				submitDraws(oitDraws, isShadow);
 			}
 		}
@@ -368,6 +382,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		{
 			return;
 		}
+
+		setPhase(RenderingPhase.CRUMBLING, false);
 
 		framebuffer.bind();
 
@@ -510,5 +526,24 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private String getShaderPackName()
 	{
 		return Iris.getCurrentPackName();
+	}
+
+	private void setPhase(RenderingPhase phase, boolean shadow)
+	{
+		var name = "Clrwl " + (shadow ? "Shadow " : "") + StringUtils.capitalize(phase.name().toLowerCase(Locale.ROOT).replace("_", " "));
+
+		GLDebug.popGroup();
+		GLDebug.pushGroup(110800 + phase.ordinal(), name);
+	}
+
+	public enum RenderingPhase
+	{
+		SOLID,
+		TRANSLUCENT,
+		OIT_DEPTH_RANGE,
+		OIT_COEFFICIENTS,
+		OIT_ACCUMULATE,
+		OIT_COMPOSITE,
+		CRUMBLING
 	}
 }
