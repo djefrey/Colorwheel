@@ -29,6 +29,6 @@ public abstract class StandardMacrosMixin
     )
     private static void colorwheel$injectClrwlStandardDefines(CallbackInfoReturnable<ImmutableList<StringPair>> cir, ArrayList<StringPair> standardDefines)
     {
-        define(standardDefines, "IS_COLORWHEEL");
+        define(standardDefines, "HAS_COLORWHEEL");
     }
 }
