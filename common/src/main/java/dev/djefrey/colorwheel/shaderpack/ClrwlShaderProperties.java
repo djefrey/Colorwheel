@@ -181,11 +181,13 @@ public class ClrwlShaderProperties
                     if (path.length == 2)
                     {
                         gbuffersOitEnabled = value.trim().equalsIgnoreCase("true");
+                        continue;
                     }
                     else if (path[2].equals("coefficientRanks") && path.length == 3)
                     {
                         parseCoefficientsRanks(value)
                                 .ifPresent(ranks -> gbuffersOitCoeffRanks = ranks);
+                        continue;
                     }
                     else if (path[2].startsWith("colortex"))
                     {
@@ -259,11 +261,13 @@ public class ClrwlShaderProperties
                     if (path.length == 2)
                     {
                         shadowOitEnabled = value.trim().equalsIgnoreCase("true");
+                        continue;
                     }
                     else if (path[2].equals("coefficientRanks") && path.length == 3)
                     {
                         parseCoefficientsRanks(value)
                                 .ifPresent(ranks -> shadowOitCoeffRanks = ranks);
+                        continue;
                     }
                     else if (path[2].startsWith("shadowcolor"))
                     {
