@@ -1,24 +1,20 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.compile.ClrwlFragDataOutComponent;
 import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class OitCoefficientsOutputComponent implements SourceComponent
 {
     private final int[] ranks;
-    private final int drawBufferCnt;
 
-    public OitCoefficientsOutputComponent(int[] ranks, int drawBufferCnt)
+    public OitCoefficientsOutputComponent(int[] ranks)
     {
         this.ranks = ranks;
-        this.drawBufferCnt = drawBufferCnt;
     }
 
     @Override
@@ -49,8 +45,6 @@ public class OitCoefficientsOutputComponent implements SourceComponent
                 idx += 1;
             }
         }
-
-        ClrwlFragDataOutComponent.addFragDataOuts(builder, drawBufferCnt);
 
         return builder.build();
     }

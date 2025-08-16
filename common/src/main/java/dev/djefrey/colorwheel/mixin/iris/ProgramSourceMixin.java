@@ -2,8 +2,7 @@ package dev.djefrey.colorwheel.mixin.iris;
 
 import dev.djefrey.colorwheel.ShaderType;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
-import dev.djefrey.colorwheel.compile.ClrwlTransformPatcher;
-import dev.engine_room.flywheel.backend.glsl.GlslVersion;
+import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
