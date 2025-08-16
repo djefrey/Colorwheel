@@ -11,7 +11,9 @@ import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class ClrwlCompilation
 {
@@ -24,6 +26,8 @@ public class ClrwlCompilation
     private final ClrwlShaderProperties properties;
     private final ProgramSource irisSources;
     private final ShaderSources sourceLoader;
+
+    private Map<Integer, String> shaderOutputs = Collections.emptyMap();
 
     public ClrwlCompilation(IrisRenderingPipeline pipeline, PackDirectives directives, ClrwlShaderProperties properties, ProgramSource irisSources, ShaderSources sourceLoader)
     {
@@ -121,5 +125,15 @@ public class ClrwlCompilation
     public ShaderSources getLoader()
     {
         return sourceLoader;
+    }
+
+    public Map<Integer, String> getShaderOutputs()
+    {
+        return shaderOutputs;
+    }
+
+    public void setShaderOutputs(Map<Integer, String> outputs)
+    {
+        this.shaderOutputs = outputs;
     }
 }

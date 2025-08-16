@@ -3,6 +3,7 @@ package dev.djefrey.colorwheel.compile;
 import com.google.common.collect.ImmutableSet;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlSamplers;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
@@ -28,6 +29,7 @@ import org.lwjgl.opengl.GL31;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class ClrwlProgram
 {
@@ -74,7 +76,7 @@ public class ClrwlProgram
 		return ImmutableSet.copyOf(res);
 	}
 
-	private ClrwlProgram(String name, boolean isShadowPass, ClrwlShaderProperties properties,
+	private ClrwlProgram(String name, ClrwlProgramId programId, ClrwlShaderProperties properties,
 						 String vertex, Optional<String> geometry, String fragment,
 						 CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
@@ -119,7 +121,7 @@ public class ClrwlProgram
 			throw err;
 		}
 
-		var oitCoeffs = properties.getOitCoeffRanks(isShadowPass ? ClrwlProgramGroup.SHADOW : ClrwlProgramGroup.GBUFFERS);
+		var oitCoeffs = properties.getOitCoeffRanks(programId.group());
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, this.handle);
 		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs.length));
@@ -140,10 +142,16 @@ public class ClrwlProgram
 			samplerBuilder.addExternalSampler(ClrwlSamplers.getCoefficient(i).number, "clrwl_coefficients" + i);
 		}
 
+		var isShadowPass = programId.group() == ClrwlProgramGroup.SHADOW;
+		Supplier<ImmutableSet<Integer>> flipped = isShadowPass
+				? pipeline::getFlippedBeforeShadow
+				: programId.afterTranslucent()
+					? pipeline::getFlippedAfterTranslucent
+					: pipeline::getFlippedAfterPrepare;
+
 		customUniforms.assignTo(uniformBuilder);
 		pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
-				isShadowPass ? pipeline::getFlippedBeforeShadow : pipeline::getFlippedAfterPrepare,
-				isShadowPass,
+				flipped, isShadowPass,
 				false, true, false); // Use Flywheel texture and overlay samplers
 		customUniforms.mapholderToPass(uniformBuilder, this);
 
@@ -168,9 +176,9 @@ public class ClrwlProgram
 		return GL20.glGetUniformLocation(this.handle, name);
 	}
 
-	public static ClrwlProgram createProgram(String name, boolean isShadowPass, ClrwlProgramSource source, ClrwlShaderProperties properties, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public static ClrwlProgram createProgram(String name, ClrwlProgramId programId, ClrwlProgramSource source, ClrwlShaderProperties properties, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
 	{
-		return new ClrwlProgram(name, isShadowPass, properties,
+		return new ClrwlProgram(name, programId, properties,
 							    source.vertex(), source.geometry(), source.fragment(),
 							    customUniforms, pipeline);
 	}

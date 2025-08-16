@@ -1,16 +1,26 @@
-package dev.djefrey.colorwheel.compile;
+package dev.djefrey.colorwheel.compile.transform;
 
+import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
 import dev.engine_room.flywheel.api.material.Transparency;
 import io.github.douira.glsl_transformer.ast.node.Identifier;
 import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
 import io.github.douira.glsl_transformer.ast.node.Version;
+import io.github.douira.glsl_transformer.ast.node.abstract_node.ASTNode;
+import io.github.douira.glsl_transformer.ast.node.declaration.DeclarationMember;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.ReferenceExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.binary.ArrayAccessExpression;
+import io.github.douira.glsl_transformer.ast.node.external_declaration.DeclarationExternalDeclaration;
+import io.github.douira.glsl_transformer.ast.node.external_declaration.ExternalDeclaration;
 import io.github.douira.glsl_transformer.ast.print.PrintType;
 import io.github.douira.glsl_transformer.ast.query.Root;
 import io.github.douira.glsl_transformer.ast.query.RootSupplier;
-import io.github.douira.glsl_transformer.ast.transform.SingleASTTransformer;
+import io.github.douira.glsl_transformer.ast.query.match.AutoHintedMatcher;
+import io.github.douira.glsl_transformer.ast.transform.ASTInjectionPoint;
+import io.github.douira.glsl_transformer.ast.transform.Template;
+import io.github.douira.glsl_transformer.parser.ParseShape;
+import io.github.douira.glsl_transformer.util.Type;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.helpers.Tri;
@@ -19,14 +29,12 @@ import net.irisshaders.iris.pipeline.transform.transformer.CommonTransformer;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class ClrwlTransformPatcher
 {
-	private static final SingleASTTransformer<ClrwlTransformParameters> transformer;
+	private static final ClrwlASTTransformer<ClrwlTransformParameters> transformer;
 	public static final Pattern versionPattern = Pattern.compile("^.*#version\\h+(\\d+)\\V*", Pattern.DOTALL);
 	public static final Pattern extensionPattern = Pattern.compile("^.*#extension\\s+([a-zA-Z0-9_]+)\\s+:\\s+([a-zA-Z0-9_]+)", Pattern.DOTALL);
 
@@ -39,9 +47,37 @@ public class ClrwlTransformPatcher
 				LIGHTMAP_OFFSET, LIGHTMAP_OFFSET, "0.0", "1.0"
 			);
 
+	private static final AutoHintedMatcher<ExternalDeclaration> fragdataLayoutDeclaration = new AutoHintedMatcher<>("layout (location = __index) out vec4 __name;", ParseShape.EXTERNAL_DECLARATION)
+	{
+		{
+			markClassedPredicateWildcard("__index",
+					pattern.getRoot().identifierIndex.getUnique("__index").getAncestor(ReferenceExpression.class),
+					LiteralExpression.class,
+					literalExpression -> literalExpression.isInteger() && literalExpression.getInteger() >= 0);
+
+			markClassWildcard("__name",
+					pattern.getRoot().identifierIndex.getUnique("__name").getAncestor(DeclarationMember.class));
+		}
+	};
+
+	private static final AutoHintedMatcher<ExternalDeclaration> fragdataOutDeclaration = new AutoHintedMatcher<>("out vec4 __name;", ParseShape.EXTERNAL_DECLARATION)
+	{
+		{
+			markClassedPredicateWildcard("__name",
+					pattern.getRoot().identifierIndex.getUnique("__name").getAncestor(DeclarationMember.class),
+					DeclarationMember.class,
+					declarationMember -> declarationMember.getName().getName().matches("outColor\\d+$"));
+		}
+	};
+
+	private static final Template<ExternalDeclaration> outputGlobalVarDeclaration;
+
 	static
 	{
-		transformer = new SingleASTTransformer<>()
+		outputGlobalVarDeclaration = Template.withExternalDeclaration("vec4 __name;");
+		outputGlobalVarDeclaration.markIdentifierReplacement("__name");
+
+		transformer = new ClrwlASTTransformer<>()
 		{
 			{
 				setRootSupplier(RootSupplier.PREFIX_UNORDERED_ED_EXACT);
@@ -50,7 +86,7 @@ public class ClrwlTransformPatcher
 			@Override
 			public TranslationUnit parseTranslationUnit(Root rootInstance, String input)
 			{
-				Matcher versionMatcher = versionPattern.matcher(input);
+				var versionMatcher = versionPattern.matcher(input);
 
 				if (!versionMatcher.find()) {
 					throw new IllegalArgumentException(
@@ -61,7 +97,7 @@ public class ClrwlTransformPatcher
 
 				input = versionMatcher.replaceAll(""); // Remove version tag, replaced by Flywheel's one
 
-				Matcher extensionMatcher = extensionPattern.matcher(input);  // Remove all extensions
+				var extensionMatcher = extensionPattern.matcher(input);  // Remove all extensions
 				input = extensionMatcher.replaceAll("");
 
 				return super.parseTranslationUnit(rootInstance, input);
@@ -73,6 +109,8 @@ public class ClrwlTransformPatcher
 		transformer.setTransformation((tree, root, parameters) ->
 		{
 			tree.outputOptions.enablePrintInfo();
+
+			Map<Integer, String> outputs = new HashMap<>();
 
 			root.indexBuildSession(() ->
 			{
@@ -148,23 +186,68 @@ public class ClrwlTransformPatcher
 					}
 
 					var oit = parameters.getOit();
+					boolean customOutputs = oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE || oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS;
 
-					if (oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE
-							||  oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
+					Map<ArrayAccessExpression, Integer> glFragDataAccess = new HashMap<>();
+					Set<Integer> glFragDataIndexes = new HashSet<>();
+
+					for (Identifier id : root.identifierIndex.get("gl_FragData"))
 					{
-						Map<ArrayAccessExpression, Long> toReplace = new HashMap<>();
+						var access = id.getAncestor(ArrayAccessExpression.class);
+						var idx = ((LiteralExpression) access.getRight()).getInteger();
 
-						for (Identifier id : root.identifierIndex.get("gl_FragData"))
-						{
-							var access = id.getAncestor(ArrayAccessExpression.class);
-							var idx = ((LiteralExpression) access.getRight()).getInteger();
+						glFragDataAccess.put(access, (int) idx);
+						glFragDataIndexes.add((int) idx);
+					}
 
-							toReplace.put(access, idx);
-						}
-
-						for (var kv : toReplace.entrySet())
+					if (customOutputs)
+					{
+						for (var kv : glFragDataAccess.entrySet())
 						{
 							kv.getKey().replaceByAndDelete(new ReferenceExpression(new Identifier("clrwl_FragData" + kv.getValue())));
+							outputs.putIfAbsent(kv.getValue(), "clrwl_FragData" + kv.getValue());
+						}
+
+						for (var index : glFragDataIndexes)
+						{
+							tree.injectNode(ASTInjectionPoint.BEFORE_FUNCTIONS, outputGlobalVarDeclaration.getInstanceFor(root, new Identifier("clrwl_FragData" + index)));
+						}
+					}
+					else
+					{
+						for (var kv : glFragDataAccess.entrySet())
+						{
+							outputs.putIfAbsent(kv.getValue(), "iris_FragData" + kv.getValue());
+						}
+					}
+
+					Map<DeclarationExternalDeclaration, String> outDeclarations = new HashMap<>();
+
+					for (var declaration : root.nodeIndex.get(DeclarationExternalDeclaration.class))
+					{
+						if (fragdataLayoutDeclaration.matchesExtract(declaration))
+						{
+							var index = fragdataLayoutDeclaration.getNodeMatch("__index", LiteralExpression.class).getInteger();
+							var name = fragdataLayoutDeclaration.getNodeMatch("__name", DeclarationMember.class).getName().getName();
+
+							outputs.putIfAbsent((int) index, name);
+							outDeclarations.put(declaration, name);
+						}
+						else if (fragdataOutDeclaration.matchesExtract(declaration))
+						{
+							var name = fragdataOutDeclaration.getNodeMatch("__name", DeclarationMember.class).getName().getName();
+							var index = Long.parseLong(name.substring(8));
+
+							outputs.putIfAbsent((int) index, name);
+							outDeclarations.put(declaration, name);
+						}
+					}
+
+					if (customOutputs)
+					{
+						for (var entry : outDeclarations.entrySet())
+						{
+							entry.getKey().replaceByAndDelete(outputGlobalVarDeclaration.getInstanceFor(root, new Identifier(entry.getValue())));
 						}
 					}
 				}
@@ -184,6 +267,8 @@ public class ClrwlTransformPatcher
 
 				root.rename("main", "_clrwl_shader_main");
 			});
+
+			return outputs;
 		});
 	}
 
@@ -192,7 +277,7 @@ public class ClrwlTransformPatcher
 		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
 		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
 
-		return transformer.transform(vertex, parameters);
+		return transformer.transform(vertex, parameters).code();
 	}
 
 	public static String patchGeometry(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
@@ -200,10 +285,10 @@ public class ClrwlTransformPatcher
 		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
 		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
 
-		return transformer.transform(vertex, parameters);
+		return transformer.transform(vertex, parameters).code();
 	}
 
-	public static String patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static ClrwlTransformOutput patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromFragment(programDirectives);
 		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, transparency, directives, textureMap);

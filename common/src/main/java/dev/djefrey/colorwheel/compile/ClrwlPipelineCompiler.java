@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import com.google.common.collect.ImmutableSet;
 import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
@@ -30,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ClrwlPipelineCompiler
 {
@@ -98,7 +100,7 @@ public class ClrwlPipelineCompiler
 
 			var customSource = new ClrwlProgramSource(name, vertex, geometry, fragment);
 
-			return ClrwlProgram.createProgram(name, isShadow, customSource, properties, irisPipeline.getCustomUniforms(), irisPipeline);
+			return ClrwlProgram.createProgram(name, baseProgramId, customSource, properties, irisPipeline.getCustomUniforms(), irisPipeline);
 		}
 
 		return null;

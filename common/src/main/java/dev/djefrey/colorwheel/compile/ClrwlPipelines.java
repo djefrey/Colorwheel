@@ -3,6 +3,8 @@ package dev.djefrey.colorwheel.compile;
 import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.compile.oit.*;
+import dev.djefrey.colorwheel.compile.transform.ClrwlTransformOutput;
+import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.djefrey.colorwheel.engine.ClrwlVertex;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
@@ -282,9 +284,11 @@ public class ClrwlPipelines
 //        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
 
         String preprocessed = fragmentSource;
-        String transformed = ClrwlTransformPatcher.patchFragment(preprocessed, k.oit(), k.transparency(), sources.getDirectives(), pipeline.getTextureMap());
+        ClrwlTransformOutput transformOut = ClrwlTransformPatcher.patchFragment(preprocessed, k.oit(), k.transparency(), sources.getDirectives(), pipeline.getTextureMap());
 
-        return new IrisShaderComponent(sources.getName(), transformed);
+        c.setShaderOutputs(transformOut.outputs());
+
+        return new IrisShaderComponent(sources.getName(), transformOut.code());
     }
 
     private static SourceComponent getOitInouts(ClrwlShaderKey k, ClrwlCompilation c)
@@ -293,18 +297,11 @@ public class ClrwlPipelines
                 ? ClrwlProgramGroup.SHADOW
                 : ClrwlProgramGroup.GBUFFERS;
 
-        if (k.oit() == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE)
-        {
-            var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
-
-            return new ClrwlFragDataOutComponent(drawBuffers.length);
-        }
-        else if (k.oit() == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
+        if (k.oit() == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS)
         {
             var ranks = c.getProperties().getOitCoeffRanks(programGroup);
-            var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
 
-            return new OitCoefficientsOutputComponent(ranks, drawBuffers.length);
+            return new OitCoefficientsOutputComponent(ranks);
         }
         else if (k.oit() == ClrwlPipelineCompiler.OitMode.EVALUATE)
         {
@@ -351,7 +348,7 @@ public class ClrwlPipelines
                 }
 
                 c.define("CLRWL_POST_SHADER");
-                return new OitCollectCoeffsComponent(ranks, coeffFrag);
+                return new OitCollectCoeffsComponent(ranks, coeffFrag, c.getShaderOutputs());
             }
 
             case EVALUATE ->
@@ -359,9 +356,10 @@ public class ClrwlPipelines
                 var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
                 var ranks = c.getProperties().getOitCoeffRanks(programGroup);
                 var overrides = c.getProperties().getOitAccumulateOverrides(programGroup);
+                var outputs = c.getShaderOutputs();
 
                 c.define("CLRWL_POST_SHADER");
-                return new OitEvaluateComponent(drawBuffers, ranks, overrides);
+                return new OitEvaluateComponent(drawBuffers, ranks, overrides, outputs);
             }
         }
 

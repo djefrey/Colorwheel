@@ -15,11 +15,13 @@ public class OitCollectCoeffsComponent implements SourceComponent
 {
     private final int[] ranks;
     private final Map<Integer, Integer> coeffFrag;
+    private final Map<Integer, String> shaderOutputs;
 
-    public OitCollectCoeffsComponent(int[] ranks, Map<Integer, Integer> coeffFrag)
+    public OitCollectCoeffsComponent(int[] ranks, Map<Integer, Integer> coeffFrag, Map<Integer, String> shaderOutputs)
     {
         this.ranks = ranks;
         this.coeffFrag = coeffFrag;
+        this.shaderOutputs = shaderOutputs;
     }
 
     @Override
@@ -48,7 +50,7 @@ public class OitCollectCoeffsComponent implements SourceComponent
             int depth = 1 << (rank - 1);
 
             String name = "clrwl_coeffs" + i;
-            String fragData = "clrwl_FragData" + frag;
+            String fragData = shaderOutputs.get(frag);
             String transmittance = "transmittance" + i;
             String adjusted_depth = "adjusted_depth" + i;
 

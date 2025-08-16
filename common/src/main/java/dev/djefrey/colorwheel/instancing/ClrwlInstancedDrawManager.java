@@ -13,6 +13,7 @@ import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.util.GlCompat;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.material.Transparency;
@@ -194,7 +195,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 					? ClrwlProgramId.GBUFFERS_TRANSLUCENT
 					: ClrwlProgramId.SHADOW_TRANSLUCENT;
 
-			var isOitEnabled = ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled(program.group());
+			var isOitEnabled = GlCompat.SUPPORTS_OIT && ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled(program.group());
 
 			if (isOitEnabled)
 			{

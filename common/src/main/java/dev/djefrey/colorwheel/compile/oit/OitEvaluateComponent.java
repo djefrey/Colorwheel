@@ -11,18 +11,21 @@ import dev.engine_room.flywheel.backend.glsl.generate.GlslStmt;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class OitEvaluateComponent implements SourceComponent
 {
     private int[] drawBuffers;
     private int[] ranks;
     private List<ClrwlOitAccumulateOverride> overrides;
+    private Map<Integer, String> shaderOutputs;
 
-    public OitEvaluateComponent(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides)
+    public OitEvaluateComponent(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides, Map<Integer, String> shaderOutputs)
     {
         this.drawBuffers = drawBuffers;
         this.ranks = ranks;
         this.overrides = overrides;
+        this.shaderOutputs = shaderOutputs;
     }
 
     @Override
@@ -50,7 +53,7 @@ public class OitEvaluateComponent implements SourceComponent
         for (int i = 0; i < drawBuffers.length; i++)
         {
             int drawBuffer = drawBuffers[i];
-            String outName = "iris_FragData" + i;
+            String outName = shaderOutputs.get(i);
 
             var maybeCoeffId = Utils.findFirst(overrides, e -> e.drawBuffer() == drawBuffer)
                     .flatMap(ClrwlOitAccumulateOverride::coefficientId);
