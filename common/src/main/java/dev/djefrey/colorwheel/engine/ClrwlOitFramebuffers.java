@@ -438,7 +438,7 @@ public class ClrwlOitFramebuffers
             for (int i = 0; i < accumulateCnt; i++)
             {
                 var drawBuffer = programDrawBuffers[i];
-                var format = InternalTextureFormat.RGBA8;
+                var format = InternalTextureFormat.RGBA16F;
 
                 var maybeOverride = Utils.findFirst(overrides, e -> e.drawBuffer() == drawBuffer);
 
@@ -479,7 +479,7 @@ public class ClrwlOitFramebuffers
             for (int i = 0; i < accumulateCnt; i++)
             {
                 var drawBuffer = programDrawBuffers[i];
-                var format = InternalTextureFormat.RGBA8;
+                var format = InternalTextureFormat.RGBA16F;
 
                 var maybeOverride = Utils.findFirst(overrides, e -> e.drawBuffer() == drawBuffer);
 
