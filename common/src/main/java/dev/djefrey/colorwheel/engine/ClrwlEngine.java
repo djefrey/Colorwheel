@@ -210,7 +210,7 @@ public class ClrwlEngine implements Engine
 	public class ClrwlMainVisualizationContext implements VisualizationContext
 	{
 		private final ClrwlInstancerProvider instancerProvider;
-		private final Map<Integer, ClrwlBlockEntityVisualizationContext> blockEntityCtxs = new HashMap<>();
+		private final Map<ClrwlBlockEntityVisualizationContext.Key, ClrwlBlockEntityVisualizationContext> blockEntityCtxs = new HashMap<>();
 		private final Map<Integer, ClrwlEntityVisualizationContext> entityCtxs = new HashMap<>();
 
 		public ClrwlMainVisualizationContext()
@@ -218,9 +218,9 @@ public class ClrwlEngine implements Engine
 			instancerProvider = new ClrwlInstancerProvider(ClrwlEngine.this, ClrwlInstanceVisual.undefined());
 		}
 
-		public VisualizationContext getBlockEntityVisualCtx(int irisId)
+		public VisualizationContext getBlockEntityVisualCtx(int irisId, int lightEmission)
 		{
-			return blockEntityCtxs.computeIfAbsent(irisId, ClrwlBlockEntityVisualizationContext::new);
+			return blockEntityCtxs.computeIfAbsent(new ClrwlBlockEntityVisualizationContext.Key(irisId, lightEmission), ClrwlBlockEntityVisualizationContext::new);
 		}
 
 		public VisualizationContext getEntityVisualCtx(int irisId)
@@ -249,13 +249,19 @@ public class ClrwlEngine implements Engine
 
 	private class ClrwlBlockEntityVisualizationContext implements VisualizationContext
 	{
+		record Key(int irisId, int lightEmission)
+		{
+		}
+
 		private final int irisId;
+		private final int lightEmission;
 		private final ClrwlInstancerProvider instancerProvider;
 
-		public ClrwlBlockEntityVisualizationContext(int irisId)
+		public ClrwlBlockEntityVisualizationContext(Key key)
 		{
-			this.irisId = irisId;
-			instancerProvider = new ClrwlInstancerProvider(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId));
+			this.irisId = key.irisId;
+			this.lightEmission = key.lightEmission;
+			instancerProvider = new ClrwlInstancerProvider(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId, lightEmission));
 		}
 
 		@Override
@@ -272,7 +278,7 @@ public class ClrwlEngine implements Engine
 		@Override
 		public VisualEmbedding createEmbedding(Vec3i renderOrigin)
 		{
-			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId), renderOrigin);
+			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId, lightEmission), renderOrigin);
 			environmentStorage.track(out);
 			return out;
 		}

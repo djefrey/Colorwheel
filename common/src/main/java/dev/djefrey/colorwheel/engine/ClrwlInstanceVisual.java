@@ -1,23 +1,23 @@
 package dev.djefrey.colorwheel.engine;
 
-public record ClrwlInstanceVisual(Type type, int irisId)
+public record ClrwlInstanceVisual(Type type, int irisId, int lightEmission)
 {
     private static final int UNDEFINED_ID = -1;
-    private static final ClrwlInstanceVisual UNDEFINED = new ClrwlInstanceVisual(Type.UNDEFINED, UNDEFINED_ID);
+    private static final ClrwlInstanceVisual UNDEFINED = new ClrwlInstanceVisual(Type.UNDEFINED, UNDEFINED_ID, 0);
 
     public static ClrwlInstanceVisual undefined()
     {
         return UNDEFINED;
     }
 
-    public static ClrwlInstanceVisual blockEntity(int irisId)
+    public static ClrwlInstanceVisual blockEntity(int irisId, int lightEmission)
     {
-        return new ClrwlInstanceVisual(Type.BLOCKENTITY, irisId);
+        return new ClrwlInstanceVisual(Type.BLOCKENTITY, irisId, lightEmission);
     }
 
     public static ClrwlInstanceVisual entity(int irisId)
     {
-        return new ClrwlInstanceVisual(Type.ENTITY, irisId);
+        return new ClrwlInstanceVisual(Type.ENTITY, irisId, 0);
     }
 
     public int getBlockEntity()
