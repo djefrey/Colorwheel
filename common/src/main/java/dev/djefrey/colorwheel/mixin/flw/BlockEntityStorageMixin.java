@@ -31,7 +31,8 @@ public abstract class BlockEntityStorageMixin
             if (blockIds != null)
             {
                 int id = blockIds.applyAsInt(obj.getBlockState());
-                var res = createRaw(mainCtx.getBlockEntityVisualCtx(id), obj, partialTick);
+                int lightEmission = obj.getBlockState().getLightEmission();
+                var res = createRaw(mainCtx.getBlockEntityVisualCtx(id, lightEmission), obj, partialTick);
 
                 cir.setReturnValue(res);
             }

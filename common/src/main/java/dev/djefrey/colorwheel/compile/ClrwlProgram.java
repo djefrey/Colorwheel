@@ -196,7 +196,7 @@ public class ClrwlProgram
 
 		setUniformS(blockEntityUniform, visual.getBlockEntity());
 		setUniformS(entityUniform, visual.getEntity());
-		setUniform(meshCenterUniform, boundingSphere.x(), boundingSphere.y(), boundingSphere.z());
+		setUniform(meshCenterUniform, boundingSphere.x(), boundingSphere.y(), boundingSphere.z(), (float) visual.lightEmission());
 
 		samplers.update();
 		uniforms.update();
@@ -256,8 +256,8 @@ public class ClrwlProgram
 		GL31.glUniform2ui(index, x, y);
 	}
 
-	private void setUniform(int index, float x, float y, float z) {
-		GL31.glUniform3f(index, x, y, z);
+	private void setUniform(int index, float x, float y, float z, float w) {
+		GL31.glUniform4f(index, x, y, z, w);
 	}
 
 	private void setUniform(int index, Matrix3f mat) {

@@ -8,11 +8,13 @@ import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
 import io.github.douira.glsl_transformer.ast.node.Version;
 import io.github.douira.glsl_transformer.ast.node.abstract_node.ASTNode;
 import io.github.douira.glsl_transformer.ast.node.declaration.DeclarationMember;
+import io.github.douira.glsl_transformer.ast.node.declaration.TypeAndInitDeclaration;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.ReferenceExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.binary.ArrayAccessExpression;
 import io.github.douira.glsl_transformer.ast.node.external_declaration.DeclarationExternalDeclaration;
 import io.github.douira.glsl_transformer.ast.node.external_declaration.ExternalDeclaration;
+import io.github.douira.glsl_transformer.ast.node.type.specifier.BuiltinNumericTypeSpecifier;
 import io.github.douira.glsl_transformer.ast.print.PrintType;
 import io.github.douira.glsl_transformer.ast.query.Root;
 import io.github.douira.glsl_transformer.ast.query.RootSupplier;
@@ -117,10 +119,10 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "gl_Vertex", "flw_vertexPos");
 				root.replaceReferenceExpressions(transformer, "gl_Normal", "flw_vertexNormal");
 				root.replaceReferenceExpressions(transformer, "gl_Color", "flw_vertexColor");
-				root.replaceReferenceExpressions(transformer, "at_midBlock", "clrwl_vertexMidMesh");
-				root.replaceReferenceExpressions(transformer, "at_tangent", "clrwl_vertexTangent");
-				root.replaceReferenceExpressions(transformer, "mc_Entity", "vec2(-1.0)");
-				root.replaceReferenceExpressions(transformer, "mc_midTexCoord", "vec4(clrwl_vertexMidTexCoord, 0.0, 1.0)");
+				replaceVec4WithVariableDimension(root, "at_midBlock", "clrwl_vertexMidMesh");
+				replaceVec4WithVariableDimension(root, "at_tangent", "clrwl_vertexTangent");
+				replaceVec2WithVariableDimension(root, "mc_midTexCoord", "clrwl_vertexMidTexCoord");
+				replaceFilledVec2WithVariableDimension(root, "mc_Entity", "-1.0");
 
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(flw_vertexTexCoord, 0.0, 1.0)");
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(flw_vertexLight, 0.0, 1.0)");
@@ -270,6 +272,128 @@ public class ClrwlTransformPatcher
 
 			return outputs;
 		});
+	}
+
+	private static int getAttributeDimensionAndDelete(Root root, String name)
+	{
+		int dimension = 4;
+
+		for (Identifier identifier : root.identifierIndex.get(name))
+		{
+			TypeAndInitDeclaration initDecl = (TypeAndInitDeclaration) identifier.getAncestor(2, 0, TypeAndInitDeclaration.class::isInstance);
+
+			if (initDecl == null)
+			{
+				continue;
+			}
+
+			DeclarationExternalDeclaration extDecl = (DeclarationExternalDeclaration) initDecl.getAncestor(1, 0, DeclarationExternalDeclaration.class::isInstance);
+
+			if (extDecl == null)
+			{
+				continue;
+			}
+
+			if (initDecl.getType().getTypeSpecifier() instanceof BuiltinNumericTypeSpecifier numType)
+			{
+				switch (numType.type)
+				{
+					case FLOAT32 ->
+					{
+						dimension = 1;
+					}
+
+					case F32VEC2 ->
+					{
+						dimension = 2;
+                    }
+
+					case F32VEC3 ->
+					{
+						dimension = 3;
+                    }
+
+					case F32VEC4 ->
+					{
+						dimension = 4;
+                    }
+				}
+			}
+
+			extDecl.detachAndDelete();
+			initDecl.detachAndDelete();
+			identifier.detachAndDelete();
+
+			break;
+		}
+
+		return dimension;
+	}
+
+	private static void replaceVec2WithVariableDimension(Root root, String name, String vec2)
+	{
+		int dimension = getAttributeDimensionAndDelete(root, name);
+
+		if (dimension == 1)
+		{
+			root.replaceReferenceExpressions(transformer, name, vec2 + ".x");
+		}
+		else if (dimension == 2)
+		{
+			root.replaceReferenceExpressions(transformer, name, vec2);
+		}
+		else if (dimension == 3)
+		{
+			root.replaceReferenceExpressions(transformer, name, "vec3(" + vec2 + ", 0.0)");
+		}
+		else
+		{
+			root.replaceReferenceExpressions(transformer, name, "vec4(" + vec2 + ", 0.0, 1.0)");
+		}
+	}
+
+	private static void replaceVec4WithVariableDimension(Root root, String name, String vec4)
+	{
+		int dimension = getAttributeDimensionAndDelete(root, name);
+
+		if (dimension == 1)
+		{
+			root.replaceReferenceExpressions(transformer, name, vec4 + ".x");
+		}
+		else if (dimension == 2)
+		{
+			root.replaceReferenceExpressions(transformer, name, vec4 + ".xy");
+		}
+		else if (dimension == 3)
+		{
+			root.replaceReferenceExpressions(transformer, name, vec4 + ".xyz");
+		}
+		else
+		{
+			root.replaceReferenceExpressions(transformer, name, vec4);
+		}
+	}
+
+	private static void replaceFilledVec2WithVariableDimension(Root root, String name, String value)
+	{
+		int dimension = getAttributeDimensionAndDelete(root, name);
+
+		if (dimension == 1)
+		{
+			root.replaceReferenceExpressions(transformer, name, "(" + value + ")");
+		}
+		else if (dimension == 2)
+		{
+			root.replaceReferenceExpressions(transformer, name, "vec2(" + value + ")");
+		}
+		else if (dimension == 3)
+		{
+			root.replaceReferenceExpressions(transformer, name, "vec3(vec2(" + value + "), 0.0)");
+		}
+		else
+		{
+			root.replaceReferenceExpressions(transformer, name, "vec4(vec2(" + value + "), 0.0, 1.0)");
+		}
 	}
 
 	public static String patchVertex(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)

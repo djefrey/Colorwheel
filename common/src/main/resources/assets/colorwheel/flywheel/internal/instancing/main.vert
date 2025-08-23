@@ -75,7 +75,7 @@ uniform mat3 _flw_normalMatrixUniform;
 
 uniform uint _flw_vertexOffset;
 
-uniform vec3 _clrwl_meshCenter;
+uniform vec4 _clrwl_meshCenter;
 
 void main()
 {
@@ -99,13 +99,12 @@ void main()
     vec2 flw_vertexLight_bkp = flw_vertexLight;
     vec3 flw_vertexNormal_bkp = flw_vertexNormal;
 
-    flw_vertexPos = vec4(_clrwl_meshCenter, 1.0);
+    flw_vertexPos = vec4(_clrwl_meshCenter.xyz, 1.0);
     flw_vertexNormal = clrwl_vertexTangent.xyz;
 
     flw_instanceVertex(instance);
 
     vec4 transformedMeshCenter = flw_vertexPos;
-    float emission = flw_vertexLight_bkp.x;
     clrwl_vertexTangent.xyz = flw_vertexNormal;
 
     flw_vertexPos = flw_vertexPos_bkp;
@@ -120,7 +119,7 @@ void main()
     flw_instanceVertex(instance);
     flw_materialVertex();
 
-    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, emission * 15.0);
+    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, _clrwl_meshCenter.w);
 
     #ifdef _FLW_CRUMBLING
     flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
@@ -134,6 +133,12 @@ void main()
 
     flw_vertexNormal = normalize(flw_vertexNormal);
     clrwl_debugIds = uvec2(gl_InstanceID, _flw_vertexOffset);
+
+    if (flw_material.useOverlay)
+    {
+        clrwl_overlayColor = texelFetch(flw_overlayTex, flw_vertexOverlay, 0);
+        clrwl_overlayColor.a = 1.0 - clrwl_overlayColor.a;
+    }
 
     _clrwl_shader_main();
 }

@@ -26,6 +26,7 @@ import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
+import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
@@ -261,6 +262,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private void submitDraws(List<ClrwlInstancedDraw> draws, boolean isShadow)
 	{
+		GlFramebuffer prevFramebuffer = null;
+
 		for (var drawCall : draws)
 		{
 			var material = drawCall.material();
@@ -303,7 +306,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			ClrwlSamplers.INSTANCE_BUFFER.makeActive();
 
-			framebuffer.bind();
+			if (prevFramebuffer != framebuffer)
+			{
+				prevFramebuffer = framebuffer;
+				framebuffer.bind();
+			}
+
 			drawCall.render(instanceTexture);
 
 			program.unbind();
