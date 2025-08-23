@@ -1,3 +1,4 @@
+#include "flywheel:internal/material.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
 in ClrwlVertexData
@@ -10,7 +11,7 @@ in ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
-    vec2 flw_debugIds;
+    flat uvec2 clrwl_debugIds;
 } clrwl_in[3];
 
 out ClrwlVertexData
