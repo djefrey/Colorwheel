@@ -134,5 +134,11 @@ void main()
     flw_vertexNormal = normalize(flw_vertexNormal);
     clrwl_debugIds = uvec2(gl_InstanceID, _flw_vertexOffset);
 
+    if (flw_material.useOverlay)
+    {
+        clrwl_overlayColor = texelFetch(flw_overlayTex, flw_vertexOverlay, 0);
+        clrwl_overlayColor.a = 1.0 - clrwl_overlayColor.a;
+    }
+
     _clrwl_shader_main();
 }

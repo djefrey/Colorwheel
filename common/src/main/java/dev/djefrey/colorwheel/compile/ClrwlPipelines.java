@@ -30,6 +30,7 @@ public class ClrwlPipelines
     public static final ResourceLocation API_IMPL_FRAG = Colorwheel.rl("internal/api_impl.frag");
 
     public static final ResourceLocation IRIS_COMPAT_VERT = Colorwheel.rl("internal/instancing/iris_compat.vert");
+    public static final ResourceLocation IRIS_COMPAT_GEOM = Colorwheel.rl("internal/instancing/iris_compat_geom.glsl");
     public static final ResourceLocation IRIS_COMPAT_FRAG = Colorwheel.rl("internal/instancing/iris_compat.frag");
 
     public static final ResourceLocation MAIN_VERT = Colorwheel.rl("internal/instancing/main.vert");
@@ -86,8 +87,8 @@ public class ClrwlPipelines
                     .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
                     .withLoader((k, sources) -> sources.get(k.instanceType().vertexShader()))
                     .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
-                    .withLoader(($, sources) -> sources.get(ClrwlVertex.LAYOUT_SHADER))
-                    .withLoader(($, sources) -> sources.get(IRIS_COMPAT_VERT))
+                    .withResource(ClrwlVertex.LAYOUT_SHADER)
+                    .withResource(IRIS_COMPAT_VERT)
                     .withComponent((k) -> new BufferTextureInstanceComponent(k.instanceType()))
                     .with(ClrwlPipelines::getIrisShaderVertexSource)
                     .withResource(MAIN_VERT)
@@ -112,6 +113,7 @@ public class ClrwlPipelines
                         }
                     })
                     .withResource(API_IMPL_GEOM)
+                    .withResource(IRIS_COMPAT_GEOM)
                     .with(ClrwlPipelines::getIrisShaderGeometrySource)
                     .withResource(MAIN_GEOM)
                     .build())
