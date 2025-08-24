@@ -1,6 +1,8 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
 import net.irisshaders.iris.gl.shader.StandardMacros;
 import net.irisshaders.iris.helpers.StringPair;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,6 +24,12 @@ public abstract class StandardMacrosMixin
         throw new RuntimeException();
     }
 
+    @Shadow
+    private static void define(List<StringPair> defines, String key, String value)
+    {
+        throw new RuntimeException();
+    }
+
     @Inject(method = "createStandardEnvironmentDefines()Lcom/google/common/collect/ImmutableList;",
             at = @At(value = "CONSTANT", args = "stringValue=IS_IRIS"),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION,
@@ -30,5 +38,11 @@ public abstract class StandardMacrosMixin
     private static void colorwheel$injectClrwlStandardDefines(CallbackInfoReturnable<ImmutableList<StringPair>> cir, ArrayList<StringPair> standardDefines)
     {
         define(standardDefines, "HAS_COLORWHEEL");
+        define(standardDefines, "COLORWHEEL_VERSION", Colorwheel.FORMATTED_VERSION);
+
+        for (ClrwlRenderingPhase phase : ClrwlRenderingPhase.values())
+        {
+            define(standardDefines, "CLRWL_RENDER_STAGE_" + phase.name(), Integer.toString(phase.getValue()));
+        }
     }
 }

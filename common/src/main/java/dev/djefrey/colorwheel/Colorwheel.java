@@ -38,10 +38,11 @@ public final class Colorwheel {
 
     // Not ideal but good enough for now
     public static ClrwlConfig CONFIG = null;
+    public static String FORMATTED_VERSION = null;
 
-    public static void init()
+    public static void init(int major, int minor, int incremental)
     {
-
+        FORMATTED_VERSION = "%d%02d%02d".formatted(major, minor,  incremental);
     }
 
     public static ResourceLocation rl(String path)
