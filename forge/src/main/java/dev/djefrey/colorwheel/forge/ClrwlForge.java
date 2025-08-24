@@ -15,9 +15,10 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 public final class ClrwlForge {
     public ClrwlForge()
     {
-        Colorwheel.init();
-
         ModLoadingContext modLoadingContext = ModLoadingContext.get();
+        var version = modLoadingContext.getActiveContainer().getModInfo().getVersion();
+
+        Colorwheel.init(version.getMajorVersion(),version.getMinorVersion(), version.getIncrementalVersion());
 
         IEventBus forgeEventBus = MinecraftForge.EVENT_BUS;
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
