@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
+import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
@@ -51,6 +52,7 @@ public class ClrwlProgram
 	public final int blockEntityUniform;
 	public final int entityUniform;
 	public final int meshCenterUniform;
+	public final int renderPhaseUniform;
 
 	public static ImmutableSet<Integer> getReservedTextureUnits(int coeffCount)
 	{
@@ -168,6 +170,7 @@ public class ClrwlProgram
 		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityId");
 		this.entityUniform = tryGetUniformLocation2("_clrwl_entityId");
 		this.meshCenterUniform = tryGetUniformLocation2("_clrwl_meshCenter");
+		this.renderPhaseUniform = tryGetUniformLocation2("_clrwl_renderPhase");
 
 		ClrwlUniforms.setUniformBlockBinding(this);
 	}
@@ -183,7 +186,7 @@ public class ClrwlProgram
 							    customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector4fc boundingSphere)
+	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector4fc boundingSphere, ClrwlRenderingPhase phase)
 	{
 		GL20.glUseProgram(this.handle);
 
@@ -197,6 +200,7 @@ public class ClrwlProgram
 		setUniformS(blockEntityUniform, visual.getBlockEntity());
 		setUniformS(entityUniform, visual.getEntity());
 		setUniform(meshCenterUniform, boundingSphere.x(), boundingSphere.y(), boundingSphere.z(), (float) visual.lightEmission());
+		setUniformS(renderPhaseUniform, phase.getValue());
 
 		samplers.update();
 		uniforms.update();

@@ -156,7 +156,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
-		setPhase(RenderingPhase.SOLID, isShadow);
+		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
 
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
@@ -178,7 +178,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
-		setPhase(RenderingPhase.TRANSLUCENT, isShadow);
+		setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
 
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
@@ -220,7 +220,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 					return;
 				}
 
-				setPhase(RenderingPhase.OIT_DEPTH_RANGE, isShadow);
+				setPhase(ClrwlRenderingPhase.OIT_DEPTH_RANGE, isShadow);
 
 				oitFramebuffer.prepare();
 
@@ -229,7 +229,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 				if (oitFramebuffer.prepareRenderTransmittance())
 				{
-					setPhase(RenderingPhase.OIT_COEFFICIENTS, isShadow);
+					setPhase(ClrwlRenderingPhase.OIT_COEFFICIENTS, isShadow);
 					submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
 				}
 
@@ -238,18 +238,18 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 //				// Need to bind this again because we just drew a full screen quad for OIT.
 //				vao.bindForDraw();
 
-				setPhase(RenderingPhase.OIT_ACCUMULATE, isShadow);
+				setPhase(ClrwlRenderingPhase.OIT_ACCUMULATE, isShadow);
 
 				oitFramebuffer.prepareAccumulate();
 				submitOitDraws(isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
 
-				setPhase(RenderingPhase.OIT_COMPOSITE, isShadow);
+				setPhase(ClrwlRenderingPhase.OIT_COMPOSITE, isShadow);
 
 				oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides);
 			}
 			else
 			{
-				setPhase(RenderingPhase.TRANSLUCENT, isShadow);
+				setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
 				submitDraws(oitDraws, isShadow);
 			}
 		}
@@ -300,7 +300,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			var blendOverride = framebuffers.getBlendModeOverride(programId, pack, programSet).orElse(null);
 			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId, pack, programSet);
 
-			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().boundingSphere());
+			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().boundingSphere(), currentRenderPhase);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setup(material, blendOverride, bufferBlendOverrides);
 
@@ -345,7 +345,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().boundingSphere());
+			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().boundingSphere(), currentRenderPhase);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setupOit(material);
 
@@ -392,7 +392,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			return;
 		}
 
-		setPhase(RenderingPhase.CRUMBLING, false);
+		setPhase(ClrwlRenderingPhase.CRUMBLING, false);
 
 		framebuffer.bind();
 
@@ -444,7 +444,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 							continue;
 						}
 
-						program.bind(0, index, crumblingMaterial, draw.visual(), draw.mesh().boundingSphere());
+						program.bind(0, index, crumblingMaterial, draw.visual(), draw.mesh().boundingSphere(), currentRenderPhase);
 						ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
 
 						Samplers.INSTANCE_BUFFER.makeActive();
@@ -537,22 +537,15 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		return Iris.getCurrentPackName();
 	}
 
-	private void setPhase(RenderingPhase phase, boolean shadow)
+	private ClrwlRenderingPhase currentRenderPhase = ClrwlRenderingPhase.SOLID;
+
+	private void setPhase(ClrwlRenderingPhase phase, boolean shadow)
 	{
 		var name = "Clrwl " + (shadow ? "Shadow " : "") + StringUtils.capitalize(phase.name().toLowerCase(Locale.ROOT).replace("_", " "));
 
 		GLDebug.popGroup();
-		GLDebug.pushGroup(110800 + phase.ordinal(), name);
-	}
+		GLDebug.pushGroup(phase.getValue(), name);
 
-	public enum RenderingPhase
-	{
-		SOLID,
-		TRANSLUCENT,
-		OIT_DEPTH_RANGE,
-		OIT_COEFFICIENTS,
-		OIT_ACCUMULATE,
-		OIT_COMPOSITE,
-		CRUMBLING
+		currentRenderPhase = phase;
 	}
 }
