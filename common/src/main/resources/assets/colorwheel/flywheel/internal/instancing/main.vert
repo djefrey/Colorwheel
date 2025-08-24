@@ -90,7 +90,7 @@ void main()
 
     _clrwl_layoutVertex();
 
-    // --- Compute mesh center and vertex tangent
+    // --- Compute mesh center, vertex tangent and midtexcoord
 
     vec4 flw_vertexPos_bkp = flw_vertexPos;
     vec4 flw_vertexColor_bkp = flw_vertexColor;
@@ -101,11 +101,13 @@ void main()
 
     flw_vertexPos = vec4(_clrwl_meshCenter.xyz, 1.0);
     flw_vertexNormal = clrwl_vertexTangent.xyz;
+    flw_vertexTexCoord = clrwl_vertexMidTexCoord;
 
     flw_instanceVertex(instance);
 
     vec4 transformedMeshCenter = flw_vertexPos;
     clrwl_vertexTangent.xyz = flw_vertexNormal;
+    clrwl_vertexMidTexCoord = flw_vertexTexCoord;
 
     flw_vertexPos = flw_vertexPos_bkp;
     flw_vertexColor = flw_vertexColor_bkp;
