@@ -114,27 +114,31 @@ public class ClrwlMeshPool {
 
 		int byteIndex = 0;
 		int baseVertex = 0;
-		for (PooledMesh mesh : meshList) {
+		for (PooledMesh mesh : meshList)
+		{
 			mesh.baseVertex = baseVertex;
 
 			vertexView.ptr(vertexPtr + byteIndex);
 			vertexView.vertexCount(mesh.vertexCount());
 			mesh.mesh.write(vertexView);
 
-			Mesh baseMesh = mesh.mesh;
+			if (!vertexView.consumeExtendedWriteFlag())
+			{
+				Mesh baseMesh = mesh.mesh;
 
-			while (baseMesh instanceof RetexturedMesh retextured)
-			{
-				baseMesh = retextured.mesh();
-			}
+				while (baseMesh instanceof RetexturedMesh retextured)
+				{
+					baseMesh = retextured.mesh();
+				}
 
-			if (baseMesh instanceof QuadMesh quad)
-			{
-				computeExtendedQuadData(quad, vertexView);
-			}
-			else
-			{
-				computeExtendedData(baseMesh, vertexView);
+				if (baseMesh instanceof QuadMesh quad)
+				{
+					computeExtendedQuadData(quad, vertexView);
+				}
+				else
+				{
+					computeExtendedData(baseMesh, vertexView);
+				}
 			}
 
 			byteIndex += mesh.byteSize();
@@ -187,9 +191,13 @@ public class ClrwlMeshPool {
 
 			for (int vId = 0; vId < 4; vId++)
 			{
-				vertexView.packedTangent(base + vId, tangent);
+				vertexView.entityX(base + vId, (short) -1);
+				vertexView.entityY(base + vId, (short) -1);
 				vertexView.midU(base + vId, midU);
 				vertexView.midV(base + vId, midV);
+				vertexView.packedTangent(base + vId, tangent);
+				vertexView.packedMidBlock(base + vId, 0);
+				vertexView.midBlockW(i, (byte) 255);
 			}
 		}
 	}
@@ -200,9 +208,13 @@ public class ClrwlMeshPool {
 
 		for (int i = 0; i < mesh.vertexCount(); i++)
 		{
-			vertexView.packedTangent(i, 0);
+			vertexView.entityX(i, (short) -1);
+			vertexView.entityY(i, (short) -1);
 			vertexView.midU(i, 0);
 			vertexView.midV(i, 0);
+			vertexView.packedTangent(i, 0);
+			vertexView.packedMidBlock(i, 0);
+			vertexView.midBlockW(i, (byte) 255);
 		}
 	}
 

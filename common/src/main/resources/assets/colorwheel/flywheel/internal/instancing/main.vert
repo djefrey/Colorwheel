@@ -99,11 +99,16 @@ void main()
     vec2 flw_vertexLight_bkp = flw_vertexLight;
     vec3 flw_vertexNormal_bkp = flw_vertexNormal;
 
-    flw_vertexPos = vec4(_clrwl_meshCenter.xyz, 1.0);
+    vec3 midMesh = clrwl_vertexMidMesh.w == -1
+        ? _clrwl_meshCenter.xyz
+        : flw_vertexPos.xyz + clrwl_vertexMidMesh.xyz / 64.0;
+
+    flw_vertexPos = vec4(midMesh.xyz, 1.0);
     flw_vertexNormal = clrwl_vertexTangent.xyz;
     flw_vertexTexCoord = clrwl_vertexMidTexCoord;
 
     flw_instanceVertex(instance);
+    flw_materialVertex();
 
     vec4 transformedMeshCenter = flw_vertexPos;
     clrwl_vertexTangent.xyz = flw_vertexNormal;
@@ -121,7 +126,8 @@ void main()
     flw_instanceVertex(instance);
     flw_materialVertex();
 
-    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, _clrwl_meshCenter.w);
+    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0,
+                                clrwl_vertexMidMesh.w == -1 ? _clrwl_meshCenter.w : clrwl_vertexMidMesh.w);
 
     #ifdef _FLW_CRUMBLING
     flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
@@ -129,12 +135,16 @@ void main()
 
     #ifdef FLW_EMBEDDED
     flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
+    clrwl_vertexMidMesh.xyz = (_flw_modelMatrix * vec4(clrwl_vertexMidMesh.xyz, 1.0)).xyz;
     flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
-    clrwl_vertexTangent = vec4(_flw_normalMatrix * clrwl_vertexTangent.xyz, clrwl_vertexTangent.w);
+    clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
     #endif
 
     flw_vertexNormal = normalize(flw_vertexNormal);
+
+    #ifdef _FLW_DEBUG
     clrwl_debugIds = uvec2(gl_InstanceID, _flw_vertexOffset);
+    #endif
 
     if (flw_material.useOverlay)
     {

@@ -5,7 +5,7 @@ plugins {
 
 loom {
     forge {
-        mixinConfig("colorwheel.mixins.iris.json", "colorwheel.mixins.flw.json", "colorwheel.mixins.mc.json")
+        mixinConfig("colorwheel.mixins.json", "colorwheel.forge.mixins.json")
     }
     runs {
         client {
@@ -46,6 +46,8 @@ dependencies {
 
     modLocalRuntime "dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"
     modLocalRuntime "dev.engine-room.vanillin:vanillin-forge-${minecraft_version}:${vanillin_version}"
+
+    modCompileOnly "maven.modrinth:oculus:${oculus_version}"
 
     modLocalRuntime "maven.modrinth:embeddium:${embeddium_version}"
     modLocalRuntime "maven.modrinth:oculus:${oculus_version}"

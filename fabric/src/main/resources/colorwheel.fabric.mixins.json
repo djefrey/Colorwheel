@@ -1,13 +1,13 @@
 {
   "required": true,
-  "package": "dev.djefrey.colorwheel.mixin.flw",
+  "package": "dev.djefrey.colorwheel.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
+    "mc.BlockRenderDispatcherMixin",
+    "mc.ModelBlockRendererMixin"
   ],
   "mixins": [
-    "BlockEntityStorageMixin",
-    "EntityStorageMixin"
   ],
   "injectors": {
     "defaultRequire": 1

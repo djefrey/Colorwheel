@@ -15,11 +15,13 @@ public final class ClrwlVertex {
 			.vector("position", FloatRepr.FLOAT, 3)
 			.vector("color", FloatRepr.NORMALIZED_UNSIGNED_BYTE, 4)
 			.vector("tex", FloatRepr.FLOAT, 2)
-			.vector("overlay", FloatRepr.SHORT, 2)
 			.vector("light", FloatRepr.UNSIGNED_SHORT, 2)
-			.vector("normal", FloatRepr.NORMALIZED_BYTE, 3)
-			.vector("tangent", FloatRepr.NORMALIZED_BYTE, 4)
+			.vector("normal", FloatRepr.NORMALIZED_BYTE, 4)
+			.vector("entity", FloatRepr.SHORT, 2)
 			.vector("midTexCoord", FloatRepr.FLOAT, 2)
+			.vector("tangent", FloatRepr.NORMALIZED_BYTE, 4)
+			.vector("midBlock", FloatRepr.BYTE, 4)
+			.vector("overlay", FloatRepr.SHORT, 2)
 			.build();
 
 	public static final List<VertexAttribute> ATTRIBUTES = LayoutAttributes.attributes(LAYOUT);

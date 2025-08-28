@@ -122,7 +122,7 @@ public class ClrwlTransformPatcher
 				replaceVec4WithVariableDimension(root, "at_midBlock", "clrwl_vertexMidMesh");
 				replaceVec4WithVariableDimension(root, "at_tangent", "clrwl_vertexTangent");
 				replaceVec2WithVariableDimension(root, "mc_midTexCoord", "clrwl_vertexMidTexCoord");
-				replaceFilledVec2WithVariableDimension(root, "mc_Entity", "-1.0");
+				replaceVec2WithVariableDimension(root, "mc_Entity", "clrwl_vertexEntity");
 
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(flw_vertexTexCoord, 0.0, 1.0)");
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(flw_vertexLight, 0.0, 1.0)");
@@ -275,9 +275,9 @@ public class ClrwlTransformPatcher
 		});
 	}
 
-	private static int getAttributeDimensionAndDelete(Root root, String name)
+	private static int getAttributeDimensionAndDelete(Root root, String name, int defaultDimension)
 	{
-		int dimension = 4;
+		int dimension = defaultDimension;
 
 		for (Identifier identifier : root.identifierIndex.get(name))
 		{
@@ -333,7 +333,7 @@ public class ClrwlTransformPatcher
 
 	private static void replaceVec2WithVariableDimension(Root root, String name, String vec2)
 	{
-		int dimension = getAttributeDimensionAndDelete(root, name);
+		int dimension = getAttributeDimensionAndDelete(root, name, 2);
 
 		if (dimension == 1)
 		{
@@ -355,7 +355,7 @@ public class ClrwlTransformPatcher
 
 	private static void replaceVec4WithVariableDimension(Root root, String name, String vec4)
 	{
-		int dimension = getAttributeDimensionAndDelete(root, name);
+		int dimension = getAttributeDimensionAndDelete(root, name, 4);
 
 		if (dimension == 1)
 		{
@@ -377,7 +377,7 @@ public class ClrwlTransformPatcher
 
 	private static void replaceFilledVec2WithVariableDimension(Root root, String name, String value)
 	{
-		int dimension = getAttributeDimensionAndDelete(root, name);
+		int dimension = getAttributeDimensionAndDelete(root, name, 2);
 
 		if (dimension == 1)
 		{
