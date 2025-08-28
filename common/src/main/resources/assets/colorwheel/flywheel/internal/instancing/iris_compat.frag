@@ -111,18 +111,30 @@ void clrwl_getDebugColor(inout vec4 color)
             color = mix(vec4(1.0, 0.0, 0.0, 1.0), vec4(0.0, 0.0, 1.0, 0.0), clrwl_vertexTangent.w * .5 + .5);
             break;
         case 4u:
-            color = _flw_id2Color(clrwl_debugIds.x);
+            color = _flw_id2Color(uint(abs(clrwl_vertexEntity.x)));
             break;
         case 5u:
-            color = vec4(vec2((flw_fragLight * 15.0 + 0.5) / 16.), 0., 1.);
+            color = vec4(sign(flw_vertexTexCoord.x - clrwl_vertexMidTexCoord.x), sign(flw_vertexTexCoord.y - clrwl_vertexMidTexCoord.y), 0.0, 1.);
             break;
         case 6u:
-            color = vec4(flw_fragOverlay / 16., 0., 1.);
+            color = vec4(clrwl_vertexMidMesh.xyz / 64.0 * .5 + .5, 1.);
             break;
         case 7u:
-            color = vec4(vec3(_clrwl_diffuseFactor()), 1.);
+            color = vec4(clrwl_vertexMidMesh.w / 5.0, 0.0, 0.0, 1.);
             break;
         case 8u:
+            color = _flw_id2Color(clrwl_debugIds.x);
+            break;
+        case 9u:
+            color = vec4(vec2((flw_fragLight * 15.0 + 0.5) / 16.), 0., 1.);
+            break;
+        case 10u:
+            color = vec4(flw_fragOverlay / 16., 0., 1.);
+            break;
+        case 11u:
+            color = vec4(vec3(_clrwl_diffuseFactor()), 1.);
+            break;
+        case 12u:
             color = _flw_id2Color(clrwl_debugIds.y);
             break;
     }

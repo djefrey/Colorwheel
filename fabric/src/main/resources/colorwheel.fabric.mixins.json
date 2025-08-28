@@ -1,11 +1,11 @@
 {
   "required": true,
-  "package": "dev.djefrey.colorwheel.mixin.mc",
+  "package": "dev.djefrey.colorwheel.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
-    "OptionsMixin",
-    "RenderSystemMixin"
+    "mc.BlockRenderDispatcherMixin",
+    "mc.ModelBlockRendererMixin"
   ],
   "mixins": [
   ],

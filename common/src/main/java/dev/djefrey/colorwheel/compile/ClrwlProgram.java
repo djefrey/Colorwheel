@@ -100,11 +100,13 @@ public class ClrwlProgram
 		GL20.glBindAttribLocation(this.handle, 0, "_flw_aPos");
 		GL20.glBindAttribLocation(this.handle, 1, "_flw_aColor");
 		GL20.glBindAttribLocation(this.handle, 2, "_flw_aTexCoord");
-		GL20.glBindAttribLocation(this.handle, 3, "_flw_aOverlay");
-		GL20.glBindAttribLocation(this.handle, 4, "_flw_aLight");
-		GL20.glBindAttribLocation(this.handle, 5, "_flw_aNormal");
-		GL20.glBindAttribLocation(this.handle, 6, "_clrwl_aTangent");
-		GL20.glBindAttribLocation(this.handle, 7, "_clrwl_aMidTexCoord");
+		GL20.glBindAttribLocation(this.handle, 3, "_flw_aLight");
+		GL20.glBindAttribLocation(this.handle, 4, "_flw_aNormal");
+		GL20.glBindAttribLocation(this.handle, 5, "_clrwl_aEntity");
+		GL20.glBindAttribLocation(this.handle, 6, "_clrwl_aMidTexCoord");
+		GL20.glBindAttribLocation(this.handle, 7, "_clrwl_aTangent");
+		GL20.glBindAttribLocation(this.handle, 8, "_clrwl_aMidBlock");
+		GL20.glBindAttribLocation(this.handle, 9, "_flw_aOverlay");
 
 		GL20.glLinkProgram(this.handle);
 

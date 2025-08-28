@@ -12,7 +12,12 @@ in ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
+#ifdef _FLW_DEBUG
+    vec2 clrwl_vertexEntity;
+    vec2 clrwl_vertexMidTexCoord;
+    vec4 clrwl_vertexMidMesh;
     flat uvec2 clrwl_debugIds;
+#endif
 };
 
 vec4 flw_sampleColor;

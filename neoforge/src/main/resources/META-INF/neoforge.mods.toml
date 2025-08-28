@@ -49,10 +49,7 @@ ordering = "NONE"
 side = "BOTH"
 
 [[mixins]]
-config = "colorwheel.mixins.iris.json"
+config = "colorwheel.mixins.json"
 
 [[mixins]]
-config = "colorwheel.mixins.flw.json"
-
-[[mixins]]
-config = "colorwheel.mixins.mc.json"
+config = "colorwheel.neoforge.mixins.json"

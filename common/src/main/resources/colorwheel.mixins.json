@@ -1,0 +1,33 @@
+{
+  "required": true,
+  "package": "dev.djefrey.colorwheel.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "client": [
+    "mc.BufferBuilderMixin",
+    "mc.OptionsMixin",
+    "mc.RenderSystemMixin"
+  ],
+  "mixins": [
+    "flw.BlockEntityStorageMixin",
+    "flw.EntityStorageMixin",
+    "flw.MeshEmitterMixin",
+    "flw.MeshHelperMixin",
+    "iris.BlockMaterialMappingMixin",
+    "iris.IrisMixin",
+    "iris.IrisRenderingPipelineMixin",
+    "iris.PackShadowDirectivesMixin",
+    "iris.ProgramDirectivesMixin",
+    "iris.ProgramSetMixin",
+    "iris.ProgramSourceMixin",
+    "iris.RenderTargetMixin",
+    "iris.ShaderPackMixin",
+    "iris.ShaderPackSourceNamesMixin",
+    "iris.ShadowRendererMixin",
+    "iris.ShadowRenderTargetsMixin",
+    "iris.StandardMacrosMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

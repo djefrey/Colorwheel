@@ -1,13 +1,13 @@
 {
   "required": true,
-  "package": "dev.djefrey.colorwheel.mixin.flw",
+  "package": "dev.djefrey.colorwheel.neoforge.mixin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
   ],
   "mixins": [
-    "BlockEntityStorageMixin",
-    "EntityStorageMixin"
+    "mc.BlockRenderDispatcherMixin",
+    "mc.ModelBlockRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
