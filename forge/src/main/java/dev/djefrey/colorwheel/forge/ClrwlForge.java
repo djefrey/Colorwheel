@@ -16,9 +16,8 @@ public final class ClrwlForge {
     public ClrwlForge()
     {
         ModLoadingContext modLoadingContext = ModLoadingContext.get();
-        var version = modLoadingContext.getActiveContainer().getModInfo().getVersion();
 
-        Colorwheel.init(version.getMajorVersion(),version.getMinorVersion(), version.getIncrementalVersion());
+        Colorwheel.init();
 
         IEventBus forgeEventBus = MinecraftForge.EVENT_BUS;
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
