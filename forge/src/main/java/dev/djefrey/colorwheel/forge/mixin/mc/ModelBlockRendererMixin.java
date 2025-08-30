@@ -33,10 +33,10 @@ public class ModelBlockRendererMixin
         }
     }
 
-    @Inject(method = "tesselateBlock(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;JI)V",
+    @Inject(method = "tesselateBlock(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;JILnet/minecraftforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)V",
             at = @At("RETURN"),
             remap = false)
-    private void injectEndBlock(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, CallbackInfo ci)
+    private void injectEndBlock(BlockAndTintGetter arg, BakedModel arg2, BlockState arg3, BlockPos arg4, PoseStack arg5, VertexConsumer consumer, boolean bl, RandomSource arg7, long l, int i, ModelData modelData, RenderType renderType, CallbackInfo ci)
     {
         if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
         {

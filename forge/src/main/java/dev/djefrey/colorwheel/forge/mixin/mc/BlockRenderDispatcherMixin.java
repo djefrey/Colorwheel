@@ -17,8 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class BlockRenderDispatcherMixin
 {
     @Inject(method = "renderLiquid",
-            at = @At("HEAD"),
-            remap = false)
+            at = @At("HEAD"))
     private void injectBeginBlock(BlockPos pos, BlockAndTintGetter level, VertexConsumer consumer, BlockState blockState, FluidState fluidState, CallbackInfo ci)
     {
         if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
@@ -30,8 +29,7 @@ public class BlockRenderDispatcherMixin
     }
 
     @Inject(method = "renderLiquid",
-            at = @At("RETURN"),
-            remap = false)
+            at = @At("RETURN"))
     private void injectEndBlock(BlockPos pos, BlockAndTintGetter level, VertexConsumer consumer, BlockState blockState, FluidState fluidState, CallbackInfo ci)
     {
         if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
