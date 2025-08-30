@@ -37,6 +37,8 @@ dependencies {
     localRuntime "org.anarres:jcpp:1.4.14"
     localRuntime "io.github.douira:glsl-transformer:2.0.1"
 
+    modCompileOnly "dev.engine-room.flywheel:flywheel-fabric-${minecraft_version}:${flywheel_version}"
+
     modLocalRuntime "dev.engine-room.flywheel:flywheel-fabric-${minecraft_version}:${flywheel_version}"
     modLocalRuntime "dev.engine-room.vanillin:vanillin-fabric-${minecraft_version}:${vanillin_version}"
 
