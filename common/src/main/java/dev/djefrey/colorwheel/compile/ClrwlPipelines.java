@@ -152,12 +152,12 @@ public class ClrwlPipelines
                     .withResource(COMPONENTS_HEADER_FRAG)
                     .withResource(API_IMPL_FRAG)
                     .withLoader((k, sources) -> sources.get(k.material().fragmentSource()))
-                    .withComponent(($) -> ClrwlPipelineCompiler.FOG)
+                    .withLoader((k, sources) -> sources.get(k.fog().source()))
                     .withLoader((k, sources) -> sources.get(k.light().source()))
                     .withLoader((k, sources) ->
                             k.cutout() == CutoutShaders.OFF
                                     ? sources.get(CutoutShaders.OFF.source())
-                                    : ClrwlPipelineCompiler.CUTOUT)
+                                    : sources.get(k.cutout().source()))
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_FRAG))
                     .with(ClrwlPipelines::getOitInouts)
                     .with(ClrwlPipelines::getIrisShaderFragmentSource)

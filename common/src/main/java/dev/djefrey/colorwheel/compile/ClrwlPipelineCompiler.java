@@ -1,19 +1,14 @@
 package dev.djefrey.colorwheel.compile;
 
-import com.google.common.collect.ImmutableSet;
-import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
-import dev.engine_room.flywheel.backend.compile.component.UberShaderComponent;
 import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
-import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
-import dev.engine_room.flywheel.backend.glsl.generate.GlslExpr;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -31,7 +26,6 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class ClrwlPipelineCompiler
 {
@@ -39,9 +33,6 @@ public class ClrwlPipelineCompiler
 	private final ClrwlPipeline pipeline;
 	private final ShaderPack pack;
 	private final NamespacedId dimension;
-
-	public static UberShaderComponent FOG;
-	public static UberShaderComponent CUTOUT;
 
 	public ClrwlPipelineCompiler(ShaderSources sources, ClrwlPipeline pipeline, ShaderPack pack, NamespacedId dimension)
 	{
@@ -51,18 +42,8 @@ public class ClrwlPipelineCompiler
 		this.dimension = dimension;
 	}
 
-	public static void refreshUberShaders()
-	{
-		createFogComponent();
-		createCutoutComponent();
-	}
-
 	public ClrwlProgram get(ClrwlShaderKey key)
 	{
-		// This will index the fog and cutout shaders
-		ClrwlMaterialShaderIndices.fogSources().index(key.fog().source());
-		ClrwlMaterialShaderIndices.cutoutSources().index(key.cutout().source());
-
 		return this.compile(key);
 	}
 
@@ -176,32 +157,6 @@ public class ClrwlPipelineCompiler
 		}
 
 		included.addAll(component.included());
-	}
-
-	public static void createFogComponent()
-	{
-		FOG = UberShaderComponent.builder(ResourceUtil.rl("fog"))
-				.materialSources(ClrwlMaterialShaderIndices.fogSources().all())
-				.adapt(FnSignature.create()
-						.returnType("vec4")
-						.name("flw_fogFilter")
-						.arg("vec4", "color")
-						.build(), GlslExpr.variable("color"))
-				.switchOn(GlslExpr.variable("_flw_uberFogIndex"))
-				.build(FlwPrograms.SOURCES);
-	}
-
-	private static void createCutoutComponent()
-	{
-		CUTOUT = UberShaderComponent.builder(ResourceUtil.rl("cutout"))
-				.materialSources(ClrwlMaterialShaderIndices.cutoutSources().all())
-				.adapt(FnSignature.create()
-						.returnType("bool")
-						.name("flw_discardPredicate")
-						.arg("vec4", "color")
-						.build(), GlslExpr.boolLiteral(false))
-				.switchOn(GlslExpr.variable("_flw_uberCutoutIndex"))
-				.build(FlwPrograms.SOURCES);
 	}
 
 	private static void dumpSources(String fileName, String source)
