@@ -65,7 +65,7 @@ vec2 _clrwl_getCrumblingTexCoord() {
 }
 #endif
 
-uniform uvec2 _flw_packedMaterial;
+uniform uint _clrwl_packedMaterial;
 uniform int _flw_baseInstance = 0;
 
 #ifdef FLW_EMBEDDED
@@ -79,7 +79,7 @@ uniform vec4 _clrwl_meshCenter;
 
 void main()
 {
-    _flw_unpackMaterialProperties(_flw_packedMaterial.y, flw_material);
+    _flw_unpackMaterialProperties(_clrwl_packedMaterial, flw_material);
 
     FlwInstance instance = _flw_unpackInstance(_flw_baseInstance + gl_InstanceID);
 

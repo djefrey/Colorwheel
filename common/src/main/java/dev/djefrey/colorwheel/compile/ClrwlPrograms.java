@@ -15,8 +15,6 @@ import java.util.Map;
 
 public class ClrwlPrograms
 {
-	private static final List<ClrwlPrograms> PROGRAMS = new ArrayList<>();
-
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 
 	private final ClrwlPipelineCompiler compiler;
@@ -47,11 +45,7 @@ public class ClrwlPrograms
 		var compiler = new ClrwlPipelineCompiler(sources, ClrwlPipelines.INSTANCING, pack, dimension);
 		var oit = new ClrwlOitPrograms(sources);
 
-		ClrwlPrograms programs = new ClrwlPrograms(compiler, oit);
-
-		PROGRAMS.add(programs);
-
-		return programs;
+        return new ClrwlPrograms(compiler, oit);
 	}
 
 	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
@@ -82,21 +76,10 @@ public class ClrwlPrograms
 	public void delete()
 	{
 		deleteCache();
-		PROGRAMS.remove(this);
 	}
 
 	public ClrwlOitPrograms getOitPrograms()
 	{
 		return oitPrograms;
-	}
-
-	public static void handleUberShaderUpdate()
-	{
-		for (var program : PROGRAMS)
-		{
-			program.deleteCache();
-		}
-
-		ClrwlPipelineCompiler.refreshUberShaders();
 	}
 }

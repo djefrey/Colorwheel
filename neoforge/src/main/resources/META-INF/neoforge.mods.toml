@@ -48,6 +48,13 @@ versionRange = "[0.2.3,)"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies.colorwheel]]
+modId = "irisflw"
+type = "incompatible"
+versionRange = "*"
+side = "CLIENT"
+reason = "Mixin conflict with Iris Flywheel Compat"
+
 [[mixins]]
 config = "colorwheel.mixins.json"
 

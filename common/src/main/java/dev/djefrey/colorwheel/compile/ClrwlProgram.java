@@ -166,7 +166,7 @@ public class ClrwlProgram
 
 		this.vertexOffsetUniform = tryGetUniformLocation2("_flw_vertexOffset");
 		this.baseInstanceUniform = tryGetUniformLocation2("_flw_baseInstance");
-		this.packedMaterialUniform = tryGetUniformLocation2("_flw_packedMaterial");
+		this.packedMaterialUniform = tryGetUniformLocation2("_clrwl_packedMaterial");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
 		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityId");
@@ -192,12 +192,11 @@ public class ClrwlProgram
 	{
 		GL20.glUseProgram(this.handle);
 
-		int packedFogAndCutout = ClrwlMaterialEncoder.packUberShader(material);
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
 
 		setUniformU(vertexOffsetUniform, vertexOffset);
 		setUniformS(baseInstanceUniform, baseInstance);
-		setUniform(packedMaterialUniform, packedFogAndCutout, packedMaterialProperties);
+		setUniformU(packedMaterialUniform, packedMaterialProperties);
 
 		setUniformS(blockEntityUniform, visual.getBlockEntity());
 		setUniformS(entityUniform, visual.getEntity());

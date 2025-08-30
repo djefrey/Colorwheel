@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.engine;
 
-import dev.djefrey.colorwheel.ClrwlMaterialShaderIndices;
 import dev.engine_room.flywheel.api.material.*;
 import net.minecraft.util.Mth;
 
@@ -47,12 +46,6 @@ public class ClrwlMaterialEncoder {
 
     private static int bitMask(int bitLength, int bitOffset) {
         return ((1 << bitLength) - 1) << bitOffset;
-    }
-
-    public static int packUberShader(Material material) {
-        var fog = ClrwlMaterialShaderIndices.fogIndex(material.fog());
-        var cutout = ClrwlMaterialShaderIndices.cutoutIndex(material.cutout());
-        return (cutout & 0xFFFF) | (fog & 0xFFFF) << 16;
     }
 
     // Packed format:

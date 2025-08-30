@@ -1,0 +1,31 @@
+package dev.djefrey.colorwheel.neoforge;
+
+import dev.djefrey.colorwheel.ClrwlXplat;
+import dev.djefrey.colorwheel.Colorwheel;
+import net.neoforged.fml.loading.LoadingModList;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ClrwlNeoForgeXplat implements ClrwlXplat
+{
+    private final Pattern VERSION_REGEX = Pattern.compile("(\\d+).(\\d+).(\\d+).*");
+
+    @Override
+    public String getFormattedVersion()
+    {
+        var version = LoadingModList.get().getModFileById(Colorwheel.MOD_ID).versionString();
+        Matcher matcher = VERSION_REGEX.matcher(version);
+
+        if (!matcher.matches())
+        {
+            throw new IllegalStateException("Could not parse Colorwheel mod version");
+        }
+
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        int incremental = Integer.parseInt(matcher.group(3));
+
+        return "%d%02d%02d".formatted(major, minor, incremental);
+    }
+}

@@ -11,9 +11,7 @@ public final class ClrwlNeoForge
 {
     public ClrwlNeoForge(IEventBus modEventBus, ModContainer modContainer)
     {
-        var version = modContainer.getModInfo().getVersion();
-
-        Colorwheel.init(version.getMajorVersion(), version.getMinorVersion(), version.getIncrementalVersion());
+        Colorwheel.init();
 
         IEventBus gameEventBus = NeoForge.EVENT_BUS;
 

@@ -32,17 +32,17 @@ public final class Colorwheel {
 
     public static final Backend IRIS_INSTANCING = SimpleBackend.builder()
             .engineFactory(level -> new ClrwlEngine(level, 256))
-            .priority(2001) // Take priority over Iris Flywheel Compat: if the shaderpack is compatible, there are no reason to use irisflw
+            .priority(500)
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(rl("instancing"));
 
     // Not ideal but good enough for now
     public static ClrwlConfig CONFIG = null;
-    public static String FORMATTED_VERSION = null;
+    public static String FORMATTED_VERSION = ClrwlXplat.INSTANCE.getFormattedVersion();
 
-    public static void init(int major, int minor, int incremental)
+    public static void init()
     {
-        FORMATTED_VERSION = "%d%02d%02d".formatted(major, minor,  incremental);
+
     }
 
     public static ResourceLocation rl(String path)

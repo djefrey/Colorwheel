@@ -22,8 +22,8 @@ public class BlockRenderDispatcherMixin
     {
         if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
         {
-            blockBuilder.beginBlock((short) WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(blockState),
-                                    (byte) 1,
+            blockBuilder.beginBlock(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(blockState),
+                                    (byte) 1, (byte) blockState.getLightEmission(),
                                     pos.getX(), pos.getY(), pos.getZ());
         }
     }

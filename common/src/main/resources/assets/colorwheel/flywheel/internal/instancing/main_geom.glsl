@@ -1,12 +1,12 @@
 #include "flywheel:internal/packed_material.glsl"
 
-uniform uvec2 _flw_packedMaterial;
+uniform uint _clrwl_packedMaterial;
 
 FlwMaterial flw_material;
 
 void main()
 {
-    _flw_unpackMaterialProperties(_flw_packedMaterial.y, flw_material);
+    _flw_unpackMaterialProperties(_clrwl_packedMaterial, flw_material);
 
     if (flw_material.useOverlay)
     {

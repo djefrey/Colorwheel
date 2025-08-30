@@ -22,10 +22,10 @@ public class ModelBlockRendererMixin
             at = @At("HEAD"))
     private void injectBeingBlock(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, CallbackInfo ci)
     {
-        if (consumer instanceof ColorwheelBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
+        if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
         {
-            blockBuilder.beginBlock((short) WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(state),
-                                    (byte) 0,
+            blockBuilder.beginBlock(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(state),
+                                    (byte) 0, (byte) state.getLightEmission(),
                                     pos.getX(), pos.getY(), pos.getZ());
         }
     }
