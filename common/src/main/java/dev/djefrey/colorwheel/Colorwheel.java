@@ -32,7 +32,7 @@ public final class Colorwheel {
 
     public static final Backend IRIS_INSTANCING = SimpleBackend.builder()
             .engineFactory(level -> new ClrwlEngine(level, 256))
-            .priority(2001) // Take priority over Iris Flywheel Compat: if the shaderpack is compatible, there are no reason to use irisflw
+            .priority(500)
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(rl("instancing"));
 

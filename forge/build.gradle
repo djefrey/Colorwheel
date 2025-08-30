@@ -103,6 +103,10 @@ unifiedPublishing {
                 curseforge = "colorwheel-patcher"
                 modrinth = "colorwheel-patcher"
             }
+            conflicts {
+                curseforge = "iris-flywheel-compat"
+                modrinth = "iris-flw-compat"
+            }
         }
 
         if (System.getenv("CF_TOKEN") != null) {

@@ -47,3 +47,10 @@ mandatory = false
 versionRange = "[0.2.3,)"
 ordering = "NONE"
 side = "BOTH"
+
+[[dependencies.colorwheel]]
+modId = "irisflw"
+mandatory = false
+versionRange = "[0.0.0-NOT-COMPATIBLE]"
+ordering = "BEFORE"
+side = "CLIENT"
