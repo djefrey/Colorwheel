@@ -1,8 +1,8 @@
-package dev.djefrey.colorwheel.mixin.flw;
+package dev.djefrey.colorwheel.fabric.mixin.flw;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
 import org.jetbrains.annotations.UnknownNullability;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.MeshEmitter")
-public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitiveBufferBuilder
+@Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.UniversalMeshEmitter")
+public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferBuilder
 {
     @Unique
     private int colorwheel$currentBlock = -1;
@@ -29,18 +29,18 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
     private int colorwheel$currentLocalPosZ;
 
     @Shadow
-    private @UnknownNullability BufferBuilder bufferBuilder;
+    private @UnknownNullability BufferBuilder currentDelegate;
 
-    @Inject(method = "prepareForGeometry(Z)V",
+    @Inject(method = "prepareForGeometry",
             at = @At("TAIL"),
             remap = false)
-    private void injectBeginBlock(boolean shade, CallbackInfo ci)
+    private void injectBeginBlock(RenderMaterial material, CallbackInfo ci)
     {
-        if (this.bufferBuilder instanceof ColorwheelBufferBuilder clrwlBuilder)
+        if (this.currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
             clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$currentBlockEmission, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
         }
-        else if (this.bufferBuilder instanceof BlockSensitiveBufferBuilder blockBuilder)
+        else if (this.currentDelegate instanceof BlockSensitiveBufferBuilder blockBuilder)
         {
             blockBuilder.beginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$currentBlockEmission, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
         }
@@ -67,11 +67,11 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
         this.colorwheel$currentLocalPosY = 0;
         this.colorwheel$currentLocalPosZ = 0;
 
-        if (this.bufferBuilder instanceof ColorwheelBufferBuilder clrwlBuilder)
+        if (this.currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
             clrwlBuilder.endBlock();
         }
-        else if (this.bufferBuilder instanceof BlockSensitiveBufferBuilder blockBuilder)
+        else if (this.currentDelegate instanceof BlockSensitiveBufferBuilder blockBuilder)
         {
             blockBuilder.endBlock();
         }
