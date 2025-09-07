@@ -8,6 +8,7 @@ import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.djefrey.colorwheel.engine.ClrwlVertex;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.backend.BackendConfig;
@@ -65,7 +66,7 @@ public class ClrwlPipelines
                         .onCompile(ClrwlPipelines::setIrisDefines)
                         .onCompile((k, c) ->
                         {
-                            var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.VERTEX);
+                            var exts = c.getIrisSources().extensions().get(ShaderType.VERTEX);
 
                             for (var ext : exts)
                             {
@@ -105,7 +106,7 @@ public class ClrwlPipelines
                     .onCompile(ClrwlPipelines::setIrisDefines)
                     .onCompile((k, c) ->
                     {
-                        var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.GEOMETRY);
+                        var exts = c.getIrisSources().extensions().get(ShaderType.GEOMETRY);
 
                         for (var ext : exts)
                         {
@@ -130,7 +131,7 @@ public class ClrwlPipelines
                     .enableExtension("GL_ARB_conservative_depth")
                     .onCompile((k, c) ->
                     {
-                        var exts = ((ProgramSourceAccessor) c.getIrisSources()).colorwheel$getShaderExtensions().get(ShaderType.FRAGMENT);
+                        var exts = c.getIrisSources().extensions().get(ShaderType.FRAGMENT);
 
                         for (var ext : exts)
                         {
@@ -181,7 +182,7 @@ public class ClrwlPipelines
 
     private static void setIrisDefines(ClrwlShaderKey k, ClrwlCompilation c)
     {
-        if (c.getPackDirectives().isOldLighting())
+        if (c.getProgramSet().getPackDirectives().isOldLighting())
         {
             c.define("CLRWL_OLD_LIGHTING");
         }
@@ -236,61 +237,29 @@ public class ClrwlPipelines
 
     private static SourceComponent getIrisShaderVertexSource(ClrwlShaderKey k, ClrwlCompilation c)
     {
-        var pipeline = c.getIrisPipeline();
-        var sources = c.getIrisSources();
+        var programId = ClrwlProgramId.fromTransparency(k.transparency(), k.isShadow());
+        var name = programId.programName() + ".vsh";
+        var patched = c.getIrisSources().vertex();
 
-        String vertexSource = sources.getVertexSource().orElseThrow();
-
-//        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-//        List<StringPair> defines = new ArrayList<>(irisDefines);
-//        defines.addAll(c.defines);
-//
-//        String preprocessed = JcppProcessor.glslPreprocessSource(vertexSource, defines);
-
-        String preprocessed = vertexSource;
-        String transformed = ClrwlTransformPatcher.patchVertex(preprocessed, k.transparency(), sources.getDirectives(), pipeline.getTextureMap());
-
-        return new IrisShaderComponent(sources.getName(), transformed);
+        return new IrisShaderComponent(name, patched);
     }
 
     private static SourceComponent getIrisShaderGeometrySource(ClrwlShaderKey k, ClrwlCompilation c)
     {
-        var pipeline = c.getIrisPipeline();
-        var sources = c.getIrisSources();
+        var programId = ClrwlProgramId.fromTransparency(k.transparency(), k.isShadow());
+        var name = programId.programName() + ".gsh";
+        var patched = c.getIrisSources().geometry().orElseThrow();
 
-        String geometrySource = sources.getGeometrySource().orElseThrow();
-
-//        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-//        List<StringPair> defines = new ArrayList<>(irisDefines);
-//        defines.addAll(c.defines);
-//
-//        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
-
-        String preprocessed = geometrySource;
-        String transformed = ClrwlTransformPatcher.patchGeometry(preprocessed, k.transparency(), sources.getDirectives(), pipeline.getTextureMap());
-
-        return new IrisShaderComponent(sources.getName(), transformed);
+        return new IrisShaderComponent(name, patched);
     }
 
     private static SourceComponent getIrisShaderFragmentSource(ClrwlShaderKey k, ClrwlCompilation c)
     {
-        var pipeline = c.getIrisPipeline();
-        var sources = c.getIrisSources();
+        var programId = ClrwlProgramId.fromTransparency(k.transparency(), k.isShadow());
+        var name = programId.programName() + ".fsh";
+        var patched = c.getIrisSources().fragment().code();
 
-        String fragmentSource = sources.getFragmentSource().orElseThrow();
-
-//        List<StringPair> irisDefines = ((ShaderPackAccessor) k.pack()).colorwheel$getEnvironmentDefines();
-//        List<StringPair> defines = new ArrayList<>(irisDefines);
-//        defines.addAll(c.defines);
-//
-//        String preprocessed = JcppProcessor.glslPreprocessSource(fragmentSource, defines);
-
-        String preprocessed = fragmentSource;
-        ClrwlTransformOutput transformOut = ClrwlTransformPatcher.patchFragment(preprocessed, k.oit(), k.transparency(), sources.getDirectives(), pipeline.getTextureMap());
-
-        c.setShaderOutputs(transformOut.outputs());
-
-        return new IrisShaderComponent(sources.getName(), transformOut.code());
+        return new IrisShaderComponent(name, patched);
     }
 
     private static SourceComponent getOitInouts(ClrwlShaderKey k, ClrwlCompilation c)
@@ -331,7 +300,7 @@ public class ClrwlPipelines
 
             case GENERATE_COEFFICIENTS ->
             {
-                var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
+                var drawBuffers = c.getIrisSources().drawBuffers();
                 var ranks = c.getProperties().getOitCoeffRanks(programGroup);
                 var overrides = c.getProperties().getOitAccumulateOverrides(programGroup);
 
@@ -350,15 +319,15 @@ public class ClrwlPipelines
                 }
 
                 c.define("CLRWL_POST_SHADER");
-                return new OitCollectCoeffsComponent(ranks, coeffFrag, c.getShaderOutputs());
+                return new OitCollectCoeffsComponent(ranks, coeffFrag, c.getIrisSources().fragment().outputs());
             }
 
             case EVALUATE ->
             {
-                var drawBuffers = c.getIrisSources().getDirectives().getDrawBuffers();
+                var drawBuffers = c.getIrisSources().drawBuffers();
                 var ranks = c.getProperties().getOitCoeffRanks(programGroup);
                 var overrides = c.getProperties().getOitAccumulateOverrides(programGroup);
-                var outputs = c.getShaderOutputs();
+                var outputs = c.getIrisSources().fragment().outputs();
 
                 c.define("CLRWL_POST_SHADER");
                 return new OitEvaluateComponent(drawBuffers, ranks, overrides, outputs);

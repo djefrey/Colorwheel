@@ -1,12 +1,8 @@
 package dev.djefrey.colorwheel.compile.transform;
 
-import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
-import dev.engine_room.flywheel.api.material.Transparency;
 import io.github.douira.glsl_transformer.ast.node.Identifier;
 import io.github.douira.glsl_transformer.ast.node.TranslationUnit;
 import io.github.douira.glsl_transformer.ast.node.Version;
-import io.github.douira.glsl_transformer.ast.node.abstract_node.ASTNode;
 import io.github.douira.glsl_transformer.ast.node.declaration.DeclarationMember;
 import io.github.douira.glsl_transformer.ast.node.declaration.TypeAndInitDeclaration;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
@@ -22,7 +18,6 @@ import io.github.douira.glsl_transformer.ast.query.match.AutoHintedMatcher;
 import io.github.douira.glsl_transformer.ast.transform.ASTInjectionPoint;
 import io.github.douira.glsl_transformer.ast.transform.Template;
 import io.github.douira.glsl_transformer.parser.ParseShape;
-import io.github.douira.glsl_transformer.util.Type;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.helpers.Tri;
@@ -188,9 +183,6 @@ public class ClrwlTransformPatcher
 						root.replaceReferenceExpressions(transformer, "gl_FragColor", "gl_FragData[0]");
 					}
 
-					var oit = parameters.getOit();
-					boolean customOutputs = oit == ClrwlPipelineCompiler.OitMode.DEPTH_RANGE || oit == ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS;
-
 					Map<ArrayAccessExpression, Integer> glFragDataAccess = new HashMap<>();
 					Set<Integer> glFragDataIndexes = new HashSet<>();
 
@@ -203,7 +195,7 @@ public class ClrwlTransformPatcher
 						glFragDataIndexes.add((int) idx);
 					}
 
-					if (customOutputs)
+					if (parameters.usesCustomOutputs())
 					{
 						for (var kv : glFragDataAccess.entrySet())
 						{
@@ -246,7 +238,7 @@ public class ClrwlTransformPatcher
 						}
 					}
 
-					if (customOutputs)
+					if (parameters.usesCustomOutputs())
 					{
 						for (var entry : outDeclarations.entrySet())
 						{
@@ -397,26 +389,26 @@ public class ClrwlTransformPatcher
 		}
 	}
 
-	public static String patchVertex(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchVertex(String vertex, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, isCrumbling, false, directives, textureMap);
 
 		return transformer.transform(vertex, parameters).code();
 	}
 
-	public static String patchGeometry(String vertex, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchGeometry(String vertex, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, ClrwlPipelineCompiler.OitMode.OFF, transparency, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, isCrumbling, false, directives, textureMap);
 
 		return transformer.transform(vertex, parameters).code();
 	}
 
-	public static ClrwlTransformOutput patchFragment(String fragment, ClrwlPipelineCompiler.OitMode oit, Transparency transparency, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static ClrwlTransformOutput patchFragment(String fragment, boolean isCrumbling, boolean customOutputs, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		var directives =  ClrwlTransformParameters.Directives.fromFragment(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, oit, transparency, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, isCrumbling, customOutputs, directives, textureMap);
 
 		return transformer.transform(fragment, parameters);
 	}

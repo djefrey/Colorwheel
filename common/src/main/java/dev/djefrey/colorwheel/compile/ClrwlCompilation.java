@@ -6,14 +6,11 @@ import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.shaderpack.programs.ProgramSource;
-import net.irisshaders.iris.shaderpack.properties.PackDirectives;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class ClrwlCompilation
 {
@@ -22,17 +19,15 @@ public class ClrwlCompilation
     public final List<String> extensions = new ArrayList<>();
 
     private final IrisRenderingPipeline pipeline;
-    private final PackDirectives directives;
+    private final ProgramSet programSet;
     private final ClrwlShaderProperties properties;
-    private final ProgramSource irisSources;
+    private final ClrwlProgramSources.PatchedSources irisSources;
     private final ShaderSources sourceLoader;
 
-    private Map<Integer, String> shaderOutputs = Collections.emptyMap();
-
-    public ClrwlCompilation(IrisRenderingPipeline pipeline, PackDirectives directives, ClrwlShaderProperties properties, ProgramSource irisSources, ShaderSources sourceLoader)
+    public ClrwlCompilation(IrisRenderingPipeline pipeline, ProgramSet programSet, ClrwlShaderProperties properties, ClrwlProgramSources.PatchedSources irisSources, ShaderSources sourceLoader)
     {
         this.pipeline = pipeline;
-        this.directives = directives;
+        this.programSet = programSet;
         this.properties = properties;
         this.irisSources = irisSources;
         this.sourceLoader = sourceLoader;
@@ -105,9 +100,9 @@ public class ClrwlCompilation
     }
 
     @Nullable
-    public PackDirectives getPackDirectives()
+    public ProgramSet getProgramSet()
     {
-        return directives;
+        return programSet;
     }
 
     @Nullable
@@ -117,7 +112,7 @@ public class ClrwlCompilation
     }
 
     @Nullable
-    public ProgramSource getIrisSources()
+    public ClrwlProgramSources.PatchedSources getIrisSources()
     {
         return irisSources;
     }
@@ -125,15 +120,5 @@ public class ClrwlCompilation
     public ShaderSources getLoader()
     {
         return sourceLoader;
-    }
-
-    public Map<Integer, String> getShaderOutputs()
-    {
-        return shaderOutputs;
-    }
-
-    public void setShaderOutputs(Map<Integer, String> outputs)
-    {
-        this.shaderOutputs = outputs;
     }
 }
