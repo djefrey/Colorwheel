@@ -126,24 +126,29 @@ void main()
     flw_instanceVertex(instance);
     flw_materialVertex();
 
-    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0,
-                                clrwl_vertexMidMesh.w == -1 ? _clrwl_meshCenter.w : clrwl_vertexMidMesh.w);
-
     #ifdef _FLW_CRUMBLING
     flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
     #endif
 
     #ifdef FLW_EMBEDDED
     flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
-    clrwl_vertexMidMesh.xyz = (_flw_modelMatrix * vec4(clrwl_vertexMidMesh.xyz, 1.0)).xyz;
+    transformedMeshCenter = _flw_modelMatrix * transformedMeshCenter;
     flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
     clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
     #endif
+
+    // at_midBlock.w doesn't exists on 1.20.1, but it's used to flag vertices as terrain
+    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, -1);
 
     flw_vertexNormal = normalize(flw_vertexNormal);
 
     #ifdef _FLW_DEBUG
     clrwl_debugIds = uvec2(gl_InstanceID, _flw_vertexOffset);
+
+    if (_flw_debugMode == 6u) // midMesh
+    {
+        flw_vertexPos.xyz += (clrwl_vertexMidMesh.xyz / 64.0) * (sin(flw_renderSeconds * 3.14159) * 0.5 + 0.5);
+    }
     #endif
 
     if (flw_material.useOverlay)

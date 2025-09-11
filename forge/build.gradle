@@ -44,6 +44,8 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionForge')
 
+    modCompileOnly "dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"
+
     modLocalRuntime "dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"
     modLocalRuntime "dev.engine-room.vanillin:vanillin-forge-${minecraft_version}:${vanillin_version}"
 

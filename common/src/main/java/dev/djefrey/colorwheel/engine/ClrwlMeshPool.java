@@ -1,6 +1,8 @@
 package dev.djefrey.colorwheel.engine;
 
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.engine_room.flywheel.api.model.Mesh;
+import dev.engine_room.flywheel.api.vertex.MutableVertexList;
 import dev.engine_room.flywheel.backend.engine.IndexPool;
 import dev.engine_room.flywheel.backend.gl.GlPrimitive;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
@@ -12,6 +14,8 @@ import dev.engine_room.flywheel.lib.model.QuadMesh;
 import dev.engine_room.flywheel.lib.model.RetexturedMesh;
 import net.irisshaders.iris.vertices.NormalHelper;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.joml.Vector4fc;
 import org.lwjgl.opengl.GL32;
 
@@ -122,6 +126,8 @@ public class ClrwlMeshPool {
 			vertexView.vertexCount(mesh.vertexCount());
 			mesh.mesh.write(vertexView);
 
+			mesh.meshCenter = computeMeshCenter(vertexView);
+
 			if (!vertexView.consumeExtendedWriteFlag())
 			{
 				Mesh baseMesh = mesh.mesh;
@@ -148,6 +154,55 @@ public class ClrwlMeshPool {
 		vbo.upload(vertexBlock);
 
 		vertexBlock.free();
+	}
+
+	private Vector3f computeMeshCenter(ClrwlVertexView vertexView)
+	{
+		float minX =  Float.MAX_VALUE;
+		float minY =  Float.MAX_VALUE;
+		float minZ =  Float.MAX_VALUE;
+		float maxX = -Float.MAX_VALUE;
+		float maxY = -Float.MAX_VALUE;
+		float maxZ = -Float.MAX_VALUE;
+
+		for (int i = 0; i < vertexView.vertexCount(); i++)
+		{
+			float x = vertexView.x(i);
+			float y = vertexView.y(i);
+			float z = vertexView.z(i);
+
+			if (x < minX)
+			{
+				minX = x;
+			}
+
+			if (x > maxX)
+			{
+				maxX = x;
+			}
+
+			if (y < minY)
+			{
+				minY = y;
+			}
+
+			if (y > maxY)
+			{
+				maxY = y;
+			}
+
+			if (z < minZ)
+			{
+				minZ = z;
+			}
+
+			if (z > maxZ)
+			{
+				maxZ = z;
+			}
+		}
+
+		return new Vector3f((minX + maxX) / 2.0f, (minY + maxY) / 2.0f, (minZ + maxZ) / 2.0f);
 	}
 
 	private void computeExtendedQuadData(QuadMesh mesh, ClrwlVertexView vertexView)
@@ -191,13 +246,11 @@ public class ClrwlMeshPool {
 
 			for (int vId = 0; vId < 4; vId++)
 			{
-				vertexView.entityX(base + vId, (short) -1);
-				vertexView.entityY(base + vId, (short) -1);
+				vertexView.packedEntity(base + vId, 0xFFFFFFFF);
 				vertexView.midU(base + vId, midU);
 				vertexView.midV(base + vId, midV);
 				vertexView.packedTangent(base + vId, tangent);
-				vertexView.packedMidBlock(base + vId, 0);
-				vertexView.midBlockW(i, (byte) 255);
+				vertexView.packedMidBlock(base + vId, 0xFF << 24);
 			}
 		}
 	}
@@ -208,13 +261,11 @@ public class ClrwlMeshPool {
 
 		for (int i = 0; i < mesh.vertexCount(); i++)
 		{
-			vertexView.entityX(i, (short) -1);
-			vertexView.entityY(i, (short) -1);
+			vertexView.packedEntity(i, 0xFFFFFFFF);
 			vertexView.midU(i, 0);
 			vertexView.midV(i, 0);
 			vertexView.packedTangent(i, 0);
-			vertexView.packedMidBlock(i, 0);
-			vertexView.midBlockW(i, (byte) 255);
+			vertexView.packedMidBlock(i, 0xFF << 24);
 		}
 	}
 
@@ -235,10 +286,13 @@ public class ClrwlMeshPool {
 		public static final int INVALID_BASE_VERTEX = -1;
 
 		private final Mesh mesh;
+		private Vector3f meshCenter;
 		private int baseVertex = INVALID_BASE_VERTEX;
 
-		private PooledMesh(Mesh mesh) {
+		private PooledMesh(Mesh mesh)
+		{
 			this.mesh = mesh;
+			this.meshCenter = new Vector3f(0, 0, 0);
 		}
 
 		public int vertexCount() {
@@ -272,6 +326,11 @@ public class ClrwlMeshPool {
 		public Vector4fc boundingSphere()
 		{
 			return mesh.boundingSphere();
+		}
+
+		public Vector3fc meshCenter()
+		{
+			return meshCenter;
 		}
 
 		public void draw(int instanceCount) {

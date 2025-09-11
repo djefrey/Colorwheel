@@ -21,5 +21,5 @@ void _clrwl_layoutVertex() {
     clrwl_vertexEntity = _clrwl_aEntity;
     clrwl_vertexMidTexCoord = _clrwl_aMidTexCoord;
     clrwl_vertexTangent = _clrwl_aTangent;
-    clrwl_vertexMidMesh =  vec4(_clrwl_aMidBlock.xyz, -1); // at_midBlock.w does not exists on 1.20.1
+    clrwl_vertexMidMesh = _clrwl_aMidBlock; // at_midBlock.w does not exists on 1.20.1
 }

@@ -100,6 +100,10 @@ public class ClrwlVertexView extends AbstractVertexView
 		return MemoryUtil.memGetShort(ptr + index * STRIDE + 34);
 	}
 
+	public int packedEntity(int index) {
+		return MemoryUtil.memGetInt(ptr + index * STRIDE + 32);
+	}
+
 	public float midU(int index) {
 		return MemoryUtil.memGetFloat(ptr + index * STRIDE + 38);
 	}
@@ -228,6 +232,10 @@ public class ClrwlVertexView extends AbstractVertexView
 
 	public void entityY(int index, short entityY) {
 		MemoryUtil.memPutShort(ptr + index * STRIDE + 34, entityY);
+	}
+
+	public void packedEntity(int index, int packed) {
+		MemoryUtil.memPutInt(ptr + index * STRIDE + 32, packed);
 	}
 
 	public void midU(int index, float midU) {
