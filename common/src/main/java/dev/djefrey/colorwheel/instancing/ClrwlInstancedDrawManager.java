@@ -300,7 +300,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			var blendOverride = framebuffers.getBlendModeOverride(programId, pack, programSet).orElse(null);
 			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId, pack, programSet);
 
-			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().boundingSphere(), currentRenderPhase);
+			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setup(material, blendOverride, bufferBlendOverrides);
 
@@ -345,7 +345,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().boundingSphere(), currentRenderPhase);
+			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setupOit(material);
 
@@ -444,7 +444,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 							continue;
 						}
 
-						program.bind(0, index, crumblingMaterial, draw.visual(), draw.mesh().boundingSphere(), currentRenderPhase);
+						program.bind(0, index, crumblingMaterial, draw.visual(), draw.mesh().meshCenter(), currentRenderPhase);
 						ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
 
 						Samplers.INSTANCE_BUFFER.makeActive();

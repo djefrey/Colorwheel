@@ -2,8 +2,11 @@ package dev.djefrey.colorwheel.fabric.mixin.flw;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
+import dev.djefrey.colorwheel.accessors.MeshEmitterAccessor;
+import dev.djefrey.colorwheel.accessors.UniversalMeshEmitterAccessor;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
+import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.UnknownNullability;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,9 +15,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.UniversalMeshEmitter")
-public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferBuilder
+@Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.UniversalMeshEmitter", remap = false)
+public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferBuilder, UniversalMeshEmitterAccessor
 {
+    @Unique
+    private boolean colorwheel$isTerrain = false;
+    
     @Unique
     private int colorwheel$currentBlock = -1;
     @Unique
@@ -22,20 +28,28 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
     @Unique
     private byte colorwheel$currentBlockEmission = -1;
     @Unique
-    private int colorwheel$currentLocalPosX;
+    private int colorwheel$currentLocalPosX = 0;
     @Unique
-    private int colorwheel$currentLocalPosY;
+    private int colorwheel$currentLocalPosY = 0;
     @Unique
-    private int colorwheel$currentLocalPosZ;
+    private int colorwheel$currentLocalPosZ = 0;
 
     @Shadow
     private @UnknownNullability BufferBuilder currentDelegate;
+
+    @Shadow
+    public abstract void prepare(RenderType defaultLayer);
 
     @Inject(method = "prepareForGeometry",
             at = @At("TAIL"),
             remap = false)
     private void injectBeginBlock(RenderMaterial material, CallbackInfo ci)
     {
+        if (!colorwheel$isTerrain)
+        {
+            return;
+        }
+
         if (this.currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
             clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$currentBlockEmission, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
@@ -67,6 +81,11 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
         this.colorwheel$currentLocalPosY = 0;
         this.colorwheel$currentLocalPosZ = 0;
 
+        if (!colorwheel$isTerrain)
+        {
+            return;
+        }
+
         if (this.currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
             clrwlBuilder.endBlock();
@@ -75,5 +94,18 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
         {
             blockBuilder.endBlock();
         }
+    }
+
+    @Inject(method = "clear",
+            at = @At("TAIL"))
+    private void injectEnd(CallbackInfo ci)
+    {
+        this.colorwheel$isTerrain = false;
+    }
+
+    public void colorwheel$prepareTerrain(RenderType renderType)
+    {
+        this.colorwheel$isTerrain = true;
+        this.prepare(renderType);
     }
 }

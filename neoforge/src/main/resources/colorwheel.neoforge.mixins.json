@@ -6,6 +6,7 @@
   "client": [
   ],
   "mixins": [
+    "flw.BakedModelBuffererMixin",
     "mc.BlockRenderDispatcherMixin",
     "mc.ModelBlockRendererMixin"
   ],

@@ -23,7 +23,7 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector4fc;
+import org.joml.Vector3fc;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
 
@@ -188,7 +188,7 @@ public class ClrwlProgram
 							    customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector4fc boundingSphere, ClrwlRenderingPhase phase)
+	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase)
 	{
 		GL20.glUseProgram(this.handle);
 
@@ -200,7 +200,7 @@ public class ClrwlProgram
 
 		setUniformS(blockEntityUniform, visual.getBlockEntity());
 		setUniformS(entityUniform, visual.getEntity());
-		setUniform(meshCenterUniform, boundingSphere.x(), boundingSphere.y(), boundingSphere.z(), (float) visual.lightEmission());
+		setUniform(meshCenterUniform, meshCenter.x(), meshCenter.y(), meshCenter.z(), (float) visual.lightEmission());
 		setUniformS(renderPhaseUniform, phase.getValue());
 
 		samplers.update();

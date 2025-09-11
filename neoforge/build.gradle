@@ -40,6 +40,8 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 
+    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
+    
     localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
     localRuntime "dev.engine-room.vanillin:vanillin-neoforge-${minecraft_version}:${vanillin_version}"
 

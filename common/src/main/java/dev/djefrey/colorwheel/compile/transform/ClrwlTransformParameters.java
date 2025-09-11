@@ -17,27 +17,27 @@ import net.irisshaders.iris.shaderpack.texture.TextureStage;
 // DO NOT USE IN TRANSFORM PATCHER
 public class ClrwlTransformParameters extends Parameters
 {
-	private final ClrwlPipelineCompiler.OitMode oit;
-	private final Transparency transparency;
+	private final boolean isCrumbling;
+	private final boolean customOutputs;
 	private final Directives directives;
 
-	public ClrwlTransformParameters(PatchShaderType type, ClrwlPipelineCompiler.OitMode oit, Transparency transparency, Directives directives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public ClrwlTransformParameters(PatchShaderType type, boolean isCrumbling, boolean customOutputs, Directives directives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		super(Patch.VANILLA, textureMap);
 		super.type = type;
-		this.oit = oit;
-		this.transparency = transparency;
+		this.isCrumbling = isCrumbling;
+		this.customOutputs = customOutputs;
 		this.directives = directives;
 	}
 
-	public ClrwlPipelineCompiler.OitMode getOit()
+	public boolean usesCustomOutputs()
 	{
-		return oit;
+		return customOutputs;
 	}
 
 	public boolean isCrumbling()
 	{
-		return transparency == Transparency.CRUMBLING;
+		return isCrumbling;
 	}
 
 	public Directives directives()
@@ -52,13 +52,14 @@ public class ClrwlTransformParameters extends Parameters
 	public TextureStage getTextureStage() { return TextureStage.GBUFFERS_AND_SHADOW; }
 
 	@Override
-	public int hashCode() {
+	public int hashCode()
+	{
 		final int prime = 61; // Another prime is used to prevent conflict with base TransformParameters
 		int result = 1;
 		result = prime * result + ((patch == null) ? 0 : patch.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		result = prime * result + oit.hashCode();
-		result = prime * result + transparency.hashCode();
+		result = prime * result + (isCrumbling ? 0 : 1);
+		result = prime * result + (customOutputs ? 0 : 1);
 		result = prime * result + directives.hashCode();
 		return result;
 	}
