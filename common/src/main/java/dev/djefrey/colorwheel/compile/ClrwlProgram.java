@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
+import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlSamplers;
@@ -10,19 +11,26 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.api.material.Material;
+import dev.engine_room.flywheel.api.material.Transparency;
 import dev.engine_room.flywheel.backend.engine.embed.EmbeddingUniforms;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
+import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.program.ProgramImages;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
+import net.irisshaders.iris.mixin.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector2i;
 import org.joml.Vector3fc;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
@@ -53,6 +61,8 @@ public class ClrwlProgram
 	public final int entityUniform;
 	public final int meshCenterUniform;
 	public final int renderPhaseUniform;
+	public final int blendFuncUniform;
+	public final int atlasSizeUniform;
 
 	public static ImmutableSet<Integer> getReservedTextureUnits(int coeffCount)
 	{
@@ -173,6 +183,8 @@ public class ClrwlProgram
 		this.entityUniform = tryGetUniformLocation2("_clrwl_entityId");
 		this.meshCenterUniform = tryGetUniformLocation2("_clrwl_meshCenter");
 		this.renderPhaseUniform = tryGetUniformLocation2("_clrwl_renderPhase");
+		this.blendFuncUniform = tryGetUniformLocation2("_clrwl_blendFunc");
+		this.atlasSizeUniform = tryGetUniformLocation2("_clrwl_atlasSize");
 
 		ClrwlUniforms.setUniformBlockBinding(this);
 	}
@@ -188,11 +200,39 @@ public class ClrwlProgram
 							    customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase)
+	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
 	{
 		GL20.glUseProgram(this.handle);
 
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
+
+		var abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(material.texture());
+		int atlasWidth = 0;
+		int atlasHeight = 0;
+
+		if (abstractTexture instanceof TextureAtlas atlas)
+		{
+			atlasWidth = ((TextureAtlasAccessor) atlas).callGetWidth();
+			atlasHeight = ((TextureAtlasAccessor) atlas).callGetWidth();
+		}
+
+		BlendMode blendMode;
+
+		if (blendModeOverride != null)
+		{
+			if (blendModeOverride.blendMode() != null)
+			{
+				blendMode = blendModeOverride.blendMode();
+			}
+			else
+			{
+				blendMode = Utils.transparencyToBlendMode(Transparency.OPAQUE);
+			}
+		}
+		else
+		{
+			blendMode = Utils.transparencyToBlendMode(material.transparency());
+		}
 
 		setUniformU(vertexOffsetUniform, vertexOffset);
 		setUniformS(baseInstanceUniform, baseInstance);
@@ -202,6 +242,8 @@ public class ClrwlProgram
 		setUniformS(entityUniform, visual.getEntity());
 		setUniform(meshCenterUniform, meshCenter.x(), meshCenter.y(), meshCenter.z(), (float) visual.lightEmission());
 		setUniformS(renderPhaseUniform, phase.getValue());
+		setUniformI(blendFuncUniform, blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
+		setUniformI(atlasSizeUniform, atlasWidth, atlasHeight);
 
 		samplers.update();
 		uniforms.update();
@@ -257,8 +299,12 @@ public class ClrwlProgram
 		GL31.glUniform1ui(index, i);
 	}
 
-	private void setUniform(int index, int x, int y) {
-		GL31.glUniform2ui(index, x, y);
+	private void setUniformI(int index, int x, int y) {
+		GL31.glUniform2i(index, x, y);
+	}
+
+	private void setUniformI(int index, int x, int y, int z, int w) {
+		GL31.glUniform4i(index, x, y, z, w);
 	}
 
 	private void setUniform(int index, float x, float y, float z, float w) {

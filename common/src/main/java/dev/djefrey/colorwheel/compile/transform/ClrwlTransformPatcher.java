@@ -124,6 +124,8 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord2",  "vec4(flw_vertexLight, 0.0, 1.0)");
 
 				root.rename("renderStage", "_clrwl_renderPhase");
+				root.rename("blendFunc", "_clrwl_blendFunc");
+				root.rename("atlasSize", "_clrwl_atlasSize");
 				root.rename("blockEntityId", "_clrwl_blockEntityId");
 				root.rename("entityId", "_clrwl_entityId");
 				root.replaceReferenceExpressions(transformer, "entityColor", "clrwl_overlayColor");
