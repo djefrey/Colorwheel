@@ -300,7 +300,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			var blendOverride = framebuffers.getBlendModeOverride(programId, pack, programSet).orElse(null);
 			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId, pack, programSet);
 
-			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase);
+			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setup(material, blendOverride, bufferBlendOverrides);
 
@@ -320,6 +320,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private void submitOitDraws(boolean isShadow, ClrwlPipelineCompiler.OitMode oit)
 	{
+		var programId = isShadow ? ClrwlProgramId.SHADOW_TRANSLUCENT : ClrwlProgramId.GBUFFERS_TRANSLUCENT;
+		var blendOverride = framebuffers.getBlendModeOverride(programId, pack, programSet).orElse(null);
+
 		for (var drawCall : oitDraws)
 		{
 			var material = drawCall.material();
@@ -341,11 +344,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			}
 			catch (Exception e)
 			{
-				handleBrokenShader(key, isShadow ? ClrwlProgramId.SHADOW_TRANSLUCENT : ClrwlProgramId.GBUFFERS_TRANSLUCENT, e);
+				handleBrokenShader(key, programId, e);
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase);
+			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setupOit(material);
 
@@ -444,7 +447,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 							continue;
 						}
 
-						program.bind(0, index, crumblingMaterial, draw.visual(), draw.mesh().meshCenter(), currentRenderPhase);
+						program.bind(0, index, crumblingMaterial, draw.visual(), draw.mesh().meshCenter(), currentRenderPhase, blendOverride);
 						ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
 
 						Samplers.INSTANCE_BUFFER.makeActive();
