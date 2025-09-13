@@ -85,7 +85,7 @@ public class ClrwlShaderProperties
 
                     var programId = maybeProgramId.get();
 
-                    if (value == "off")
+                    if (value.equals("off"))
                     {
                         programBlendOverrides.put(programId, new ClrwlBlendModeOverride(null));
                     }
