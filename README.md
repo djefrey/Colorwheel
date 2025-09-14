@@ -6,7 +6,8 @@
 
 ### About
 
-The goal of this project is to provide a [Flywheel](https://github.com/Engine-Room/Flywheel) backend that is compatible with [Iris](https://github.com/IrisShaders/Iris) 1.x.
+The goal of this project is to provide a [Flywheel](https://github.com/Engine-Room/Flywheel) backend that is compatible with [Iris](https://github.com/IrisShaders/Iris) 1.x.  
+It does so by providing new shader programs to be provided by shaderpacks. Documentation is available here: https://djefrey.github.io/colorwheel/.
 
 This project started as an attempt to port [Iris Flywheel Compat](https://github.com/leon-o/iris-flw-compat/) from Flywheel 0.6 to 1.0.  
 However, with the amount of changes made to Flywheel, I decided to start from scratch.
@@ -30,7 +31,7 @@ To use this mod, you need to install Iris and a mod that includes Flywheel (like
 You also need to use a compatible shaderpack.  
 
 You can find Colorwheel releases in the [Releases](https://github.com/djefrey/Colorwheel/releases) section.  
-The [Colorwheel Patcher](https://github.com/djefrey/Colorwheel-Patcher) mod can be use to apply automatically patches on supported shaders.
+The [Colorwheel Patcher](https://github.com/djefrey/Colorwheel-Patcher) mod can be used to apply automatically patches for shaderpack I support myself. This is not required for shaderpacks supporting Colorwheel themselves.
 
 ### Credits
 
@@ -41,7 +42,9 @@ The [Colorwheel Patcher](https://github.com/djefrey/Colorwheel-Patcher) mod can 
 
 ### License
 
-All code in this repository is licensed under **MIT**. You are free to read, distribute and modify the code.  
+All code in this repository is licensed under the **MIT** license. You are free to read, distribute and modify the code.  
 This does **not** apply to the shaderpack patches provided in the Releases section.
 
-This project is partially based on code from Flywheel, licensed under MIT.  
+This project is partially based on code from Flywheel, licensed under the MIT license.  
+
+This project uses glsl-transformer, licensed under the GNU Affero General Public License version 3. This may affect your ability to distribute Colorwheel.
