@@ -1,7 +1,21 @@
+### 1.0.0
+
+- Public and documented shaderpack extension  
+Shaderpack devs can now make their pack compatible
+- Geometry shaders are now supported
+- Provides mc_Entity values for terrain-like geometries  
+This makes Iris Flywheel Compat incompatible with Colorwheel
+- Provides correct at_midBlock values
+- Missing Iris uniforms are now provided (fixes generated normals)
+- Shaderpack programs are now pre-transformed (improves compile time)
+- OIT is now disabled on Apple Silicon (fixes issues related to translucent geometries)
+- Fixes weird rendering with colored shadows
+- A lot of bug / incorrect behavior fixes
+
 ### 0.2.3
 
-- Fix lag when mining Create blocks and assembling contraptions
-- Fix incompatible shaderpack alert displaying full path
+- Fixes lag when mining Create blocks and assembling contraptions
+- Fixes incompatible shaderpack alert displaying full path
 - Working Fabric builds
 
 ### 0.2.2
