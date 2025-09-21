@@ -81,7 +81,7 @@ unifiedPublishing {
     project {
         displayName = "$project.version-forge"
         version = "$project.version"
-        releaseType = "beta"
+        releaseType = "release"
         changelog = new File("${rootProject.rootDir.toPath().toString()}/CHANGELOG.md").getText('UTF-8')
         gameVersions = ["1.20.1"]
         gameLoaders = ["forge"]
