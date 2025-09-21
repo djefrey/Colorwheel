@@ -76,7 +76,7 @@ unifiedPublishing {
     project {
         displayName = "$project.version-neoforge"
         version = "$project.version"
-        releaseType = "beta"
+        releaseType = "release"
         changelog = new File("${rootProject.rootDir.toPath().toString()}/CHANGELOG.md").getText('UTF-8')
         gameVersions = ["1.21.1"]
         gameLoaders = ["neoforge"]
