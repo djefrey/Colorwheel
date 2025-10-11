@@ -1,7 +1,14 @@
 {
-    "colorwheel.alert.incompatible_pack": "'%s' is not compatible",
-    "colorwheel.alert.incompatible_pack.patch_available": "You may use '%s' instead",
-    "colorwheel.alert.broken_pack": "Shader pack contains broken shaders, expect graphical issues",
+    "colorwheel.fallback_mode": "fallback mode",
+    "colorwheel.fallback_mode.enable": "Enable fallback mode",
+
+    "colorwheel.alert.incompatible_pack": "The shader pack %1$s is not compatible",
+    "colorwheel.alert.incompatible_pack.patch_available": "You should select %1$s in the Shader Packs menu instead",
+    "colorwheel.alert.incompatible_pack.ask_fallback_mode": "You may request Colorwheel support to the shader pack developer. You may also enable the %1$s for fully automatic support. There WILL BE graphical issues and support WON'T be provided.",
+    "colorwheel.alert.incompatible_pack.ask_disable": "Disable this alert",
+    "colorwheel.alert.incompatible_pack.disable": "Disable incompatible shader pack alert",
+
+    "colorwheel.alert.broken_pack": "Current shader pack contains broken shaders, expect graphical issues",
 
     "command.colorwheel.alert_incompatible_pack.get.on": "Incompatible shader pack alert is enabled",
     "command.colorwheel.alert_incompatible_pack.get.off": "Incompatible shader pack alert is disabled",
@@ -11,5 +18,10 @@
     "command.colorwheel.alert_broken_pack.get.on": "Broken shader pack alert is enabled",
     "command.colorwheel.alert_broken_pack.get.off": "Broken shader pack alert is disabled",
     "command.colorwheel.alert_broken_pack.set.on": "Broken shader pack alert is now enabled",
-    "command.colorwheel.alert_broken_pack.set.off": "Broken shader pack alert is now disabled"
+    "command.colorwheel.alert_broken_pack.set.off": "Broken shader pack alert is now disabled",
+
+    "command.colorwheel.fallback_mode.get.on": "Fallback mode is enabled",
+    "command.colorwheel.fallback_mode.get.off": "Fallback mode is disabled",
+    "command.colorwheel.fallback_mode.set.on": "Fallback mode is now enabled. Here be dragons !",
+    "command.colorwheel.fallback_mode.set.off": "Fallback mode is now disabled"
 }

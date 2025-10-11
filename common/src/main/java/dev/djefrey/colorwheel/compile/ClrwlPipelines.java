@@ -29,14 +29,23 @@ public class ClrwlPipelines
     public static final ResourceLocation API_IMPL_VERT = Colorwheel.rl("internal/api_impl.vert");
     public static final ResourceLocation API_IMPL_GEOM = Colorwheel.rl("internal/api_impl_geom.glsl");
     public static final ResourceLocation API_IMPL_FRAG = Colorwheel.rl("internal/api_impl.frag");
+    public static final ResourceLocation FALLBACK_API_IMPL_VERT = Colorwheel.rl("internal/fallback/api_impl.vert");
+    public static final ResourceLocation FALLBACK_API_IMPL_GEOM = Colorwheel.rl("internal/fallback/api_impl_geom.glsl");
+    public static final ResourceLocation FALLBACK_API_IMPL_FRAG = Colorwheel.rl("internal/fallback/api_impl.frag");
 
     public static final ResourceLocation IRIS_COMPAT_VERT = Colorwheel.rl("internal/instancing/iris_compat.vert");
     public static final ResourceLocation IRIS_COMPAT_GEOM = Colorwheel.rl("internal/instancing/iris_compat_geom.glsl");
     public static final ResourceLocation IRIS_COMPAT_FRAG = Colorwheel.rl("internal/instancing/iris_compat.frag");
+    public static final ResourceLocation FALLBACK_IRIS_COMPAT_VERT = Colorwheel.rl("internal/fallback/instancing/iris_compat.vert");
+    public static final ResourceLocation FALLBACK_IRIS_COMPAT_GEOM = Colorwheel.rl("internal/fallback/instancing/iris_compat_geom.glsl");
+    public static final ResourceLocation FALLBACK_IRIS_COMPAT_FRAG = Colorwheel.rl("internal/fallback/instancing/iris_compat.frag");
 
     public static final ResourceLocation MAIN_VERT = Colorwheel.rl("internal/instancing/main.vert");
     public static final ResourceLocation MAIN_GEOM = Colorwheel.rl("internal/instancing/main_geom.glsl");
     public static final ResourceLocation MAIN_FRAG = Colorwheel.rl("internal/instancing/main.frag");
+    public static final ResourceLocation FALLBACK_MAIN_VERT = Colorwheel.rl("internal/fallback/instancing/main.vert");
+    public static final ResourceLocation FALLBACK_MAIN_GEOM = Colorwheel.rl("internal/fallback/instancing/main_geom.glsl");
+    public static final ResourceLocation FALLBACK_MAIN_FRAG = Colorwheel.rl("internal/fallback/instancing/main.frag");
 
     public static final ResourceLocation OIT_DEPTH_RANGE_FRAG = Colorwheel.rl("internal/oit/depth_range.frag");
 
@@ -55,24 +64,24 @@ public class ClrwlPipelines
                 }
             })
             .vertex(ClrwlPipeline.vertexStage()
-                        .define("IS_COLORWHEEL")
-                        .onCompile((k, c) ->
+                    .define("IS_COLORWHEEL")
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isDebugEnabled())
                         {
-                            if (k.isDebugEnabled())
-                            {
-                                c.define("_FLW_DEBUG");
-                            }
-                        })
-                        .onCompile(ClrwlPipelines::setIrisDefines)
-                        .onCompile((k, c) ->
-                        {
-                            var exts = c.getIrisSources().extensions().get(ShaderType.VERTEX);
+                            c.define("_FLW_DEBUG");
+                        }
+                    })
+                    .onCompile(ClrwlPipelines::setIrisDefines)
+                    .onCompile((k, c) ->
+                    {
+                        var exts = c.getIrisSources().extensions().get(ShaderType.VERTEX);
 
-                            for (var ext : exts)
-                            {
-                                c.enableExtension(ext);
-                            }
-                        })
+                        for (var ext : exts)
+                        {
+                            c.enableExtension(ext);
+                        }
+                    })
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
                     .onCompile((k, c) -> setContextDefine(k.context(), c))
                     .onCompile((k, c) ->
@@ -164,6 +173,111 @@ public class ClrwlPipelines
                     .with(ClrwlPipelines::getIrisShaderFragmentSource)
                     .with(ClrwlPipelines::getPostShaderFragmentSource)
                     .withResource(MAIN_FRAG)
+                    .build())
+            .build();
+
+    public static ClrwlPipeline FALLBACK_INSTANCING = ClrwlPipeline.builder()
+            .id("fallback_instancing")
+            .minVersion(GlCompat.MAX_GLSL_VERSION)
+            .onSetup((b) ->
+            {
+                for (String ext : ClrwlPrograms.EXTENSIONS)
+                {
+                    b.requireExtension(ext);
+                }
+            })
+            .vertex(ClrwlPipeline.vertexStage()
+                    .define("IS_COLORWHEEL")
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isDebugEnabled())
+                        {
+                            c.define("_FLW_DEBUG");
+                        }
+                    })
+                    .onCompile(ClrwlPipelines::setIrisDefines)
+                    .onCompile((k, c) ->
+                    {
+                        var exts = c.getIrisSources().extensions().get(ShaderType.VERTEX);
+
+                        for (var ext : exts)
+                        {
+                            c.enableExtension(ext);
+                        }
+                    })
+                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                    .onCompile((k, c) -> setContextDefine(k.context(), c))
+                    .onCompile(ClrwlPipelines::setLightSmoothness)
+                    .withResource(FALLBACK_API_IMPL_VERT)
+                    .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
+                    .withLoader((k, sources) -> sources.get(k.instanceType().vertexShader()))
+                    .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
+                    .withResource(ClrwlVertex.LAYOUT_SHADER)
+                    .withResource(FALLBACK_IRIS_COMPAT_VERT)
+                    .withComponent((k) -> new BufferTextureInstanceComponent(k.instanceType()))
+                    .with(ClrwlPipelines::getIrisShaderVertexSource)
+                    .withResource(FALLBACK_MAIN_VERT)
+                    .build())
+            .geometry(ClrwlPipeline.geometryStage()
+                    .define("IS_COLORWHEEL")
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isDebugEnabled())
+                        {
+                            c.define("_FLW_DEBUG");
+                        }
+                    })
+                    .onCompile(ClrwlPipelines::setIrisDefines)
+                    .onCompile((k, c) ->
+                    {
+                        var exts = c.getIrisSources().extensions().get(ShaderType.GEOMETRY);
+
+                        for (var ext : exts)
+                        {
+                            c.enableExtension(ext);
+                        }
+                    })
+                    .withResource(FALLBACK_API_IMPL_GEOM)
+                    .withResource(FALLBACK_IRIS_COMPAT_GEOM)
+                    .with(ClrwlPipelines::getIrisShaderGeometrySource)
+                    .withResource(FALLBACK_MAIN_GEOM)
+                    .build())
+            .fragment(ClrwlPipeline.fragmentStage()
+                    .define("IS_COLORWHEEL")
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isDebugEnabled())
+                        {
+                            c.define("_FLW_DEBUG");
+                        }
+                    })
+                    .onCompile(ClrwlPipelines::setIrisDefines)
+                    .enableExtension("GL_ARB_conservative_depth")
+                    .onCompile((k, c) ->
+                    {
+                        var exts = c.getIrisSources().extensions().get(ShaderType.FRAGMENT);
+
+                        for (var ext : exts)
+                        {
+                            c.enableExtension(ext);
+                        }
+                    })
+                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                    .onCompile((k, c) -> setContextDefine(k.context(), c))
+                    .onCompile((k, c) -> setCutoutDefine(k.cutout(), c))
+                    .onCompile((k, c) -> setSeparateAoDefine(c))
+                    .onCompile(ClrwlPipelines::setLightSmoothness)
+                    .withResource(COMPONENTS_HEADER_FRAG)
+                    .withResource(FALLBACK_API_IMPL_FRAG)
+                    .withLoader((k, sources) ->
+                            k.cutout() == CutoutShaders.OFF
+                                    ? sources.get(CutoutShaders.OFF.source())
+                                    : sources.get(k.cutout().source()))
+                    .withLoader(($, sources) -> sources.get(FALLBACK_IRIS_COMPAT_FRAG))
+                    .with(ClrwlPipelines::getOitInouts)
+                    .with(ClrwlPipelines::getIrisShaderFragmentSource)
+                    .with(ClrwlPipelines::getFallbackCutoutFragmentSource)
+                    .withResource(FALLBACK_MAIN_FRAG)
                     .build())
             .build();
 
@@ -335,6 +449,19 @@ public class ClrwlPipelines
         }
 
         return null;
+    }
+
+    private static void setSeparateAoDefine(ClrwlCompilation c)
+    {
+        if (c.getProgramSet().getPackDirectives().shouldUseSeparateAo())
+        {
+            c.define("_CLRWL_SEPARATE_AO");
+        }
+    }
+
+    private static SourceComponent getFallbackCutoutFragmentSource(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        return new FallbackCutoutComponent(c.getIrisSources().fragment().outputs());
     }
 
     private ClrwlPipelines() {}

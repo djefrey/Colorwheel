@@ -35,6 +35,12 @@ public class ClrwlConfigForge implements ClrwlConfig
         return client.alertBrokenPack.get();
     }
 
+    @Override
+    public boolean isFallbackModeEnabled()
+    {
+        return client.fallbackModeEnabled.get();
+    }
+
     public void registerSpecs(ModLoadingContext context) {
         context.registerConfig(ModConfig.Type.CLIENT, clientSpec);
     }
@@ -43,6 +49,7 @@ public class ClrwlConfigForge implements ClrwlConfig
     {
         public final ForgeConfigSpec.BooleanValue alertIncompatiblePack;
         public final ForgeConfigSpec.BooleanValue alertBrokenPack;
+        public final ForgeConfigSpec.BooleanValue fallbackModeEnabled;
 
         private ClientConfig(ForgeConfigSpec.Builder builder)
         {
@@ -51,6 +58,9 @@ public class ClrwlConfigForge implements ClrwlConfig
 
             alertBrokenPack = builder.comment("Should display a message when a broken shaderpack is used.")
                     .define("alertBrokenPack", true);
+
+            fallbackModeEnabled = builder.comment("Should fallback mode be used for non supported shaderpacks.")
+                    .define("enableFallbackMode", false);
         }
     }
 }
