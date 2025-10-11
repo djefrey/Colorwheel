@@ -82,7 +82,7 @@ void _clrwl_shaderLight_hook()
     flw_shaderLight();
 
     #ifdef CLRWL_OLD_LIGHTING
-    flw_fragColor *= _clrwl_diffuseFactor();
+    flw_fragColor.rgb *= _clrwl_diffuseFactor();
     #endif
 }
 
