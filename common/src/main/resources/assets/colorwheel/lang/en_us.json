@@ -6,7 +6,7 @@
 
     "colorwheel.alert.incompatible_pack": "The shader pack %1$s is not compatible",
     "colorwheel.alert.incompatible_pack.patch_available": "You should select %1$s in the Shader Packs menu instead",
-    "colorwheel.alert.incompatible_pack.ask_fallback_mode": "You may request Colorwheel support to the shader pack developer. You may also enable the %1$s for fully automatic support. There WILL BE graphical issues and support WON'T be provided.",
+    "colorwheel.alert.incompatible_pack.ask_fallback_mode": "You may request Colorwheel support to the shader pack developer. You may also enable the %1$s for fully automatic support. There WILL BE graphical issues and extensive support WON'T be provided.",
     "colorwheel.alert.incompatible_pack.disable": "Disable incompatible shader pack alert",
 
     "colorwheel.alert.broken_pack": "Current shader pack contains broken shaders, expect graphical issues",
