@@ -9,11 +9,11 @@ import java.util.Optional;
 
 public enum ClrwlProgramId
 {
-    GBUFFERS(ClrwlProgramGroup.GBUFFERS, "clrwl_gbuffers", ProgramId.Block, null, false, null),
+    GBUFFERS(ClrwlProgramGroup.GBUFFERS, "clrwl_gbuffers", ProgramId.Terrain, null, false, null),
     GBUFFERS_ADDITIVE(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_additive", null, GBUFFERS, false, null),
     GBUFFERS_GLINT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_glint", ProgramId.ArmorGlint, GBUFFERS, false, null),
     GBUFFERS_LIGHTNING(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_lightning", null, GBUFFERS, false, null),
-    GBUFFERS_TRANSLUCENT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_translucent", ProgramId.BlockTrans, GBUFFERS, true, null),
+    GBUFFERS_TRANSLUCENT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_translucent", ProgramId.Water, GBUFFERS, true, null),
     GBUFFERS_DAMAGEDBLOCK(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_damagedblock", ProgramId.DamagedBlock, GBUFFERS, false, null),
 
     SHADOW(ClrwlProgramGroup.SHADOW, "clrwl_shadow", ProgramId.Shadow, null, false, ClrwlBlendModeOverride.OFF),
