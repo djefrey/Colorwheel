@@ -67,7 +67,7 @@ public class ClrwlConfigFabric implements ClrwlConfig
                 {
                     alertIncompatiblePack = readBoolean(jsonObj, ALERT_INCOMPATIBLE_KEY, true);
                     alertBrokenPack = readBoolean(jsonObj, ALERT_BROKEN_KEY, true);
-                    fallbackModeEnabled = readBoolean(jsonObj, FALLBACK_MODE_KEY, true);
+                    fallbackModeEnabled = readBoolean(jsonObj, FALLBACK_MODE_KEY, false);
                 }
             }
             catch (Exception e)
@@ -75,6 +75,7 @@ public class ClrwlConfigFabric implements ClrwlConfig
                 Colorwheel.LOGGER.error("Config: could not read config file", e);
                 alertIncompatiblePack = true;
                 alertBrokenPack = true;
+                fallbackModeEnabled = false;
             }
         }
 

@@ -41,8 +41,14 @@ public class ClrwlConfigNeoForge implements ClrwlConfig
         return client.fallbackModeEnabled.get();
     }
 
-    public void registerSpecs(ModContainer context) {
+    public void registerSpecs(ModContainer context)
+    {
         context.registerConfig(ModConfig.Type.CLIENT, clientSpec);
+    }
+
+    public void save()
+    {
+        clientSpec.save();
     }
 
     public static class ClientConfig

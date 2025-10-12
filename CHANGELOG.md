@@ -8,6 +8,7 @@ This doesn't replace compatible packs (there WILL BE rendering issues) but it's 
 - `gl_MultiTexCoord1`/`gl_MultiTexCoord1` is now scaled by 240 to match Iris behavior
 - Fixes old lightning multiplying the alpha channel
 - Adds namespace prefix to Flywheel shader functions related to old lighting
+- Fixes config not being saved
 
 ### 1.0.0
 
