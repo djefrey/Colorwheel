@@ -155,6 +155,35 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		return Optional.empty();
 	}
 
+	public Optional<ProgramId> colorwheel$getRealFallbackProgram(ClrwlProgramId programId)
+	{
+		var clrwlCur = programId;
+
+		while (clrwlCur != null && clrwlCur.fallbackProgram() == null)
+		{
+			clrwlCur = clrwlCur.base();
+		}
+
+		if (clrwlCur == null)
+		{
+			return Optional.empty();
+		}
+
+		var cur = Optional.of(clrwlCur.fallbackProgram());
+
+		while (cur.isPresent())
+		{
+			if (get(cur.get()).isPresent())
+			{
+				return cur;
+			}
+
+			cur = cur.get().getFallback();
+		}
+
+		return Optional.empty();
+	}
+
 	public Optional<ProgramSource> colorwheel$getClrwlProgramSource(ClrwlProgramId programId)
 	{
 		ClrwlProgramId cur = programId;

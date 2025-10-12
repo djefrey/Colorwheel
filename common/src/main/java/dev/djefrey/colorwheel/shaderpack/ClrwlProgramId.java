@@ -52,6 +52,7 @@ public enum ClrwlProgramId
         return name;
     }
 
+    @Nullable
     public ProgramId fallbackProgram()
     {
         return fallbackProgram;
