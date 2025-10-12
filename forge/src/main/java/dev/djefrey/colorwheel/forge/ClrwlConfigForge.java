@@ -41,8 +41,14 @@ public class ClrwlConfigForge implements ClrwlConfig
         return client.fallbackModeEnabled.get();
     }
 
-    public void registerSpecs(ModLoadingContext context) {
+    public void registerSpecs(ModLoadingContext context)
+    {
         context.registerConfig(ModConfig.Type.CLIENT, clientSpec);
+    }
+
+    public void save()
+    {
+        clientSpec.save();
     }
 
     public static class ClientConfig

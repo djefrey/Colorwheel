@@ -69,6 +69,7 @@ public class ClrwlCommandsForge
                         .executes(ctx ->
                         {
                             alertIncompatiblePack.set(true);
+                            ClrwlConfigForge.INSTANCE.save();
                             sendMessage(ctx.getSource(), Component.translatable("command.colorwheel.alert_incompatible_pack.set.on"));
 
                             return Command.SINGLE_SUCCESS;
@@ -77,6 +78,7 @@ public class ClrwlCommandsForge
                         .executes(ctx ->
                         {
                             alertIncompatiblePack.set(false);
+                            ClrwlConfigForge.INSTANCE.save();
                             sendMessage(ctx.getSource(), Component.translatable("command.colorwheel.alert_incompatible_pack.set.off"));
 
                             return Command.SINGLE_SUCCESS;
@@ -100,6 +102,7 @@ public class ClrwlCommandsForge
                         .executes(ctx ->
                         {
                             alertBrokenPack.set(true);
+                            ClrwlConfigForge.INSTANCE.save();
                             sendMessage(ctx.getSource(), Component.translatable("command.colorwheel.alert_broken_pack.set.on"));
 
                             return Command.SINGLE_SUCCESS;
@@ -108,6 +111,7 @@ public class ClrwlCommandsForge
                         .executes(ctx ->
                         {
                             alertBrokenPack.set(false);
+                            ClrwlConfigForge.INSTANCE.save();
                             sendMessage(ctx.getSource(), Component.translatable("command.colorwheel.alert_broken_pack.set.off"));
 
                             return Command.SINGLE_SUCCESS;
@@ -131,6 +135,7 @@ public class ClrwlCommandsForge
                         .executes(ctx ->
                         {
                             fallbackModeEnabled.set(true);
+                            ClrwlConfigForge.INSTANCE.save();
                             sendMessage(ctx.getSource(), Component.translatable("command.colorwheel.fallback_mode.set.on"));
                             Minecraft.getInstance().levelRenderer.allChanged();
 
@@ -140,6 +145,7 @@ public class ClrwlCommandsForge
                         .executes(ctx ->
                         {
                             fallbackModeEnabled.set(false);
+                            ClrwlConfigForge.INSTANCE.save();
                             sendMessage(ctx.getSource(), Component.translatable("command.colorwheel.fallback_mode.set.off"));
                             Minecraft.getInstance().levelRenderer.allChanged();
 
