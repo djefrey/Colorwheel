@@ -92,7 +92,7 @@ public final class Colorwheel {
                             sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.ask_fallback_mode", fallbackComp), false);
                         }
 
-                        var disableComp = Component.translatable("colorwheel.alert.incompatible_pack.ask_disable").withStyle(
+                        var disableComp = Component.translatable("colorwheel.alert.ask_disable").withStyle(
                                 Style.EMPTY
                                         .withUnderlined(true)
                                         .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertIncompatiblePack off"))
@@ -141,7 +141,7 @@ public final class Colorwheel {
         return Optional.empty();
     }
 
-    public static void sendWarnMessage(MutableComponent component)
+    public static void sendWarnMessage(MutableComponent component, boolean prefix)
     {
         var player =  Minecraft.getInstance().player;
 
@@ -150,11 +150,14 @@ public final class Colorwheel {
             return;
         }
 
-        var prefixed = Component.literal("[Colorwheel] ");
-        prefixed.append(component);
+        var comp = prefix
+                ? Component.literal("[Colorwheel] ")
+                : Component.empty();
 
-        prefixed.setStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW)));
-        player.sendSystemMessage(prefixed);
+        comp.append(component);
+
+        comp.setStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW)));
+        player.sendSystemMessage(comp);
     }
 
     public static void sendErrorMessage(Component component, boolean prefix)

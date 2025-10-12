@@ -34,7 +34,10 @@ import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -466,7 +469,15 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	{
 		if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
 		{
-			Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"));
+			Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"), true);
+
+			var disableComp = Component.translatable("colorwheel.alert.ask_disable").withStyle(
+					Style.EMPTY
+						.withUnderlined(true)
+						.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertBrokenPack off"))
+						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.broken_pack.disable"))));
+
+			Colorwheel.sendWarnMessage(disableComp, false);
 		}
 
 		brokenShaders.add(key);
