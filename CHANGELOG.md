@@ -1,3 +1,14 @@
+### 1.1.0
+
+- Adds fallback mode for non supported shaderpacks  
+This mode will force usage of Colorwheel by relying on existing shaders. This is the method used by Iris Flywheel Compat.  
+This doesn't replace compatible packs (there WILL BE rendering issues) but it's better than nothing.
+- Improved incompatible pack alert wording
+- Adds "Disable this alert" clickable text for incompatible pack and broken pack alerts
+- `gl_MultiTexCoord1`/`gl_MultiTexCoord1` is now scaled by 240 to match Iris behavior
+- Fixes old lightning multiplying the alpha channel
+- Adds namespace prefix to Flywheel shader functions related to old lighting
+
 ### 1.0.0
 
 - Public and documented shaderpack extension  

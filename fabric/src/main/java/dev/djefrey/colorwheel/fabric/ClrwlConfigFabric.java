@@ -25,9 +25,11 @@ public class ClrwlConfigFabric implements ClrwlConfig
 
     private final String ALERT_INCOMPATIBLE_KEY = "alertIncompatiblePack";
     private final String ALERT_BROKEN_KEY = "alertBrokenPack";
+    private final String FALLBACK_MODE_KEY = "enableFallbackMode";
 
     public boolean alertIncompatiblePack = true;
     public boolean alertBrokenPack = true;
+    public boolean fallbackModeEnabled = false;
 
     public ClrwlConfigFabric(File file)
     {
@@ -47,6 +49,12 @@ public class ClrwlConfigFabric implements ClrwlConfig
         return alertBrokenPack;
     }
 
+    @Override
+    public boolean isFallbackModeEnabled()
+    {
+        return fallbackModeEnabled;
+    }
+
     public void load()
     {
         if (file.exists())
@@ -59,6 +67,7 @@ public class ClrwlConfigFabric implements ClrwlConfig
                 {
                     alertIncompatiblePack = readBoolean(jsonObj, ALERT_INCOMPATIBLE_KEY, true);
                     alertBrokenPack = readBoolean(jsonObj, ALERT_BROKEN_KEY, true);
+                    fallbackModeEnabled = readBoolean(jsonObj, FALLBACK_MODE_KEY, true);
                 }
             }
             catch (Exception e)
@@ -104,6 +113,7 @@ public class ClrwlConfigFabric implements ClrwlConfig
         JsonObject json = new JsonObject();
         json.addProperty(ALERT_INCOMPATIBLE_KEY, alertIncompatiblePack);
         json.addProperty(ALERT_BROKEN_KEY, alertBrokenPack);
+        json.addProperty(FALLBACK_MODE_KEY, fallbackModeEnabled);
 
         return json;
     }

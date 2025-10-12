@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.accessors.BlendModeOverrideAccessor;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
@@ -115,31 +116,59 @@ public class ClrwlProgramFramebuffers
 
     public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
     {
-        var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-        var realProgramId = ((ProgramSetAccessor) programSet).colorwheel$getRealClrwlProgram(programId);
+        var programSetAccessor = ((ProgramSetAccessor) programSet);
 
-        return realProgramId.flatMap(properties::getBlendModeOverride).or(programId::defaultBlendOverride);
+        if (!programSetAccessor.colorwheel$isFallbackMode())
+        {
+            var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+            var realProgramId = programSetAccessor.colorwheel$getRealClrwlProgram(programId);
+
+            return realProgramId.flatMap(properties::getBlendModeOverride).or(programId::defaultBlendOverride);
+        }
+        else
+        {
+            var maybeSrc = programSetAccessor.colorwheel$getClrwlProgramSource(programId);
+
+            return maybeSrc.flatMap(src -> src.getDirectives().getBlendModeOverride()
+                                    .map(bm -> ((BlendModeOverrideAccessor) bm).colorwheel$convert()))
+                            .or(programId::defaultBlendOverride);
+        }
     }
 
     public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
     {
         var programSetAccessor = ((ProgramSetAccessor) programSet);
-        var realProgram = programSetAccessor.colorwheel$getRealClrwlProgram(programId);
 
-        if (realProgram.isEmpty())
+        if (!programSetAccessor.colorwheel$isFallbackMode())
         {
-            return Collections.emptyList();
+            var realProgram = programSetAccessor.colorwheel$getRealClrwlProgram(programId);
+
+            if (realProgram.isEmpty())
+            {
+                return Collections.emptyList();
+            }
+
+            return bufferBlendOverrides.computeIfAbsent(realProgram.get(), (key) ->
+            {
+                var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+                var maybeSrc = programSetAccessor.colorwheel$getClrwlProgramSource(key);
+
+                return maybeSrc
+                        .map(src -> computeBufferBlendOff(src, properties.getBufferBlendModeOverrides(realProgram.get())))
+                        .orElse(Collections.emptyList());
+            });
         }
-
-        return bufferBlendOverrides.computeIfAbsent(realProgram.get(), (key) ->
+        else
         {
-            var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-            var maybeSrc = programSetAccessor.colorwheel$getClrwlProgramSource(key);
+            return bufferBlendOverrides.computeIfAbsent(programId, (key) ->
+            {
+                var maybeSrc = programSetAccessor.colorwheel$getClrwlProgramSource(programId);
 
-            return maybeSrc
-                    .map(src -> computeBufferBlendOff(src, properties.getBufferBlendModeOverrides(realProgram.get())))
-                    .orElse(Collections.emptyList());
-        });
+                return maybeSrc
+                        .map(src -> src.getDirectives().getBufferBlendOverrides())
+                        .orElse(Collections.emptyList());
+            });
+        }
     }
 
     private List<BufferBlendInformation> computeBufferBlendOff(ProgramSource source, List<BufferBlendInformation> blendOverrides)
@@ -155,7 +184,6 @@ public class ClrwlProgramFramebuffers
         for (int i = 0; i < drawBuffers.length; i++)
         {
             int buf = drawBuffers[i];
-            BlendModeOverride override = null;
 
             for (var entry : blendOverrides)
             {

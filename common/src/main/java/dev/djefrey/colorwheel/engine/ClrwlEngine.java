@@ -3,6 +3,7 @@ package dev.djefrey.colorwheel.engine;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
+import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
@@ -67,7 +68,10 @@ public class ClrwlEngine implements Engine
 		this.irisPipeline = (IrisRenderingPipeline) worldPipeline;
 		this.pack = Iris.getCurrentPack().orElseThrow();
 
-		ClrwlPrograms programs = ClrwlPrograms.build(FlwPrograms.SOURCES, pack, dimension);
+		var programSet = pack.getProgramSet(dimension);
+		var isFallback = (((ProgramSetAccessor) programSet).colorwheel$isFallbackMode());
+
+		ClrwlPrograms programs = ClrwlPrograms.build(FlwPrograms.SOURCES, pack, dimension, isFallback);
 
 		this.drawManager = new ClrwlInstancedDrawManager(dimension, irisPipeline, pack, programs);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;

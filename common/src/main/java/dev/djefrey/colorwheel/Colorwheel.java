@@ -2,7 +2,6 @@ package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.util.AccumulateTimer;
 import dev.engine_room.flywheel.api.backend.Backend;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
@@ -14,10 +13,7 @@ import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,25 +57,57 @@ public final class Colorwheel {
             return false;
         }
 
-        String name = Iris.getCurrentPackName();
-        ProgramSet programSet = pack.get().getProgramSet(Iris.getCurrentDimension());
-        var isCompatible = ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(ClrwlProgramId.GBUFFERS).isPresent();
-
-        if (!isCompatible)
+        if (!CONFIG.isFallbackModeEnabled())
         {
-            if (Colorwheel.CONFIG.shouldAlertIncompatiblePack())
+            String name = Iris.getCurrentPackName();
+            ProgramSet programSet = pack.get().getProgramSet(Iris.getCurrentDimension());
+            var isFallback = ((ProgramSetAccessor) programSet).colorwheel$isFallbackMode();
+
+            if (isFallback)
             {
-                ACCUMULATE_INCOMPATIBLE.request(() ->
+                if (Colorwheel.CONFIG.shouldAlertIncompatiblePack())
                 {
-                    var patch = findPatchedShaderpack(name);
+                    ACCUMULATE_INCOMPATIBLE.request(() ->
+                    {
+                        var patch = findPatchedShaderpack(name);
 
-                    sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", name));
-                    patch.ifPresent(s ->
-                            sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.patch_available", s)));
-                });
+                        sendEmptyMessage();
+
+                        var packComp = Component.literal(name).setStyle(Style.EMPTY.withItalic(true));
+                        sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", packComp), true);
+
+                        if (patch.isPresent())
+                        {
+                            var patchComp = Component.literal(patch.get()).setStyle(Style.EMPTY.withItalic(true));
+                            sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.patch_available", patchComp), false );
+                        }
+                        else
+                        {
+                            var fallbackComp = Component.translatable("colorwheel.fallback_mode").withStyle(
+                                    Style.EMPTY
+                                            .withUnderlined(true)
+                                            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel enableFallbackMode on"))
+                                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.fallback_mode.enable"))));
+
+                            sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.ask_fallback_mode", fallbackComp), false);
+                        }
+
+                        var disableComp = Component.translatable("colorwheel.alert.ask_disable").withStyle(
+                                Style.EMPTY
+                                        .withUnderlined(true)
+                                        .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertIncompatiblePack off"))
+                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.incompatible_pack.disable"))));
+
+                        sendEmptyMessage();
+
+                        sendErrorMessage(disableComp, false);
+
+                        sendEmptyMessage();
+                    });
+                }
+
+                return false;
             }
-
-            return false;
         }
 
         WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
@@ -113,7 +141,7 @@ public final class Colorwheel {
         return Optional.empty();
     }
 
-    public static void sendWarnMessage(MutableComponent component)
+    public static void sendWarnMessage(MutableComponent component, boolean prefix)
     {
         var player =  Minecraft.getInstance().player;
 
@@ -122,14 +150,17 @@ public final class Colorwheel {
             return;
         }
 
-        var prefixed = Component.literal("[Colorwheel] ");
-        prefixed.append(component);
+        var comp = prefix
+                ? Component.literal("[Colorwheel] ")
+                : Component.empty();
 
-        prefixed.setStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW)));
-        player.sendSystemMessage(prefixed);
+        comp.append(component);
+
+        comp.setStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW)));
+        player.sendSystemMessage(comp);
     }
 
-    public static void sendErrorMessage(Component component)
+    public static void sendErrorMessage(Component component, boolean prefix)
     {
         var player =  Minecraft.getInstance().player;
 
@@ -138,10 +169,25 @@ public final class Colorwheel {
             return;
         }
 
-        var prefixed = Component.literal("[Colorwheel] ");
-        prefixed.append(component);
+        var comp = prefix
+                ? Component.literal("[Colorwheel] ")
+                : Component.empty();
 
-        prefixed.setStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.RED)));
-        player.sendSystemMessage(prefixed);
+        comp.append(component);
+
+        comp.setStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.RED)));
+        player.sendSystemMessage(comp);
+    }
+
+    public static void sendEmptyMessage()
+    {
+        var player =  Minecraft.getInstance().player;
+
+        if (player == null)
+        {
+            return;
+        }
+
+        player.sendSystemMessage(Component.empty());
     }
 }

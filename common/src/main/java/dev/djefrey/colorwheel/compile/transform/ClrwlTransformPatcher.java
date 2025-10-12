@@ -35,7 +35,7 @@ public class ClrwlTransformPatcher
 	public static final Pattern versionPattern = Pattern.compile("^.*#version\\h+(\\d+)\\V*", Pattern.DOTALL);
 	public static final Pattern extensionPattern = Pattern.compile("^.*#extension\\s+([a-zA-Z0-9_]+)\\s+:\\s+([a-zA-Z0-9_]+)", Pattern.DOTALL);
 
-	private static final String LIGHTMAP_SCALE = "1.0";
+	private static final String LIGHTMAP_SCALE = "1.0 / 240.0";
 	private static final String LIGHTMAP_OFFSET = "0.03125";
 	private static final String LIGHTMAP_MATRIX = String.format("mat4(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
 				LIGHTMAP_SCALE, "0.0",			  "0.0", "0.0",
@@ -120,8 +120,8 @@ public class ClrwlTransformPatcher
 				replaceVec2WithVariableDimension(root, "mc_Entity", "clrwl_vertexEntity");
 
 				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord0", "vec4(flw_vertexTexCoord, 0.0, 1.0)");
-				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(flw_vertexLight, 0.0, 1.0)");
-				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord2",  "vec4(flw_vertexLight, 0.0, 1.0)");
+				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord1",  "vec4(flw_vertexLight * 240.0, 0.0, 1.0)");
+				root.replaceReferenceExpressions(transformer, "gl_MultiTexCoord2",  "vec4(flw_vertexLight * 240.0, 0.0, 1.0)");
 
 				root.rename("renderStage", "_clrwl_renderPhase");
 				root.rename("blendFunc", "_clrwl_blendFunc");

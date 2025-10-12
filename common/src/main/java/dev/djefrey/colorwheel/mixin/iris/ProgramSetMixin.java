@@ -6,12 +6,14 @@ import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
+import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.parsing.ConstDirectiveParser;
 import net.irisshaders.iris.shaderpack.parsing.DispatchingDirectiveHolder;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.ShaderProperties;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -33,47 +35,54 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	@Final
 	private PackDirectives packDirectives;
 
-	@Invoker
-	@Override
-	public abstract ProgramSource callReadProgramSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties, boolean readTessellation);
+	@Shadow
+	public abstract Optional<ProgramSource> get(ProgramId programId);
 
-	@Unique
+    @Shadow
+    private static ProgramSource readProgramSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties, boolean readTesselation)
+	{
+		throw new RuntimeException();
+	}
+
+    @Unique
 	@Final
 	private Map<ClrwlProgramId, ProgramSource> colorwheel$programSrcs = new HashMap<>();
 
+	@Unique
+	private boolean colorwheel$isFallbackMode = false;
+
 	@Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/include/AbsolutePackPath;Ljava/util/function/Function;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/shaderpack/ShaderPack;)V",
 			at = @At("RETURN"))
-	private void injectInit(AbsolutePackPath directory, Function sourceProvider, ShaderProperties shaderProperties, ShaderPack pack, CallbackInfo ci)
+	private void injectInit(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, ShaderProperties shaderProperties, ShaderPack pack, CallbackInfo ci)
 	{
-		// TODO: Sources are preprocessed otherwise the PackDirectives / ProgramDirectives are not correct
-		// Current method does not allow to have specific code for OIT pass, which could provide performance gain
+		var clrwlGbuffers = readProgramSource(directory, sourceProvider, ClrwlProgramId.GBUFFERS.programName(), (ProgramSet) (Object) this, shaderProperties, false)
+				.requireValid();
 
-//		IncludeGraph graph = pack.getShaderPackOptions().getIncludes();
-//		IncludeProcessor includeProcessor = new IncludeProcessor(graph);
-//
-//		Function<AbsolutePackPath, String> sourceProviderNoPreprocess = (path) ->
-//		{
-//			ImmutableList<String> lines = includeProcessor.getIncludedFile(path);
-//
-//			if (lines == null) {
-//				return null;
-//			}
-//
-//			StringBuilder builder = new StringBuilder();
-//
-//			for (String line : lines) {
-//				builder.append(line);
-//				builder.append('\n');
-//			}
-//
-//			return builder.toString();
-//		};
-
-		for (var program : ClrwlProgramId.values())
+		if (clrwlGbuffers.isPresent())
 		{
-			callReadProgramSource(directory, sourceProvider, program.programName(), (ProgramSet) (Object) this, shaderProperties, false)
-					.requireValid()
-					.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
+			colorwheel$programSrcs.put(ClrwlProgramId.GBUFFERS, clrwlGbuffers.get());
+
+			for (var program : ClrwlProgramId.values())
+			{
+				if (program == ClrwlProgramId.GBUFFERS)
+				{
+					continue;
+				}
+
+				readProgramSource(directory, sourceProvider, program.programName(), (ProgramSet) (Object) this, shaderProperties, false)
+						.requireValid()
+						.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
+			}
+		}
+		else
+		{
+			colorwheel$isFallbackMode = true;
+
+			for (var program : ClrwlProgramId.values())
+			{
+				colorwheel$getFallbackProgramSrc(program.fallbackProgram())
+						.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
+			}
 		}
 
 		colorwheel$locateClrwlDirectives();
@@ -84,6 +93,26 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		{
 			// Handle ProgramSet overrides
 			((PackShadowDirectivesAccessor) this.packDirectives.getShadowDirectives()).colorwheel$setFlywheelShadowRendering(clrwlProperties.shouldRenderShadow());
+		}
+	}
+
+	@Unique
+	private Optional<ProgramSource> colorwheel$getFallbackProgramSrc(@Nullable ProgramId programId)
+	{
+		if (programId == null)
+		{
+			return Optional.empty();
+		}
+
+		var src = get(programId);
+
+		if (src.isPresent())
+		{
+			return src;
+		}
+		else
+		{
+			return colorwheel$getFallbackProgramSrc(programId.getFallback().orElse(null));
 		}
 	}
 
@@ -126,6 +155,35 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		return Optional.empty();
 	}
 
+	public Optional<ProgramId> colorwheel$getRealFallbackProgram(ClrwlProgramId programId)
+	{
+		var clrwlCur = programId;
+
+		while (clrwlCur != null && clrwlCur.fallbackProgram() == null)
+		{
+			clrwlCur = clrwlCur.base();
+		}
+
+		if (clrwlCur == null)
+		{
+			return Optional.empty();
+		}
+
+		var cur = Optional.of(clrwlCur.fallbackProgram());
+
+		while (cur.isPresent())
+		{
+			if (get(cur.get()).isPresent())
+			{
+				return cur;
+			}
+
+			cur = cur.get().getFallback();
+		}
+
+		return Optional.empty();
+	}
+
 	public Optional<ProgramSource> colorwheel$getClrwlProgramSource(ClrwlProgramId programId)
 	{
 		ClrwlProgramId cur = programId;
@@ -143,5 +201,11 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 
 		return Optional.empty();
+	}
+
+	@Unique
+	public boolean colorwheel$isFallbackMode()
+	{
+		return colorwheel$isFallbackMode;
 	}
 }

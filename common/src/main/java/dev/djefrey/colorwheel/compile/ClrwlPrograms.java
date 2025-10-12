@@ -35,14 +35,18 @@ public class ClrwlPrograms
 		return extensions.build();
 	}
 
-	public static ClrwlPrograms build(ShaderSources sources, ShaderPack pack, NamespacedId dimension)
+	public static ClrwlPrograms build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean fallback)
 	{
 		if (!GlCompat.SUPPORTS_INSTANCING)
 		{
 			return null;
 		}
 
-		var compiler = new ClrwlPipelineCompiler(sources, ClrwlPipelines.INSTANCING, pack, dimension);
+		var pipeline = fallback
+				? ClrwlPipelines.FALLBACK_INSTANCING
+				: ClrwlPipelines.INSTANCING;
+
+		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, dimension);
 		var oit = new ClrwlOitPrograms(sources);
 
         return new ClrwlPrograms(compiler, oit);

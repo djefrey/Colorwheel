@@ -2,37 +2,41 @@ package dev.djefrey.colorwheel.shaderpack;
 
 import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.engine_room.flywheel.api.material.Transparency;
+import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
 public enum ClrwlProgramId
 {
-    GBUFFERS(ClrwlProgramGroup.GBUFFERS, "clrwl_gbuffers", null, false, null),
-    GBUFFERS_ADDITIVE(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_additive", GBUFFERS, false, null),
-    GBUFFERS_GLINT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_glint", GBUFFERS, false, null),
-    GBUFFERS_LIGHTNING(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_lightning", GBUFFERS, false, null),
-    GBUFFERS_TRANSLUCENT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_translucent", GBUFFERS, true, null),
-    GBUFFERS_DAMAGEDBLOCK(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_damagedblock", GBUFFERS, false, null),
+    GBUFFERS(ClrwlProgramGroup.GBUFFERS, "clrwl_gbuffers", ProgramId.Terrain, null, false, null),
+    GBUFFERS_ADDITIVE(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_additive", null, GBUFFERS, false, null),
+    GBUFFERS_GLINT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_glint", ProgramId.ArmorGlint, GBUFFERS, false, null),
+    GBUFFERS_LIGHTNING(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_lightning", null, GBUFFERS, false, null),
+    GBUFFERS_TRANSLUCENT(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_translucent", ProgramId.Water, GBUFFERS, true, null),
+    GBUFFERS_DAMAGEDBLOCK(ClrwlProgramGroup.GBUFFERS,"clrwl_gbuffers_damagedblock", ProgramId.DamagedBlock, GBUFFERS, false, null),
 
-    SHADOW(ClrwlProgramGroup.SHADOW, "clrwl_shadow", null, false, ClrwlBlendModeOverride.OFF),
-    SHADOW_ADDITIVE(ClrwlProgramGroup.SHADOW,"clrwl_shadow_additive", SHADOW, false, ClrwlBlendModeOverride.OFF),
-    SHADOW_GLINT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_glint", SHADOW, false, ClrwlBlendModeOverride.OFF),
-    SHADOW_LIGHTNING(ClrwlProgramGroup.SHADOW,"clrwl_shadow_lightning", SHADOW, false, ClrwlBlendModeOverride.OFF),
-    SHADOW_TRANSLUCENT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_translucent", SHADOW, true, ClrwlBlendModeOverride.OFF);
+    SHADOW(ClrwlProgramGroup.SHADOW, "clrwl_shadow", ProgramId.Shadow, null, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_ADDITIVE(ClrwlProgramGroup.SHADOW,"clrwl_shadow_additive", null, SHADOW, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_GLINT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_glint", null, SHADOW, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_LIGHTNING(ClrwlProgramGroup.SHADOW,"clrwl_shadow_lightning", null, null, false, ClrwlBlendModeOverride.OFF),
+    SHADOW_TRANSLUCENT(ClrwlProgramGroup.SHADOW,"clrwl_shadow_translucent", null, SHADOW, true, ClrwlBlendModeOverride.OFF);
 
     private final ClrwlProgramGroup group;
     private final String name;
+    @Nullable
+    private final ProgramId fallbackProgram;
     @Nullable
     private final ClrwlProgramId base;
     private final boolean afterTranslucent;
     @Nullable
     private final ClrwlBlendModeOverride defaultBlendOverride;
 
-    ClrwlProgramId(ClrwlProgramGroup group, String name, ClrwlProgramId base, boolean afterTranslucent, @Nullable ClrwlBlendModeOverride defaultBlendOverride)
+    ClrwlProgramId(ClrwlProgramGroup group, String name, @Nullable ProgramId fallbackProgram, @Nullable ClrwlProgramId base, boolean afterTranslucent, @Nullable ClrwlBlendModeOverride defaultBlendOverride)
     {
         this.group = group;
         this.name = name;
+        this.fallbackProgram = fallbackProgram;
         this.base = base;
         this.afterTranslucent = afterTranslucent;
         this.defaultBlendOverride = defaultBlendOverride;
@@ -46,6 +50,12 @@ public enum ClrwlProgramId
     public String programName()
     {
         return name;
+    }
+
+    @Nullable
+    public ProgramId fallbackProgram()
+    {
+        return fallbackProgram;
     }
 
     @Nullable

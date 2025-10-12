@@ -8,6 +8,7 @@ import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.DebugMode;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.network.chat.Component;
 
@@ -108,6 +109,41 @@ public class ClrwlCommandsFabric
                             ClrwlConfigFabric.INSTANCE.alertBrokenPack = false;
                             ClrwlConfigFabric.INSTANCE.save();
                             ctx.getSource().sendFeedback(Component.translatable("command.colorwheel.alert_broken_pack.set.off"));
+
+                            return Command.SINGLE_SUCCESS;
+                        })));
+
+        command.then(ClientCommandManager.literal("enableFallbackMode")
+                .executes(ctx ->
+                {
+                    if (ClrwlConfigFabric.INSTANCE.fallbackModeEnabled)
+                    {
+                        ctx.getSource().sendFeedback(Component.translatable("command.colorwheel.fallback_mode.get.on"));
+                    }
+                    else
+                    {
+                        ctx.getSource().sendFeedback(Component.translatable("command.colorwheel.fallback_mode.get.off"));
+                    }
+
+                    return Command.SINGLE_SUCCESS;
+                })
+                .then(ClientCommandManager.literal("on")
+                        .executes(ctx ->
+                        {
+                            ClrwlConfigFabric.INSTANCE.fallbackModeEnabled = true;
+                            ClrwlConfigFabric.INSTANCE.save();
+                            ctx.getSource().sendFeedback(Component.translatable("command.colorwheel.fallback_mode.set.on"));
+                            Minecraft.getInstance().levelRenderer.allChanged();
+
+                            return Command.SINGLE_SUCCESS;
+                        }))
+                .then(ClientCommandManager.literal("off")
+                        .executes(ctx ->
+                        {
+                            ClrwlConfigFabric.INSTANCE.fallbackModeEnabled = false;
+                            ClrwlConfigFabric.INSTANCE.save();
+                            ctx.getSource().sendFeedback(Component.translatable("command.colorwheel.fallback_mode.set.off"));
+                            Minecraft.getInstance().levelRenderer.allChanged();
 
                             return Command.SINGLE_SUCCESS;
                         })));
