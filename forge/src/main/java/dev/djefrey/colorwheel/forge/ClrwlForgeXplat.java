@@ -4,6 +4,7 @@ import dev.djefrey.colorwheel.ClrwlXplat;
 import dev.djefrey.colorwheel.Colorwheel;
 import net.minecraftforge.fml.loading.LoadingModList;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,5 +28,18 @@ public class ClrwlForgeXplat implements ClrwlXplat
         int incremental = Integer.parseInt(matcher.group(3));
 
         return "%d%02d%02d".formatted(major, minor, incremental);
+    }
+
+    private Boolean hasFlywheel = null;
+
+    @Override
+    public boolean doesHaveFlywheel()
+    {
+        if (hasFlywheel == null)
+        {
+            hasFlywheel = ClrwlForge.hasFlywheel();
+        }
+
+        return hasFlywheel;
     }
 }

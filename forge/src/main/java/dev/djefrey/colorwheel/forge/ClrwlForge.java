@@ -5,30 +5,41 @@ import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 
 import dev.djefrey.colorwheel.Colorwheel;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.LoadingModList;
 
 @Mod(Colorwheel.MOD_ID)
 public final class ClrwlForge {
     public ClrwlForge()
     {
         ModLoadingContext modLoadingContext = ModLoadingContext.get();
+        boolean hasFlywheel = hasFlywheel();
 
-        Colorwheel.init();
+        Colorwheel.init(hasFlywheel);
 
-        IEventBus forgeEventBus = MinecraftForge.EVENT_BUS;
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        if (hasFlywheel)
+        {
+            IEventBus forgeEventBus = MinecraftForge.EVENT_BUS;
+            IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClrwlForge.clientInit(forgeEventBus, modEventBus));
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClrwlForge.clientInit(forgeEventBus, modEventBus));
 
-        ClrwlConfigForge.INSTANCE.registerSpecs(modLoadingContext);
+            ClrwlConfigForge.INSTANCE.registerSpecs(modLoadingContext);
+        }
     }
 
     private static void clientInit(IEventBus forgeEventBus, IEventBus modEventBus)
     {
         forgeEventBus.addListener(ClrwlCommandsForge::registerClientCommands);
+    }
+
+    public static boolean hasFlywheel()
+    {
+        return LoadingModList.get().getModFileById("flywheel") != null;
     }
 }

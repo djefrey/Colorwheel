@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
@@ -19,6 +20,7 @@ import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.api.visualization.VisualEmbedding;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
+import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
@@ -29,14 +31,21 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.joml.Vector3d;
 
 import java.util.HashMap;
 import java.util.List;
@@ -140,7 +149,7 @@ public class ClrwlEngine implements Engine
 
 			if (context instanceof ShadowRenderContext shadowContext)
 			{
-				if (shadowContext.phase() == ShadowRenderContext.RenderPhase.SOLID)
+				if (shadowContext.phase() == ShadowRenderingPhase.SOLID)
 				{
 					ClrwlUniforms.update(context, pack, dimension);
 					environmentStorage.flush();

@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.mixin.mc;
 
-import dev.djefrey.colorwheel.engine.uniform.ClrwlOptionsUniforms;
+import dev.djefrey.colorwheel.Colorwheel;
 import net.minecraft.client.Options;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,12 +13,12 @@ public class OptionsMixin
     @Inject(method = "load()V", at = @At("RETURN"))
     private void colorwheel$onLoad(CallbackInfo ci)
     {
-        ClrwlOptionsUniforms.update((Options) (Object) this);
+        Colorwheel.getSafeFlw().updateOptionsUniform((Options) (Object) this);
     }
 
     @Inject(method = "save", at = @At("HEAD"))
     private void colorwheel$onSave(CallbackInfo ci)
     {
-        ClrwlOptionsUniforms.update((Options) (Object) this);
+        Colorwheel.getSafeFlw().updateOptionsUniform((Options) (Object) this);
     }
 }
