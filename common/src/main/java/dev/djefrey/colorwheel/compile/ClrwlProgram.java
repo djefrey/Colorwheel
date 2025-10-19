@@ -254,7 +254,6 @@ public class ClrwlProgram
 
 	public void unbind()
 	{
-		ProgramManager.glUseProgram(0);
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
 	}
