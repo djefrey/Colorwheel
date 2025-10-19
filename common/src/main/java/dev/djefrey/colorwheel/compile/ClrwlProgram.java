@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.shaders.ProgramManager;
 import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
@@ -202,7 +203,7 @@ public class ClrwlProgram
 
 	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
 	{
-		GL20.glUseProgram(this.handle);
+		ProgramManager.glUseProgram(this.handle);
 
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
 
@@ -253,7 +254,7 @@ public class ClrwlProgram
 
 	public void unbind()
 	{
-		GL20.glUseProgram(0);
+		ProgramManager.glUseProgram(0);
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
 	}
