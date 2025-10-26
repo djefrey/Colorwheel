@@ -1,12 +1,13 @@
 modLoader = "javafml"
 loaderVersion = "[4,)"
-#issueTrackerURL = ""
+issueTrackerURL = "https://github.com/djefrey/Colorwheel/issues"
 license = "MIT"
 
 [[mods]]
 modId = "colorwheel"
 version = "${version}"
 displayName = "Colorwheel"
+displayURL = "https://djefrey.github.io/colorwheel/"
 authors = "djefrey"
 description = '''
 Allows you to use Iris Shaders with Flywheel
