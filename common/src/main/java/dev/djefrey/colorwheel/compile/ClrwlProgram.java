@@ -23,8 +23,10 @@ import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
+import net.irisshaders.iris.gl.state.FogMode;
 import net.irisshaders.iris.mixin.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.uniforms.CommonUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -164,6 +166,7 @@ public class ClrwlProgram
 					? pipeline::getFlippedAfterTranslucent
 					: pipeline::getFlippedAfterPrepare;
 
+		CommonUniforms.addDynamicUniforms(uniformBuilder, FogMode.PER_VERTEX);
 		customUniforms.assignTo(uniformBuilder);
 		pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
 				flipped, isShadowPass,
