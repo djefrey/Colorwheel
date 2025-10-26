@@ -1,3 +1,13 @@
+### 1.1.1
+
+- Fixes the rendering issue with Create Fabric 6.0.7
+- Fixes the "no active program" issue with dropped items and Just Stargate Mod
+- Fixes the colored lights with Forgified Fabric
+- Adds missing Iris uniforms
+- Flywheel is now an optional dependency  
+Colorwheel can be installed without a Flywheel mod
+- Sets correct homepage, sources and issues page links in mod description
+
 ### 1.1.0
 
 - Adds fallback mode for non supported shaderpacks  
