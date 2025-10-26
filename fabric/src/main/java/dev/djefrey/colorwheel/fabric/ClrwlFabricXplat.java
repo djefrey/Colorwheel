@@ -33,7 +33,7 @@ public class ClrwlFabricXplat implements ClrwlXplat
         return "%d%02d%02d".formatted(major, minor, incremental);
     }
 
-    private Boolean hasFlywheel = false;
+    private Boolean hasFlywheel = null;
 
     @Override
     public boolean doesHaveFlywheel()
