@@ -8,8 +8,9 @@
     "djefrey"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://djefrey.github.io/colorwheel/",
+    "sources": "https://github.com/djefrey/Colorwheel",
+    "issues": "https://github.com/djefrey/Colorwheel/issues"
   },
   "license": "MIT",
   "icon": "logo.png",
