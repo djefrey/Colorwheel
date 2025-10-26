@@ -31,8 +31,10 @@
     "minecraft": "~1.21.1",
     "java": ">=21",
     "fabric-api": "*",
-    "flywheel": ">=1.0.0",
     "iris": ">=1.8.0"
+  },
+  "recommends": {
+    "flywheel": ">=1.0.0"
   },
   "suggests": {
     "colorwheel_patcher": ">=0.2.3"

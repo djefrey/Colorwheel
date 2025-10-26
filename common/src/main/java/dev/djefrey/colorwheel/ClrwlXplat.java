@@ -7,4 +7,5 @@ public interface ClrwlXplat
     ClrwlXplat INSTANCE = ServiceLoader.load(ClrwlXplat.class).findFirst().get();
 
     String getFormattedVersion();
+    boolean doesHaveFlywheel();
 }

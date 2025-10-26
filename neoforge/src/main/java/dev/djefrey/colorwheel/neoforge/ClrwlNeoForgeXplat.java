@@ -28,4 +28,17 @@ public class ClrwlNeoForgeXplat implements ClrwlXplat
 
         return "%d%02d%02d".formatted(major, minor, incremental);
     }
+
+    private Boolean hasFlywheel = null;
+
+    @Override
+    public boolean doesHaveFlywheel()
+    {
+        if (hasFlywheel == null)
+        {
+            hasFlywheel = ClrwlNeoForge.hasFlywheel();
+        }
+
+        return hasFlywheel;
+    }
 }

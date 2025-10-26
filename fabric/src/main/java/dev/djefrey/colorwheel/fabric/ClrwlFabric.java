@@ -14,8 +14,18 @@ public final class ClrwlFabric implements ModInitializer
     @Override
     public void onInitialize()
     {
-        Colorwheel.init();
+        boolean hasFlywheel = hasFlywheel();
 
-        ClrwlConfigFabric.INSTANCE.load();
+        Colorwheel.init(hasFlywheel);
+
+        if (hasFlywheel)
+        {
+            ClrwlConfigFabric.INSTANCE.load();
+        }
+    }
+
+    public static boolean hasFlywheel()
+    {
+        return FabricLoader.getInstance().isModLoaded("flywheel");
     }
 }

@@ -1,13 +1,33 @@
-layout(std140) uniform _ClrwlLevelUniforms
-{
+// https://github.com/Engine-Room/Flywheel/blob/610b1683f3ed0fef5cd387a126bd2c530a9c2ead/common/src/backend/resources/assets/flywheel/flywheel/internal/uniforms/level.glsl
+
+layout(std140) uniform _ClrwlLevelUniforms {
+    vec4 flw_skyColor;
     vec4 flw_cloudColor;
 
     vec4 _flw_light0Direction;
     vec4 _flw_light1Direction;
 
+/** The current day number of the level. */
+    uint flw_levelDay;
+/** The current fraction of the current day that has elapsed. */
+    float flw_timeOfDay;
+
+    uint flw_levelHasSkyLight;
+
+    float flw_sunAngle;
+
     float flw_moonBrightness;
+/** There are normally only 8 moon phases. */
+    uint flw_moonPhase;
+
+    uint flw_isRaining;
+    float flw_rainLevel;
+    uint flw_isThundering;
+    float flw_thunderLevel;
 
     float flw_skyDarken;
+
+    uint flw_constantAmbientLight;
 
 /** Use FLW_DIMENSION_* ids to determine the dimension. May eventually be implemented for custom dimensions. */
     uint flw_dimension;

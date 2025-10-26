@@ -2,12 +2,9 @@ package dev.djefrey.colorwheel.mixin.iris;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRendererAccessor;
-import dev.engine_room.flywheel.api.backend.RenderContext;
-import dev.engine_room.flywheel.api.internal.FlwApiLink;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
+import dev.djefrey.colorwheel.engine.ShadowRenderingPhase;
 import net.irisshaders.iris.mixin.LevelRendererAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
@@ -56,36 +53,15 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
     )
     private void injectRenderShadows(LevelRendererAccessor levelRenderer, Camera playerCamera, CallbackInfo ci)
     {
-        if (colorwheel$shouldRenderShadow && FlwApiLink.INSTANCE.getCurrentBackend() == Colorwheel.IRIS_INSTANCING)
+        if (colorwheel$shouldRenderShadow && Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
         {
             ClientLevel level = Minecraft.getInstance().level;
-            VisualizationManager manager = VisualizationManager.get(level);
 
             // Determine the player camera position
             Vector3d cameraPos = CameraUniforms.getUnshiftedCameraPosition();
-
-            double cameraX = cameraPos.x();
-            double cameraY = cameraPos.y();
-            double cameraZ = cameraPos.z();
-
             final float tickDelta = CapturedRenderingState.INSTANCE.getTickDelta();
 
-            if (manager != null)
-            {
-                RenderContext ctx = ShadowRenderContext.create(
-                        Minecraft.getInstance().levelRenderer,
-                        level,
-                        Minecraft.getInstance().renderBuffers(),
-                        ShadowRenderer.MODELVIEW,
-                        ShadowRenderer.PROJECTION,
-                        playerCamera,
-                        (float) cameraX, (float) cameraY, (float) cameraZ,
-                        tickDelta,
-                        ShadowRenderContext.RenderPhase.SOLID
-                );
-
-                manager.renderDispatcher().afterEntities(ctx);
-            }
+            Colorwheel.getSafeFlw().submitShadowRenderContext(level, playerCamera, cameraPos, tickDelta, ShadowRenderingPhase.SOLID);
         }
     }
 
@@ -95,36 +71,15 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
     )
     private void injectRenderShadowsTranslucent(LevelRendererAccessor levelRenderer, Camera playerCamera, CallbackInfo ci)
     {
-        if (shouldRenderTranslucent && colorwheel$shouldRenderShadow && FlwApiLink.INSTANCE.getCurrentBackend() == Colorwheel.IRIS_INSTANCING)
+        if (shouldRenderTranslucent && colorwheel$shouldRenderShadow && Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
         {
             ClientLevel level = Minecraft.getInstance().level;
-            VisualizationManager manager = VisualizationManager.get(level);
 
             // Determine the player camera position
             Vector3d cameraPos = CameraUniforms.getUnshiftedCameraPosition();
-
-            double cameraX = cameraPos.x();
-            double cameraY = cameraPos.y();
-            double cameraZ = cameraPos.z();
-
             final float tickDelta = CapturedRenderingState.INSTANCE.getTickDelta();
 
-            if (manager != null)
-            {
-                RenderContext ctx = ShadowRenderContext.create(
-                        Minecraft.getInstance().levelRenderer,
-                        level,
-                        Minecraft.getInstance().renderBuffers(),
-                        ShadowRenderer.MODELVIEW,
-                        ShadowRenderer.PROJECTION,
-                        playerCamera,
-                        (float) cameraX, (float) cameraY, (float) cameraZ,
-                        tickDelta,
-                        ShadowRenderContext.RenderPhase.TRANSLUCENT
-                );
-
-                manager.renderDispatcher().afterEntities(ctx);
-            }
+            Colorwheel.getSafeFlw().submitShadowRenderContext(level, playerCamera, cameraPos, tickDelta, ShadowRenderingPhase.TRANSLUCENT);
         }
     }
 }

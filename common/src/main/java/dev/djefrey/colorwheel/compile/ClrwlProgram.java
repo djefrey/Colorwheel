@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.shaders.ProgramManager;
 import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
@@ -22,8 +23,10 @@ import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.shader.GlShader;
 import net.irisshaders.iris.gl.shader.ShaderType;
+import net.irisshaders.iris.gl.state.FogMode;
 import net.irisshaders.iris.mixin.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.uniforms.CommonUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -163,6 +166,7 @@ public class ClrwlProgram
 					? pipeline::getFlippedAfterTranslucent
 					: pipeline::getFlippedAfterPrepare;
 
+		CommonUniforms.addDynamicUniforms(uniformBuilder, FogMode.PER_VERTEX);
 		customUniforms.assignTo(uniformBuilder);
 		pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
 				flipped, isShadowPass,
@@ -202,7 +206,7 @@ public class ClrwlProgram
 
 	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
 	{
-		GL20.glUseProgram(this.handle);
+		ProgramManager.glUseProgram(this.handle);
 
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
 
@@ -253,7 +257,6 @@ public class ClrwlProgram
 
 	public void unbind()
 	{
-		GL20.glUseProgram(0);
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
 	}

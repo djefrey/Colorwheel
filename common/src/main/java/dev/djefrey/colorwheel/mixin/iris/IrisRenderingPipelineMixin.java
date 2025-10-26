@@ -2,12 +2,11 @@ package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableSet;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRenderTargetsAccessor;
 import dev.djefrey.colorwheel.accessors.ShadowRendererAccessor;
 import dev.djefrey.colorwheel.engine.BeginTranslucentRenderFunction;
-import dev.djefrey.colorwheel.engine.ClrwlEngine;
-import dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
@@ -131,14 +130,6 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 			remap = false)
 	public void colorwheel$onDelete(CallbackInfo ci)
 	{
-		ClrwlEngine engine = ClrwlEngine.ENGINES.get((IrisRenderingPipeline) (Object) this);
-
-		if (engine != null)
-		{
-			// Direct access to the implementation is required as no method in the public API
-			// allows you to reset a visualization manager
-
-			VisualizationManagerImpl.reset(engine.level());
-		}
+		Colorwheel.getSafeFlw().resetVisuals((IrisRenderingPipeline) (Object) this);
 	}
 }

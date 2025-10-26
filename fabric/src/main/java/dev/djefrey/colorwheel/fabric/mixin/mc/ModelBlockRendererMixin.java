@@ -22,22 +22,23 @@ public class ModelBlockRendererMixin
     @Unique
     private boolean colorwheel$isFirstCall = true;
 
-    // This is required as Sodium injects a Mixin that cancels the call
+    // This is required as Sodium (Fabric) and Indigo (Forge) injects a Mixin that cancels the call,
+    // which prevent cleanups done with @At("RETURN")
+    //
+    // The mixin priority is aggressive to ensure that this is called first,
+    // the method is never truly cancelled so that's okay
 
     @Inject(method = "tesselateBlock",
             at = @At("HEAD"),
             cancellable = true,
-            order = 500)
+            order = 300)
     private void injectBeginEndBlock(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, CallbackInfo ci)
     {
-        if (colorwheel$isFirstCall)
+        if (colorwheel$isFirstCall && consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
         {
-            if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
-            {
-                    blockBuilder.beginBlock(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(state),
-                                            (byte) 0, (byte) state.getLightEmission(),
-                                            pos.getX(), pos.getY(), pos.getZ());
-            }
+            blockBuilder.beginBlock(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(state),
+                                    (byte) 0, (byte) state.getLightEmission(),
+                                    pos.getX(), pos.getY(), pos.getZ());
 
             colorwheel$isFirstCall = false;
 
@@ -49,11 +50,7 @@ public class ModelBlockRendererMixin
             {
                 this.colorwheel$isFirstCall = true;
 
-                if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
-                {
-                    blockBuilder.endBlock();
-                }
-
+                blockBuilder.endBlock();
                 ci.cancel();
             }
         }
