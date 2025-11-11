@@ -154,8 +154,15 @@ void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLi
 
     _clrwl_shaderLight_hook();
 
-    vec3 fragColorLightRatio = flw_fragColor.rgb / fragColorBfLight.rgb;
-    ao = clamp(max(max(fragColorLightRatio.r, fragColorLightRatio.g), fragColorLightRatio.b), 0.0, 1.0);
+    if (flw_material.ambientOcclusion)
+    {
+        vec3 fragColorLightRatio = flw_fragColor.rgb / fragColorBfLight.rgb;
+        ao = clamp(max(max(fragColorLightRatio.r, fragColorLightRatio.g), fragColorLightRatio.b), 0.0, 1.0);
+    }
+    else
+    {
+        ao = 1.0;
+    }
 
     clrwl_computeDiscard(flw_fragColor);
     clrwl_getDebugColor(flw_fragColor);

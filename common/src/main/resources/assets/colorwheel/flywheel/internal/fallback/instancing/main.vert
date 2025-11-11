@@ -1,4 +1,4 @@
-#include "flywheel:internal/packed_material.glsl"
+#include "colorwheel:internal/packed_material.glsl"
 #include "flywheel:internal/instancing/light.glsl"
 #include "colorwheel:internal/diffuse.glsl"
 
