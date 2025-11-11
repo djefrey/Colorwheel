@@ -21,6 +21,7 @@ public abstract class BlockEntityStorageMixin
 
     @Inject(method = "createRaw(Ldev/engine_room/flywheel/api/visualization/VisualizationContext;Lnet/minecraft/world/level/block/entity/BlockEntity;F)Ldev/engine_room/flywheel/api/visual/BlockEntityVisual;",
             at = @At("HEAD"),
+            require = 0,
             cancellable = true)
     private void injectCreateRaw(VisualizationContext visualizationContext, BlockEntity obj, float partialTick, CallbackInfoReturnable<BlockEntityVisual<?>> cir)
     {

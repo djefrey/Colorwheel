@@ -40,6 +40,7 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
 
     @Inject(method = "prepareForGeometry",
             at = @At("TAIL"),
+            require = 0,
             remap = false)
     private void injectBeginBlock(RenderMaterial material, CallbackInfo ci)
     {
@@ -84,6 +85,7 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
 
     @Inject(method = "clear",
             at = @At("TAIL"),
+            require = 0,
             remap = false)
     private void injectEnd(CallbackInfo ci)
     {
