@@ -28,7 +28,7 @@ vec4 clrwl_vertexMidMesh;
 
 FlwMaterial flw_material;
 
-#define flw_vertexId gl_VertexID
+uint flw_vertexId;
 
 uniform sampler2D flw_diffuseTex;
 uniform sampler2D flw_overlayTex;
