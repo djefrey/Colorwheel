@@ -50,7 +50,7 @@ public final class Colorwheel
             catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e)
             {
                 LOGGER.error("Could not load ClrwlSafeFlwImpl", e);
-                throw new RuntimeException("Error while loading Colorweel", e);
+                throw new RuntimeException("Error while loading Colorwheel", e);
             }
         }
 
