@@ -22,6 +22,7 @@ public abstract class EntityStorageMixin
 
     @Inject(method = "createRaw(Ldev/engine_room/flywheel/api/visualization/VisualizationContext;Lnet/minecraft/world/entity/Entity;F)Ldev/engine_room/flywheel/api/visual/EntityVisual;",
             at = @At("HEAD"),
+            require = 0,
             cancellable = true)
     private void injectCreateRaw(VisualizationContext context, Entity obj, float partialTick, CallbackInfoReturnable<EntityVisual<?>> cir)
     {

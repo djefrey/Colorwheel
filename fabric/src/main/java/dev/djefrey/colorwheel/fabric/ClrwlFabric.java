@@ -4,10 +4,6 @@ import net.fabricmc.api.ModInitializer;
 
 import dev.djefrey.colorwheel.Colorwheel;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public final class ClrwlFabric implements ModInitializer
 {
@@ -15,6 +11,11 @@ public final class ClrwlFabric implements ModInitializer
     public void onInitialize()
     {
         boolean hasFlywheel = hasFlywheel();
+
+        if (hasFlywheel && !isFlywheelVersionSupported())
+        {
+            throw new RuntimeException("Flywheel version is not compatible with Colorwheel");
+        }
 
         Colorwheel.init(hasFlywheel);
 
@@ -27,5 +28,22 @@ public final class ClrwlFabric implements ModInitializer
     public static boolean hasFlywheel()
     {
         return FabricLoader.getInstance().isModLoaded("flywheel");
+    }
+
+    public static boolean isFlywheelVersionSupported()
+    {
+        var dependencies = FabricLoader.getInstance().getModContainer(Colorwheel.MOD_ID).get().getMetadata().getDependencies();
+        var flwVersion = FabricLoader.getInstance().getModContainer("flywheel").get().getMetadata().getVersion();
+
+        for (var dep : dependencies)
+        {
+            if (dep.getModId().equals("flywheel"))
+            {
+                return dep.matches(flwVersion);
+            }
+        }
+
+        // Should never happen
+        throw new RuntimeException("Flywheel is not a dependency");
     }
 }

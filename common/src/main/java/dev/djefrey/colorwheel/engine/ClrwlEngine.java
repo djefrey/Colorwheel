@@ -145,8 +145,6 @@ public class ClrwlEngine implements Engine
 	{
 		try (var state = GlStateTracker.getRestoreState())
 		{
-			RenderSystem.replayQueue();
-
 			if (context instanceof ShadowRenderContext shadowContext)
 			{
 				if (shadowContext.phase() == ShadowRenderingPhase.SOLID)

@@ -14,6 +14,7 @@ public class BakedModelBuffererMixin
 {
     @Redirect(method = "bufferBlocks",
             at = @At(value = "INVOKE", target = "Ldev/engine_room/flywheel/lib/model/baked/MeshEmitter;prepare(Ldev/engine_room/flywheel/lib/model/baked/BakedModelBufferer$ResultConsumer;)V"),
+            require = 0,
             remap = false)
     private static void injectTerrainFlag(@Coerce Object instance, @Coerce Object resultConsumer)
     {
@@ -21,7 +22,8 @@ public class BakedModelBuffererMixin
     }
 
     @Redirect(method = "bufferBlocks",
-            at = @At(value = "INVOKE", target = "Ldev/engine_room/flywheel/lib/model/baked/UniversalMeshEmitter;prepare(Lnet/minecraft/client/renderer/RenderType;)V"))
+            at = @At(value = "INVOKE", target = "Ldev/engine_room/flywheel/lib/model/baked/UniversalMeshEmitter;prepare(Lnet/minecraft/client/renderer/RenderType;)V"),
+            require = 0)
     private static void injectUniversalTerrainFlag(@Coerce Object instance, RenderType renderType)
     {
         ((UniversalMeshEmitterAccessor) instance).colorwheel$prepareTerrain(renderType);

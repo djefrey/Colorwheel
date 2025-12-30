@@ -18,6 +18,7 @@ public class MeshHelperMixin
 {
     @Inject(method = "blockVerticesToMesh",
             at = @At("HEAD"),
+            require = 0,
             cancellable = true)
     private static void injectCustomVertexData(MeshData data, String meshDescriptor, CallbackInfoReturnable<SimpleQuadMesh> cir)
     {

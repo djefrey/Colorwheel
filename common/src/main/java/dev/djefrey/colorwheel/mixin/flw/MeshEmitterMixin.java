@@ -40,6 +40,7 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
 
     @Inject(method = "prepareForGeometry(Z)V",
             at = @At("TAIL"),
+            require = 0,
             remap = false)
     private void injectBeginBlock(boolean shade, CallbackInfo ci)
     {
@@ -95,6 +96,7 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
     }
 
     @Inject(method = "end",
+            require = 0,
             at = @At("TAIL"))
     private void injectEnd(CallbackInfo ci)
     {
