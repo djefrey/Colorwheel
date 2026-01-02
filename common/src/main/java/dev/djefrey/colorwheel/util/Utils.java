@@ -12,11 +12,6 @@ import java.util.stream.Collectors;
 
 public class Utils
 {
-    public static int divRoundUp(int num, int den)
-    {
-        return (num + den - 1) / den;
-    }
-
     public static <V, K> Map<V, K> reverse(Map<K, V> map)
     {
         return map.entrySet()
