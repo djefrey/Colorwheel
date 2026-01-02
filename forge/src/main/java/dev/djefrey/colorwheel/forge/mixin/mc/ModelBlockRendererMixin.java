@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ModelBlockRendererMixin
 {
     @Unique
-    private boolean colorwheel$isFirstCall = true;
+    private ThreadLocal<Boolean> colorwheel$isFirstCall = ThreadLocal.withInitial(() -> true);
 
     // This is required as Sodium (Fabric) and Indigo (Forge) injects a Mixin that cancels the call,
     // which prevent cleanups done with @At("RETURN")
@@ -36,13 +36,13 @@ public class ModelBlockRendererMixin
             remap = false)
     private void injectBeginEndBlock(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType, CallbackInfo ci)
     {
-        if (colorwheel$isFirstCall && consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
+        if (colorwheel$isFirstCall.get() && consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
         {
             blockBuilder.beginBlock((short) WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(state),
                     (byte) 0,
                     pos.getX(), pos.getY(), pos.getZ());
 
-            colorwheel$isFirstCall = false;
+            colorwheel$isFirstCall.set(false);
 
             try
             {
@@ -50,7 +50,7 @@ public class ModelBlockRendererMixin
             }
             finally
             {
-                this.colorwheel$isFirstCall = true;
+                colorwheel$isFirstCall.set(true);
 
                 blockBuilder.endBlock();
                 ci.cancel();
