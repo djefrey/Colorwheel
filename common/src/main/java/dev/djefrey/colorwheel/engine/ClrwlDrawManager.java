@@ -9,7 +9,9 @@ import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.backend.FlwBackend;
+import dev.engine_room.flywheel.backend.engine.AbstractInstancer;
 import dev.engine_room.flywheel.backend.engine.GroupKey;
+import dev.engine_room.flywheel.backend.engine.InstancerKey;
 import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.lib.task.ForEachPlan;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Function;
 
 public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 {
@@ -39,6 +42,12 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	 */
 	protected final Queue<UninitializedInstancer<N, ?>> initializationQueue = new ConcurrentLinkedQueue<>();
 
+	/**
+	 * Function object to pass into computeIfAbsent.
+	 * <p>Create once and cache to avoid allocating every time.
+	 */
+	protected final Function<ClrwlInstancerKey<?>, N> createAndDeferInit = this::createAndDeferInit;
+
 	public <I extends Instance> ClrwlAbstractInstancer<I> getInstancer(ClrwlInstanceVisual visual, Environment environment, InstanceType<I> type, Model model, int bias)
 	{
 		return getInstancer(new ClrwlInstancerKey<>(visual, environment, type, model, bias));
@@ -47,7 +56,7 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	@SuppressWarnings("unchecked")
 	public <I extends Instance> ClrwlAbstractInstancer<I> getInstancer(ClrwlInstancerKey<I> key)
 	{
-		return (ClrwlAbstractInstancer<I>) instancers.computeIfAbsent(key, this::createAndDeferInit);
+		return (ClrwlAbstractInstancer<I>) instancers.computeIfAbsent(key, createAndDeferInit);
 	}
 
 	public Plan<RenderContext> createFramePlan()
