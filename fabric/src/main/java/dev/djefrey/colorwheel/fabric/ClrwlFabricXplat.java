@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel.fabric;
 
 import dev.djefrey.colorwheel.ClrwlXplat;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.Version;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
@@ -28,9 +29,9 @@ public class ClrwlFabricXplat implements ClrwlXplat
 
         int major = Integer.parseInt(matcher.group(1));
         int minor = Integer.parseInt(matcher.group(2));
-        int incremental = Integer.parseInt(matcher.group(3));
+        int patch = Integer.parseInt(matcher.group(3));
 
-        return "%d%02d%02d".formatted(major, minor, incremental);
+        return "%d%02d%02d".formatted(major, minor, patch);
     }
 
     private Boolean hasFlywheel = null;
@@ -44,5 +45,30 @@ public class ClrwlFabricXplat implements ClrwlXplat
         }
 
         return hasFlywheel;
+    }
+
+    @Override
+    public Version getFlywheelVersion()
+    {
+        var modContainer = FabricLoader.getInstance().getModContainer("flywheel");
+
+        if (modContainer.isEmpty())
+        {
+            return null;
+        }
+
+        String version = modContainer.get().getMetadata().getVersion().getFriendlyString();
+        Matcher matcher = VERSION_REGEX.matcher(version);
+
+        if (!matcher.matches())
+        {
+            throw new IllegalStateException("Could not parse Flywheel mod version");
+        }
+
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        int patch = Integer.parseInt(matcher.group(3));
+
+        return new Version(major, minor, patch);
     }
 }

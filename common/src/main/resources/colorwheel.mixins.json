@@ -1,6 +1,7 @@
 {
   "required": true,
   "package": "dev.djefrey.colorwheel.mixin",
+  "plugin": "dev.djefrey.colorwheel.MixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
@@ -11,8 +12,8 @@
   "mixins": [
     "flw.BlockEntityStorageMixin",
     "flw.EntityStorageMixin",
-    "flw.MeshEmitterMixin",
     "flw.MeshHelperMixin",
+    "flw.v10000.MeshEmitterMixin",
     "iris.BlendModeOverrideMixin",
     "iris.BlockMaterialMappingMixin",
     "iris.IrisMixin",

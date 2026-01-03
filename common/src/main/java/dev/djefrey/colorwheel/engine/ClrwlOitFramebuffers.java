@@ -11,6 +11,7 @@ import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.backend.NoiseTextures;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
+import dev.engine_room.flywheel.lib.math.MoreMath;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.blending.BlendModeFunction;
@@ -534,7 +535,7 @@ public class ClrwlOitFramebuffers
             {
                 int rank = coeffRanks[i];
                 int buffer = GL46.glCreateTextures(GL46.GL_TEXTURE_2D_ARRAY);
-                int depth = Utils.divRoundUp(1 << (rank + 1), 4);
+                int depth = MoreMath.ceilingDiv(1 << (rank + 1), 4);
 
                 GL46.glTextureStorage3D(buffer, 1, GL32.GL_RGBA16F, width, height, depth);
                 coefficients[i] = buffer;
@@ -547,7 +548,7 @@ public class ClrwlOitFramebuffers
             for (int i = 0; i < coeffCnt; i++)
             {
                 int rank = coeffRanks[i];
-                int depth = Utils.divRoundUp(1 << (rank + 1), 4);
+                int depth = MoreMath.ceilingDiv(1 << (rank + 1), 4);
 
                 for (int j = 0; j < depth; j++)
                 {
@@ -569,7 +570,7 @@ public class ClrwlOitFramebuffers
             {
                 int rank = coeffRanks[i];
                 int buffer = GL32.glGenTextures();
-                int depth = Utils.divRoundUp(1 << (rank + 1), 4);
+                int depth = MoreMath.ceilingDiv(1 << (rank + 1), 4);
 
                 GL32.glBindTexture(GL32.GL_TEXTURE_2D_ARRAY, buffer);
                 GL32.glTexImage3D(GL32.GL_TEXTURE_2D_ARRAY, 0, GL32.GL_RGBA16F, width, height, depth, 0, GL46.GL_RGBA, GL46.GL_BYTE, 0);
@@ -591,7 +592,7 @@ public class ClrwlOitFramebuffers
             for (int i = 0; i < coeffCnt; i++)
             {
                 int rank = coeffRanks[i];
-                int depth = Utils.divRoundUp(1 << (rank + 1), 4);
+                int depth = MoreMath.ceilingDiv(1 << (rank + 1), 4);
 
                 for (int j = 0; j < depth; j++)
                 {

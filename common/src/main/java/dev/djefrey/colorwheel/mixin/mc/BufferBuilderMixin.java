@@ -32,13 +32,17 @@ public abstract class BufferBuilderMixin implements ColorwheelBufferBuilder
     @Unique
     private byte colorwheel$lightEmission = -1;
 
+    @Unique
+    private boolean colorwheel$isTerrain = false;
+
     @Override
-    public void clrwlBeginBlock(int block, byte renderType, byte lightEmission, int posX, int posY, int posZ)
+    public void clrwlBeginBlock(int block, byte renderType, byte lightEmission, boolean isTerrain, int posX, int posY, int posZ)
     {
         colorwheel$isFlwBuffer = true;
         colorwheel$lightEmission = lightEmission;
+        colorwheel$isTerrain = isTerrain;
 
-        ColorwheelBufferBuilder.super.clrwlBeginBlock(block, renderType, lightEmission, posX, posY, posZ);
+        ColorwheelBufferBuilder.super.clrwlBeginBlock(block, renderType, lightEmission, isTerrain, posX, posY, posZ);
     }
 
     @Inject(method = "addVertex(FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;",
@@ -54,7 +58,8 @@ public abstract class BufferBuilderMixin implements ColorwheelBufferBuilder
             if (wasRequested && hasBeenFilled)
             {
                 long midBlockOffset = this.vertexPointer + (long) this.offsetsByElement[IrisVertexFormats.MID_BLOCK_ELEMENT.id()];
-                MemoryUtil.memPutByte(midBlockOffset + 3, colorwheel$lightEmission);
+
+                MemoryUtil.memPutByte(midBlockOffset + 3, colorwheel$isTerrain ? colorwheel$lightEmission : (byte) -1);
             }
         }
     }

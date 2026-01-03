@@ -33,7 +33,6 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector2i;
 import org.joml.Vector3fc;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
@@ -55,7 +54,7 @@ public class ClrwlProgram
 	private final ProgramSamplers samplers;
 	private final ProgramImages images;
 
-	public final int vertexOffsetUniform;
+	public final int baseVertexUniform;
 	public final int baseInstanceUniform;
 	public final int packedMaterialUniform;
 	public final int modelMatrixUniform;
@@ -178,7 +177,7 @@ public class ClrwlProgram
 		this.samplers = samplerBuilder.build();
 		this.images = imageBuilder.build();
 
-		this.vertexOffsetUniform = tryGetUniformLocation2("_flw_vertexOffset");
+		this.baseVertexUniform = tryGetUniformLocation2("_flw_baseVertex");
 		this.baseInstanceUniform = tryGetUniformLocation2("_flw_baseInstance");
 		this.packedMaterialUniform = tryGetUniformLocation2("_clrwl_packedMaterial");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
@@ -204,7 +203,7 @@ public class ClrwlProgram
 							    customUniforms, pipeline);
 	}
 
-	public void bind(int vertexOffset, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
+	public void bind(int baseVertex, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
 	{
 		ProgramManager.glUseProgram(this.handle);
 
@@ -238,7 +237,7 @@ public class ClrwlProgram
 			blendMode = Utils.transparencyToBlendMode(material.transparency());
 		}
 
-		setUniformU(vertexOffsetUniform, vertexOffset);
+		setUniformU(baseVertexUniform, baseVertex);
 		setUniformS(baseInstanceUniform, baseInstance);
 		setUniformU(packedMaterialUniform, packedMaterialProperties);
 

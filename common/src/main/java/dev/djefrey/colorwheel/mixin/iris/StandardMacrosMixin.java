@@ -32,7 +32,7 @@ public abstract class StandardMacrosMixin
 
     @Inject(method = "createStandardEnvironmentDefines()Lcom/google/common/collect/ImmutableList;",
             at = @At(value = "CONSTANT", args = "stringValue=IS_IRIS"),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION,
+            locals = LocalCapture.CAPTURE_FAILHARD,
             remap = false
     )
     private static void colorwheel$injectClrwlStandardDefines(CallbackInfoReturnable<ImmutableList<StringPair>> cir, ArrayList<StringPair> standardDefines)

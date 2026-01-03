@@ -50,12 +50,12 @@ public class OitCompositeComponent implements SourceComponent
 
         var body = new GlslBlock();
 
-        body.add(GlslStmt.raw("float minDepth = -texelFetch(_flw_depthRange, ivec2(gl_FragCoord.xy), 0).r;"));
+        body.raw("float minDepth = -texelFetch(_flw_depthRange, ivec2(gl_FragCoord.xy), 0).r;");
 
         // Required otherwise depth buffer is corrupted
-        body.add(GlslStmt.raw("if (minDepth == _flw_cullData.zfar) { discard; }"));
+        body.raw("if (minDepth == _flw_cullData.zfar) { discard; }");
 
-        body.add(GlslStmt.raw("gl_FragDepth = _clrwl_delinearize_depth(minDepth, _flw_cullData.znear, _flw_cullData.zfar);"));
+        body.raw("gl_FragDepth = _clrwl_delinearize_depth(minDepth, _flw_cullData.znear, _flw_cullData.zfar);");
 
         for (int i = 0; i < ranks.length; i++)
         {
@@ -64,7 +64,7 @@ public class OitCompositeComponent implements SourceComponent
             var name = "total_transmittance" + i;
             var coeffName = "clrwl_coefficients" + i;
 
-            body.add(GlslStmt.raw("float " + name + " = _clrwl_total_transmittance(" + coeffName + ", " + rank + ");"));
+            body.raw("float " + name + " = _clrwl_total_transmittance(" + coeffName + ", " + rank + ");");
         }
 
         for (int i = 0; i < drawBuffers.length; i++)
@@ -81,12 +81,16 @@ public class OitCompositeComponent implements SourceComponent
                 var texelName = "texelTranslucent" + drawBuffer;
                 var totalName = "total_transmittance" + coeffId.get();
 
-                body.add(GlslStmt.raw("vec4 " + texelName + " = texelFetch(" + accumulate + ", ivec2(gl_FragCoord.xy), 0);"));
-                body.add(GlslStmt.raw(out + " = vec4(" + texelName + ".rgb / " + texelName + ".a, 1. - " + totalName + ");"));
+                body.raw("vec4 " + texelName + " = texelFetch(" + accumulate + ", ivec2(gl_FragCoord.xy), 0);");
+                body.raw("if (" + texelName + ".a >= 1e-5) {");
+                body.raw("    " + out + " = vec4(" + texelName + ".rgb / " + texelName + ".a, 1. - " + totalName + ");");
+                body.raw("} else {");
+                body.raw("    " + out + " = vec4(0.0);");
+                body.raw("}");
             }
             else // Frontmost
             {
-                body.add(GlslStmt.raw(out + " = texelFetch(" + accumulate + ", ivec2(gl_FragCoord.xy), 0);"));
+                body.raw(out + " = texelFetch(" + accumulate + ", ivec2(gl_FragCoord.xy), 0);");
             }
         }
 

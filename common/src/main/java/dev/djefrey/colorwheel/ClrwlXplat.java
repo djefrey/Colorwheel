@@ -1,5 +1,7 @@
 package dev.djefrey.colorwheel;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ServiceLoader;
 
 public interface ClrwlXplat
@@ -8,4 +10,6 @@ public interface ClrwlXplat
 
     String getFormattedVersion();
     boolean doesHaveFlywheel();
+    @Nullable
+    Version getFlywheelVersion();
 }

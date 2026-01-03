@@ -46,7 +46,7 @@ public abstract class ShaderPackMixin implements ShaderPackAccessor
 
 	@Inject(method = "<init>(Ljava/nio/file/Path;Ljava/util/Map;Lcom/google/common/collect/ImmutableList;Z)V",
 			at = @At("RETURN"),
-			locals = LocalCapture.CAPTURE_FAILEXCEPTION)
+			locals = LocalCapture.CAPTURE_FAILHARD)
 	private void injectInit(Path root, Map changedConfigs, ImmutableList environmentDefines, boolean isZip, CallbackInfo ci, ArrayList envDefines1, ImmutableList.Builder starts, ImmutableList potentialFileNames, boolean[] hasDimensionIds, List dimensionIdCreator, IncludeGraph graph, List finalEnvironmentDefines, List invalidFlagList, List invalidFeatureFlags, List newEnvDefines, List optionalFeatureFlags, ProfileSet profiles, List disabledPrograms, IncludeProcessor includeProcessor, Iterable<StringPair> finalEnvironmentDefines1, int userOptionsChanged)
 	{
 		this.colorwheel$environmentDefines = ImmutableList.copyOf(finalEnvironmentDefines1);

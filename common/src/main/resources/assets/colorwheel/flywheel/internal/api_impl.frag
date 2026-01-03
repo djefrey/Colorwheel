@@ -1,4 +1,4 @@
-#include "flywheel:internal/material.glsl"
+#include "colorwheel:internal/material.glsl"
 #include "flywheel:internal/api_impl.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 

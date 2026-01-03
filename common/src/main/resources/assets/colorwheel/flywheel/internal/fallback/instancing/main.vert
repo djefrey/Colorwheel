@@ -1,4 +1,4 @@
-#include "flywheel:internal/packed_material.glsl"
+#include "colorwheel:internal/packed_material.glsl"
 #include "flywheel:internal/instancing/light.glsl"
 #include "colorwheel:internal/diffuse.glsl"
 
@@ -74,7 +74,7 @@ uniform mat4 _flw_modelMatrixUniform;
 uniform mat3 _flw_normalMatrixUniform;
 #endif
 
-uniform uint _flw_vertexOffset;
+uniform uint _flw_baseVertex;
 
 uniform vec4 _clrwl_meshCenter;
 
@@ -103,6 +103,8 @@ float _clrwl_diffuseFactor()
 
 void main()
 {
+    flw_vertexId = gl_VertexID - _flw_baseVertex;
+
     _flw_unpackMaterialProperties(_clrwl_packedMaterial, flw_material);
 
     FlwInstance instance = _flw_unpackInstance(_flw_baseInstance + gl_InstanceID);
@@ -183,7 +185,7 @@ void main()
     #endif
 
     #ifdef _FLW_DEBUG
-    clrwl_debugIds = uvec2(gl_InstanceID, _flw_vertexOffset);
+    clrwl_debugIds = uvec2(gl_InstanceID, _flw_baseVertex);
 
     if (_flw_debugMode == 6u) // midMesh
     {

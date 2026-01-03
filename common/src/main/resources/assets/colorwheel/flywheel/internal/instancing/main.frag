@@ -1,4 +1,4 @@
-#include "flywheel:internal/packed_material.glsl"
+#include "colorwheel:internal/packed_material.glsl"
 #include "colorwheel:internal/fog_distance.glsl"
 
 uniform uint _clrwl_packedMaterial;

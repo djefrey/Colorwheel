@@ -225,13 +225,4 @@ public final class ClrwlMaterialRenderState
         RenderSystem.depthMask(true);
         RenderSystem.colorMask(true, true, true, true);
     }
-
-    public static boolean materialEquals(Material lhs, Material rhs)
-    {
-        if (lhs == rhs) {
-            return true;
-        } else {
-            return lhs.blur() == rhs.blur() && lhs.mipmap() == rhs.mipmap() && lhs.backfaceCulling() == rhs.backfaceCulling() && lhs.polygonOffset() == rhs.polygonOffset() && lhs.depthTest() == rhs.depthTest() && lhs.transparency() == rhs.transparency() && lhs.writeMask() == rhs.writeMask() && lhs.light().source().equals(rhs.light().source()) && lhs.texture().equals(rhs.texture()) && lhs.cutout().source().equals(rhs.cutout().source()) && lhs.shaders().fragmentSource().equals(rhs.shaders().fragmentSource()) && lhs.shaders().vertexSource().equals(rhs.shaders().vertexSource());
-        }
-    }
 }

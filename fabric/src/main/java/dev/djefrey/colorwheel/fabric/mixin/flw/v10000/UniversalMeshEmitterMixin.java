@@ -1,26 +1,27 @@
-package dev.djefrey.colorwheel.fabric.mixin.flw;
+package dev.djefrey.colorwheel.fabric.mixin.flw.v10000;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
-import dev.djefrey.colorwheel.accessors.MeshEmitterAccessor;
-import dev.djefrey.colorwheel.accessors.UniversalMeshEmitterAccessor;
+import dev.djefrey.colorwheel.accessors.flw10000.UniversalMeshEmitterAccessor;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
 import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.UnknownNullability;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.UniversalMeshEmitter", remap = false)
+@Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.UniversalMeshEmitter")
+@Pseudo
 public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferBuilder, UniversalMeshEmitterAccessor
 {
     @Unique
     private boolean colorwheel$isTerrain = false;
-    
+
     @Unique
     private int colorwheel$currentBlock = -1;
     @Unique
@@ -46,14 +47,9 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
             remap = false)
     private void injectBeginBlock(RenderMaterial material, CallbackInfo ci)
     {
-        if (!colorwheel$isTerrain)
-        {
-            return;
-        }
-
         if (this.currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
-            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$currentBlockEmission, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
+            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$currentBlockEmission, colorwheel$isTerrain, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
         }
         else if (this.currentDelegate instanceof BlockSensitiveBufferBuilder blockBuilder)
         {
@@ -81,11 +77,6 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
         this.colorwheel$currentLocalPosX = 0;
         this.colorwheel$currentLocalPosY = 0;
         this.colorwheel$currentLocalPosZ = 0;
-
-        if (!colorwheel$isTerrain)
-        {
-            return;
-        }
 
         if (this.currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
