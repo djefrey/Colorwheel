@@ -18,7 +18,7 @@ public abstract class ShaderPackSourceNamesMixin
 
 	@Inject(method = "findPotentialStarts",
 			at = @At(value = "INVOKE", target = "com/google/common/collect/ImmutableList$Builder.build ()Lcom/google/common/collect/ImmutableList;"),
-			locals = LocalCapture.CAPTURE_FAILEXCEPTION,
+			locals = LocalCapture.CAPTURE_FAILHARD,
 			remap = false)
 	private static void injectPotentialStats(CallbackInfoReturnable<ImmutableList<String>> cir, ImmutableList.Builder<String> builder)
 	{

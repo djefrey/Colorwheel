@@ -1,15 +1,12 @@
-package dev.djefrey.colorwheel.mixin.flw;
+package dev.djefrey.colorwheel.mixin.flw.v10000;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
-import dev.djefrey.colorwheel.accessors.MeshEmitterAccessor;
+import dev.djefrey.colorwheel.accessors.flw10000.MeshEmitterAccessor;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
 import org.jetbrains.annotations.UnknownNullability;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -18,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 @Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.MeshEmitter", remap = false)
+@Pseudo
 public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitiveBufferBuilder, MeshEmitterAccessor
 {
     @Unique
@@ -53,6 +51,7 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
         }
     }
 
+    // Called by ModelBlockRendererMixin::injectBeginEndBlock
     @Override
     public void beginBlock(short block, short renderType, int localPosX, int localPosY, int localPosZ)
     {
@@ -63,6 +62,7 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
         this.colorwheel$currentLocalPosZ = localPosZ;
     }
 
+    // Called by ModelBlockRendererMixin::injectBeginEndBlock
     @Override
     public void endBlock()
     {
@@ -80,14 +80,6 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
         {
             blockBuilder.endBlock();
         }
-    }
-
-    @Inject(method = "end",
-            require = 0,
-            at = @At("TAIL"))
-    private void injectEnd(CallbackInfo ci)
-    {
-        this.colorwheel$isTerrain = false;
     }
 
     @Unique
@@ -116,5 +108,13 @@ public abstract class MeshEmitterMixin implements VertexConsumer, BlockSensitive
         {
             throw new RuntimeException(e);
         }
+    }
+
+    @Inject(method = "end",
+            require = 0,
+            at = @At("TAIL"))
+    private void injectEnd(CallbackInfo ci)
+    {
+        this.colorwheel$isTerrain = false;
     }
 }

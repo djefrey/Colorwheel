@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.accessors;
+package dev.djefrey.colorwheel.accessors.flw10000;
 
 import net.minecraft.client.renderer.RenderType;
 

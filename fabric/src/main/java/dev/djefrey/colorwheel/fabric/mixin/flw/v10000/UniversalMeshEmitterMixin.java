@@ -1,14 +1,14 @@
-package dev.djefrey.colorwheel.fabric.mixin.flw;
+package dev.djefrey.colorwheel.fabric.mixin.flw.v10000;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
-import dev.djefrey.colorwheel.accessors.MeshEmitterAccessor;
-import dev.djefrey.colorwheel.accessors.UniversalMeshEmitterAccessor;
+import dev.djefrey.colorwheel.accessors.flw10000.UniversalMeshEmitterAccessor;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
 import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.UnknownNullability;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.UniversalMeshEmitter")
+@Pseudo
 public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferBuilder, UniversalMeshEmitterAccessor
 {
     @Unique

@@ -1,12 +1,14 @@
 {
   "required": true,
   "package": "dev.djefrey.colorwheel.forge.mixin",
+  "plugin": "dev.djefrey.colorwheel.MixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
   ],
   "mixins": [
-    "flw.BakedModelBuffererMixin",
+    "flw.v10000.BakedModelBuffererMixin",
+    "flw.v10006.ForgeMeshEmitterMixin",
     "mc.BlockRenderDispatcherMixin",
     "mc.ModelBlockRendererMixin"
   ],

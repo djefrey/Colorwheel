@@ -18,7 +18,7 @@ public class BlockMaterialMappingMixin
 {
     @Inject(method = "createBlockTypeMap",
             at = @At(value = "RETURN"),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION,
+            locals = LocalCapture.CAPTURE_FAILHARD,
             remap = false)
     private static void fixTranslucentWaterwheels(Map<NamespacedId, BlockRenderType> blockPropertiesMap, CallbackInfoReturnable<Map<Block, BlockRenderType>> cir, Map<Block, BlockRenderType> blockTypeIds)
     {

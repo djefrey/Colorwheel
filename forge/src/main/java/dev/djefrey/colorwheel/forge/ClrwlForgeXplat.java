@@ -2,6 +2,7 @@ package dev.djefrey.colorwheel.forge;
 
 import dev.djefrey.colorwheel.ClrwlXplat;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.Version;
 import net.minecraftforge.fml.loading.LoadingModList;
 
 import java.util.Optional;
@@ -25,9 +26,9 @@ public class ClrwlForgeXplat implements ClrwlXplat
 
         int major = Integer.parseInt(matcher.group(1));
         int minor = Integer.parseInt(matcher.group(2));
-        int incremental = Integer.parseInt(matcher.group(3));
+        int patch = Integer.parseInt(matcher.group(3));
 
-        return "%d%02d%02d".formatted(major, minor, incremental);
+        return "%d%02d%02d".formatted(major, minor, patch);
     }
 
     private Boolean hasFlywheel = null;
@@ -41,5 +42,29 @@ public class ClrwlForgeXplat implements ClrwlXplat
         }
 
         return hasFlywheel;
+    }
+
+    @Override
+    public Version getFlywheelVersion()
+    {
+        var modInfo = LoadingModList.get().getModFileById("flywheel");
+
+        if (modInfo == null)
+        {
+            return null;
+        }
+
+        Matcher matcher = VERSION_REGEX.matcher(modInfo.versionString());
+
+        if (!matcher.matches())
+        {
+            throw new IllegalStateException("Could not parse Flywheel mod version");
+        }
+
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        int patch = Integer.parseInt(matcher.group(3));
+
+        return new Version(major, minor, patch);
     }
 }
