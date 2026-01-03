@@ -3,7 +3,7 @@ package dev.djefrey.colorwheel.fabric.mixin.flw.v10006;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
-import dev.engine_room.flywheel.lib.model.SimpleModel;
+import dev.djefrey.colorwheel.accessors.flw10006.MeshEmitterManagerAccessor;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.FabricMeshEmitterManager")
 @Pseudo
@@ -39,25 +38,6 @@ public abstract class FabricMeshEmitterManagerMixin implements VertexConsumer, B
     @Shadow
     private @Nullable BufferBuilder currentDelegate;
 
-    @Inject(method = "prepareForBlock",
-            at = @At("TAIL"),
-            require = 0,
-            remap = false)
-    private void injectBeginBlock(CallbackInfo ci)
-    {
-        colorwheel$isTerrain = true;
-    }
-
-    @Inject(method = "end",
-            at = @At("HEAD"),
-            require = 0,
-            remap = false
-    )
-    private void injectEndBlock(CallbackInfoReturnable<SimpleModel> cir)
-    {
-        this.colorwheel$isTerrain = false;
-    }
-
     @Inject(method = "prepareForGeometry",
             at = @At("RETURN"),
             require = 0,
@@ -65,9 +45,11 @@ public abstract class FabricMeshEmitterManagerMixin implements VertexConsumer, B
     )
     private void injectBeginBlock(RenderMaterial material, CallbackInfo ci)
     {
+        var isTerrain = ((MeshEmitterManagerAccessor) this).colorwheel$isTerrain();
+
         if (currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
-            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$currentBlockEmission, colorwheel$isTerrain, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
+            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$currentBlockEmission, isTerrain, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
         }
         else if (currentDelegate instanceof BlockSensitiveBufferBuilder blockBuilder)
         {
