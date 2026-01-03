@@ -14,6 +14,7 @@
     "flw.EntityStorageMixin",
     "flw.MeshHelperMixin",
     "flw.v10000.MeshEmitterMixin",
+    "flw.v10006.MeshEmitterManagerMixin",
     "iris.BlendModeOverrideMixin",
     "iris.BlockMaterialMappingMixin",
     "iris.IrisMixin",
