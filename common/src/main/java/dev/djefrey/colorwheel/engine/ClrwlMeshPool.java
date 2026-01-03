@@ -146,6 +146,11 @@ public class ClrwlMeshPool {
 					computeExtendedData(baseMesh, vertexView);
 				}
 			}
+			else
+			{
+				// Vertex format is IrisVertexFormats.TERRAIN, therefore the mesh must be a QuadMesh
+				patchMidUVCoords(mesh.mesh, vertexView);
+			}
 
 			byteIndex += mesh.byteSize();
 			baseVertex += mesh.vertexCount();
@@ -209,18 +214,20 @@ public class ClrwlMeshPool {
 	{
 		var quadCnt = mesh.vertexCount() / 4;
 
-		for (int i = 0; i < quadCnt; i++)
+		var uArr = new float[4];
+		var vArr = new float[4];
+		var uvCnt = 0;
+
+		for (int q = 0; q < quadCnt; q++)
 		{
-			int base = i * 4;
+			int base = q * 4;
 
 			float normalX = 0;
 			float normalY = 0;
 			float normalZ = 0;
+			uvCnt = 0;
 
-			float midU = 0;
-			float midV = 0;
-
-			for (int vId = 0; vId < 4; vId++)
+top:		for (int vId = 0; vId < 4; vId++)
 			{
 				int idx = base + vId;
 
@@ -228,16 +235,37 @@ public class ClrwlMeshPool {
 				normalY += vertexView.normalY(idx);
 				normalZ += vertexView.normalZ(idx);
 
-				midU += vertexView.u(idx);
-				midV += vertexView.v(idx);
+				float u = vertexView.u(idx);
+				float v = vertexView.v(idx);
+
+				for (int i = 0; i < uvCnt; i++)
+				{
+					if (uArr[i] == u && vArr[i] == v)
+					{
+						continue top;
+					}
+				}
+
+				uArr[uvCnt] = u;
+				vArr[uvCnt] = v;
+				uvCnt += 1;
 			}
 
 			normalX /= 4.0F;
 			normalY /= 4.0F;
 			normalZ /= 4.0F;
 
-			midU /= 4.0F;
-			midV /= 4.0F;
+			float midU = 0;
+			float midV = 0;
+
+			for (int i = 0; i < uvCnt; i++)
+			{
+				midU += uArr[i];
+				midV += vArr[i];
+			}
+
+			midU /= uvCnt;
+			midV /= uvCnt;
 
 			int tangent = NormalHelper.computeTangent(normalX, normalY, normalZ,
 										vertexView.x(base + 0), vertexView.y(base + 0), vertexView.z(base + 0), vertexView.u(base + 0), vertexView.v(base + 0),
@@ -266,6 +294,61 @@ public class ClrwlMeshPool {
 			vertexView.midV(i, 0);
 			vertexView.packedTangent(i, 0);
 			vertexView.packedMidBlock(i, 0xFF << 24);
+		}
+	}
+
+	// Some Create blocks, like waterwheels, are QuadMesh but with degenerated triangles
+	// This causes issues with the method used by Iris to compute midTexCoord
+	private void patchMidUVCoords(Mesh mesh, ClrwlVertexView vertexView)
+	{
+		var quadCnt = mesh.vertexCount() / 4;
+
+		var uArr = new float[4];
+		var vArr = new float[4];
+		var uvCnt = 0;
+
+		for (int q = 0; q < quadCnt; q++)
+		{
+			int base = q * 4;
+
+			uvCnt = 0;
+
+top: 		for (int vId = 0; vId < 4; vId++)
+			{
+				int idx = base + vId;
+				float u = vertexView.u(idx);
+				float v = vertexView.v(idx);
+
+				for (int i = 0; i < uvCnt; i++)
+				{
+					if (uArr[i] == u && vArr[i] == v)
+					{
+						continue top;
+					}
+				}
+
+				uArr[uvCnt] = u;
+				vArr[uvCnt] = v;
+				uvCnt += 1;
+			}
+
+			float midU = 0;
+			float midV = 0;
+
+			for (int i = 0; i < uvCnt; i++)
+			{
+				midU += uArr[i];
+				midV += vArr[i];
+			}
+
+			midU /= uvCnt;
+			midV /= uvCnt;
+
+			for (int vId = 0; vId < 4; vId++)
+			{
+				vertexView.midU(base + vId, midU);
+				vertexView.midV(base + vId, midV);
+			}
 		}
 	}
 
