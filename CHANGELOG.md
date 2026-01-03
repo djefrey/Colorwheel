@@ -1,3 +1,9 @@
+### 1.2.0
+
+- Added compatibility with Flywheel 1.0.6 (used by Create 6.0.9)
+- Fixed bug causing very large bright flashes on Euphoria Patches
+- Fixed `mc_midTexCoord` on Create large waterwheels
+
 ### 1.1.2
 
 - Fixed crash when loading a PBR resource pack
