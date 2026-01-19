@@ -321,5 +321,15 @@ public class ClrwlProgram
 		GL31.glUniformMatrix4fv(index, false, mat.get(new float[16]));
 	}
 
-	public GlProgram getProgram() { return new GlProgram(this.handle); }
+	private GlProgram flwProgram;
+
+	public GlProgram getProgram()
+	{
+		if (flwProgram == null)
+		{
+			flwProgram = new GlProgram(this.handle);
+		}
+
+		return flwProgram;
+	}
 }
