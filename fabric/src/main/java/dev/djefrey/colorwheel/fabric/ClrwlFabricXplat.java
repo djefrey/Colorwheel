@@ -47,9 +47,16 @@ public class ClrwlFabricXplat implements ClrwlXplat
         return hasFlywheel;
     }
 
+    private Version flwVersion = null;
+
     @Override
     public Version getFlywheelVersion()
     {
+        if (flwVersion != null)
+        {
+            return flwVersion;
+        }
+
         var modContainer = FabricLoader.getInstance().getModContainer("flywheel");
 
         if (modContainer.isEmpty())
@@ -69,6 +76,7 @@ public class ClrwlFabricXplat implements ClrwlXplat
         int minor = Integer.parseInt(matcher.group(2));
         int patch = Integer.parseInt(matcher.group(3));
 
-        return new Version(major, minor, patch);
+        flwVersion = new Version(major, minor, patch);
+        return flwVersion;
     }
 }

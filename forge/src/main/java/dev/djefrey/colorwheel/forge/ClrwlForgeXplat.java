@@ -44,9 +44,16 @@ public class ClrwlForgeXplat implements ClrwlXplat
         return hasFlywheel;
     }
 
+    private Version flwVersion;
+
     @Override
     public Version getFlywheelVersion()
     {
+        if (flwVersion != null)
+        {
+            return flwVersion;
+        }
+
         var modInfo = LoadingModList.get().getModFileById("flywheel");
 
         if (modInfo == null)
@@ -65,6 +72,7 @@ public class ClrwlForgeXplat implements ClrwlXplat
         int minor = Integer.parseInt(matcher.group(2));
         int patch = Integer.parseInt(matcher.group(3));
 
-        return new Version(major, minor, patch);
+        flwVersion = new Version(major, minor, patch);
+        return flwVersion;
     }
 }
