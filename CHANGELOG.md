@@ -1,3 +1,8 @@
+### 1.2.1
+
+- Fixed shader compilation with the fallback mode
+- Fixed performance issues
+
 ### 1.2.0
 
 - Added compatibility with Flywheel 1.0.6 (used by Create 6.0.9)

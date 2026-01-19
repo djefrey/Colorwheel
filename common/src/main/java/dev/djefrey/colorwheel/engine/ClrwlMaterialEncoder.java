@@ -1,11 +1,15 @@
 package dev.djefrey.colorwheel.engine;
 
+import dev.djefrey.colorwheel.ClrwlXplat;
+import dev.djefrey.colorwheel.Version;
 import dev.engine_room.flywheel.api.material.*;
 import net.minecraft.util.Mth;
 
 // Materials are unpacked in "flywheel:flywheel/internal/packed_material.glsl"
 public final class ClrwlMaterialEncoder
 {
+    private static final Version FLW_V10006 = new Version(1, 0, 6);
+
     // The number of bits each property takes up
     private static final int BLUR_LENGTH = 1;
     private static final int MIPMAP_LENGTH = 1;
@@ -69,11 +73,13 @@ public final class ClrwlMaterialEncoder
         bits |= (material.cardinalLightingMode()
                 .ordinal() << CARDINAL_LIGHTING_MODE_OFFSET) & CARDINAL_LIGHTING_MODE_MASK;
 
-        try // Exists since Flywheel 1.0.6
+        // TODO: could improve check
+        if (ClrwlXplat.INSTANCE.getFlywheelVersion().compareTo(FLW_V10006) >= 0)
         {
+            // Exists since Flywheel 1.0.6
             if (material.ambientOcclusion()) bits |= AMBIENT_OCCLUSION_MASK;
         }
-        catch (NoSuchMethodError ignored)
+        else
         {
             bits |= AMBIENT_OCCLUSION_MASK;
         }
