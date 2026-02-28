@@ -1,3 +1,7 @@
+### 1.2.2
+
+- Fixed crash with Vista
+
 ### 1.2.1
 
 - Fixed shader compilation with the fallback mode
