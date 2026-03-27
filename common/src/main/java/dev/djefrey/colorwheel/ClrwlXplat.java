@@ -12,4 +12,6 @@ public interface ClrwlXplat
     boolean doesHaveFlywheel();
     @Nullable
     Version getFlywheelVersion();
+    boolean doesHaveCreate();
+    boolean doesHavePonder();
 }

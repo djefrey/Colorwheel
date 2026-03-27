@@ -46,6 +46,14 @@ public class MixinPlugin implements IMixinConfigPlugin
                 return FLW_VERSION.compareTo(FLW_V10006) >= 0;
             }
         }
+        else if (mixinClassName.contains(".create."))
+        {
+            return ClrwlXplat.INSTANCE.doesHaveCreate();
+        }
+        else if (mixinClassName.contains(".ponder."))
+        {
+            return ClrwlXplat.INSTANCE.doesHavePonder();
+        }
 
         return true;
     }
