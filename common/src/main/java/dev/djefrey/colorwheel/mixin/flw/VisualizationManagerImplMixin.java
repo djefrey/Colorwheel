@@ -38,9 +38,8 @@ public class VisualizationManagerImplMixin
     {
         if (Colorwheel.getSafeFlw().isColorwheelCurrentBackend() && level instanceof ClientLevel clientLevel)
         {
-            NamespacedId dimension = new NamespacedId(clientLevel.dimension().location().getNamespace(),
-                                                      clientLevel.dimension().location().getPath());
-            WorldRenderingPipeline pipeline = Iris.getPipelineManager().preparePipeline(dimension);
+            // preparePipeline can't be used, as it could create a new pipeline on a non-main thread
+            WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
             if (!(pipeline instanceof IrisRenderingPipeline))
             {
