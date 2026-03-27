@@ -79,4 +79,16 @@ public class ClrwlFabricXplat implements ClrwlXplat
         flwVersion = new Version(major, minor, patch);
         return flwVersion;
     }
+
+    @Override
+    public boolean doesHaveCreate()
+    {
+        return FabricLoader.getInstance().isModLoaded("create");
+    }
+
+    @Override
+    public boolean doesHavePonder()
+    {
+        return FabricLoader.getInstance().isModLoaded("ponder");
+    }
 }

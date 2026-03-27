@@ -7,10 +7,12 @@
   "client": [
   ],
   "mixins": [
+    "create.ClientEventsMixin",
     "flw.v10000.BakedModelBuffererMixin",
     "flw.v10006.NeoforgeMeshEmitterMixin",
     "mc.BlockRenderDispatcherMixin",
-    "mc.ModelBlockRendererMixin"
+    "mc.ModelBlockRendererMixin",
+    "ponder.NeoForgePonderClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

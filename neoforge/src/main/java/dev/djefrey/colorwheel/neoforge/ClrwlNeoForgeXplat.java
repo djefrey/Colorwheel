@@ -74,4 +74,16 @@ public class ClrwlNeoForgeXplat implements ClrwlXplat
         flwVersion = new Version(major, minor, patch);
         return flwVersion;
     }
+
+    @Override
+    public boolean doesHaveCreate()
+    {
+        return LoadingModList.get().getModFileById("create") != null;
+    }
+
+    @Override
+    public boolean doesHavePonder()
+    {
+        return LoadingModList.get().getModFileById("ponder") != null;
+    }
 }
