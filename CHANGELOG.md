@@ -1,3 +1,10 @@
+### 1.2.3
+
+- Fixed crash on world reload
+- Fixed rendering issue with Create glue and schematics on some shaderpacks   
+This wasn't a Colorwheel bug at all, but a Create/Ponder incompatibility with Iris.
+- Improved Iris Flywheel Compat incompatibility alert on Forge
+
 ### 1.2.2
 
 - Fixed crash with Vista
