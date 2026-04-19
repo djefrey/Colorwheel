@@ -35,10 +35,10 @@
     "iris": ">=1.7.0"
   },
   "recommends": {
-    "flywheel": ">=1.0.0"
+    "flywheel": "^1.0.0"
   },
   "suggests": {
-    "colorwheel_patcher": ">=0.2.3"
+    "colorwheel_patcher": ">=1.0.0"
   },
   "breaks": {
     "irisflw": "*"
