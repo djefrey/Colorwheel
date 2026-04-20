@@ -171,6 +171,11 @@ void main()
     FlwLightAo light;
     if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
     {
+        if (!flw_material.ambientOcclusion)
+        {
+            light.ao = 1.0;
+        }
+
         #ifdef _CLRWL_SEPARATE_AO
         flw_vertexLight = max(flw_vertexLight, light.light);
         flw_vertexColor.a = light.ao;
