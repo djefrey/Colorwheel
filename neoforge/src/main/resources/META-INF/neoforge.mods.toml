@@ -31,7 +31,7 @@ side = "BOTH"
 [[dependencies.colorwheel]]
 modId = "flywheel"
 type = "optional"
-versionRange = "[1.0.0,)"
+versionRange = "[1.0.0,2.0.0)"
 ordering = "BEFORE"
 side = "BOTH"
 
@@ -45,7 +45,7 @@ side = "BOTH"
 [[dependencies.colorwheel]]
 modId = "colorwheel_patcher"
 type = "optional"
-versionRange = "[0.2.3,)"
+versionRange = "[1.0.0,)"
 ordering = "NONE"
 side = "BOTH"
 
