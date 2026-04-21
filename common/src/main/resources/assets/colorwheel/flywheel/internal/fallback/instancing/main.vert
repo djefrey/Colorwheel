@@ -70,8 +70,14 @@ uniform uint _clrwl_packedMaterial;
 uniform int _flw_baseInstance = 0;
 
 #ifdef FLW_EMBEDDED
-uniform mat4 _flw_modelMatrixUniform;
-uniform mat3 _flw_normalMatrixUniform;
+    uniform mat4 _flw_modelMatrixUniform;
+    uniform mat3 _flw_normalMatrixUniform;
+
+    #ifdef HAS_SABLE
+        uniform uint _flw_lightingSceneUniform;
+        uniform float _flw_lightingSkyLightScaleUniform;
+        uniform mat4 _flw_lightingSceneMatrixUniform;
+    #endif
 #endif
 
 uniform uint _flw_baseVertex;
@@ -109,10 +115,16 @@ void main()
 
     FlwInstance instance = _flw_unpackInstance(_flw_baseInstance + gl_InstanceID);
 
-    #ifdef FLW_EMBEDDED
+#ifdef FLW_EMBEDDED
     mat4 _flw_modelMatrix = _flw_modelMatrixUniform;
     mat3 _flw_normalMatrix = _flw_normalMatrixUniform;
+
+    #ifdef HAS_SABLE
+        uint _flw_lightingSceneId = _flw_lightingSceneUniform;
+        float _flw_skyLightScale = _flw_lightingSkyLightScaleUniform;
+        mat4 _flw_lightingSceneMatrix = _flw_lightingSceneMatrixUniform;
     #endif
+#endif
 
     _clrwl_layoutVertex();
 
@@ -152,22 +164,32 @@ void main()
     flw_instanceVertex(instance);
     flw_materialVertex();
 
-    #ifdef _FLW_CRUMBLING
+#ifdef _FLW_CRUMBLING
     flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
+#endif
+
+#ifdef FLW_EMBEDDED
+    #ifdef HAS_SABLE
+        flw_vertexLightingPos = _flw_lightingSceneMatrix * flw_vertexPos;
     #endif
 
-    #ifdef FLW_EMBEDDED
     flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
     transformedMeshCenter = _flw_modelMatrix * transformedMeshCenter;
     flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
     clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
+
+    #ifdef HAS_SABLE
+        flw_vertexLightingSceneId = _flw_lightingSceneId;
+        flw_skyLightScale = _flw_skyLightScale;
     #endif
+#endif
 
     // at_midBlock.w doesn't exists on 1.20.1, but it's used to flag vertices as terrain
     clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, -1);
 
     flw_vertexNormal = normalize(flw_vertexNormal);
 
+#ifndef HAS_SABLE
     FlwLightAo light;
     if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
     {
@@ -177,26 +199,66 @@ void main()
         }
 
         #ifdef _CLRWL_SEPARATE_AO
-        flw_vertexLight = max(flw_vertexLight, light.light);
-        flw_vertexColor.a = light.ao;
+            flw_vertexLight = max(flw_vertexLight, light.light);
+            flw_vertexColor.a = light.ao;
         #else
-        flw_vertexLight = max(flw_vertexLight, light.light);
-        flw_vertexColor.rgb *= light.ao;
+            flw_vertexLight = max(flw_vertexLight, light.light);
+            flw_vertexColor.rgb *= light.ao;
+        #endif
+    }
+#else
+    uint sceneId = 0;
+    vec4 vertexLightingPos;
+    ivec3 renderOrigin;
+
+    #ifdef FLW_EMBEDDED
+        renderOrigin = flw_renderOrigin;
+        sceneId = flw_vertexLightingSceneId;
+        vertexLightingPos = flw_vertexLightingPos;
+
+        if (sceneId != 0)
+        {
+            renderOrigin = ivec3(0);
+        }
+    #else
+        renderOrigin = flw_renderOrigin;
+        vertexLightingPos = flw_vertexPos;
+    #endif
+
+    FlwLightAo light;
+    if (flw_light(sceneId, vertexLightingPos.xyz, flw_vertexNormal, renderOrigin, light))
+    {
+        if (!flw_material.ambientOcclusion)
+        {
+            light.ao = 1.0;
+        }
+
+        #ifdef _CLRWL_SEPARATE_AO
+            flw_vertexLight = max(flw_vertexLight, light.light);
+            flw_vertexColor.a = light.ao;
+        #else
+            flw_vertexLight = max(flw_vertexLight, light.light);
+            flw_vertexColor.rgb *= light.ao;
         #endif
     }
 
-    #ifdef CLRWL_OLD_LIGHTING
-    flw_vertexColor.rgb *= _clrwl_diffuseFactor();
+    #ifdef FLW_EMBEDDED
+        flw_vertexLight.y *= flw_skyLightScale;
     #endif
+#endif
 
-    #ifdef _FLW_DEBUG
+#ifdef CLRWL_OLD_LIGHTING
+    flw_vertexColor.rgb *= _clrwl_diffuseFactor();
+#endif
+
+#ifdef _FLW_DEBUG
     clrwl_debugIds = uvec2(gl_InstanceID, _flw_baseVertex);
 
     if (_flw_debugMode == 6u) // midMesh
     {
         flw_vertexPos.xyz += (clrwl_vertexMidMesh.xyz / 64.0) * (sin(flw_renderSeconds * 3.14159) * 0.5 + 0.5);
     }
-    #endif
+#endif
 
     if (flw_material.useOverlay)
     {

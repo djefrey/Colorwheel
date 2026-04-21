@@ -14,4 +14,6 @@ public interface ClrwlXplat
     Version getFlywheelVersion();
     boolean doesHaveCreate();
     boolean doesHavePonder();
+    @Nullable
+    String getCustomModCompatClasspath();
 }

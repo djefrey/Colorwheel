@@ -11,6 +11,14 @@ in ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
+#ifdef FLW_EMBEDDED
+    #ifdef HAS_SABLE
+        flat uint flw_vertexLightingSceneId;
+        flat float flw_skyLightScale;
+        vec4 flw_vertexLightingPos;
+    #endif
+#endif
+
 #ifdef _FLW_DEBUG
     vec2 clrwl_vertexEntity;
     vec2 clrwl_vertexMidTexCoord;
@@ -28,6 +36,14 @@ out ClrwlVertexData
     vec2 flw_vertexLight;
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
+
+#ifdef FLW_EMBEDDED
+    #ifdef HAS_SABLE
+        flat uint flw_vertexLightingSceneId;
+        flat float flw_skyLightScale;
+        vec4 flw_vertexLightingPos;
+    #endif
+#endif
 
 #ifdef _FLW_DEBUG
     vec2 clrwl_vertexEntity;

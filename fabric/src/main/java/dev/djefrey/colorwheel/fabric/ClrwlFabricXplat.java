@@ -5,6 +5,7 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.Version;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,5 +91,11 @@ public class ClrwlFabricXplat implements ClrwlXplat
     public boolean doesHavePonder()
     {
         return FabricLoader.getInstance().isModLoaded("ponder");
+    }
+
+    @Override
+    public @Nullable String getCustomModCompatClasspath()
+    {
+        return null;
     }
 }

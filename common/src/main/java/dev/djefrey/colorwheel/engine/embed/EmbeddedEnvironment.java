@@ -22,6 +22,8 @@ import org.joml.Matrix4fc;
 
 public class EmbeddedEnvironment implements VisualEmbedding, Environment
 {
+	public static final int MATRIX_SIZE_BYTES = (16 + 12) * Float.BYTES;
+
 	private final ClrwlEngine engine;
 	private final ClrwlInstanceVisual visual;
 	private final Vec3i renderOrigin;
@@ -29,10 +31,10 @@ public class EmbeddedEnvironment implements VisualEmbedding, Environment
 	private final EmbeddedEnvironment parent;
 	private final InstancerProvider instancerProvider;
 
-	private final Matrix4f pose = new Matrix4f();
-	private final Matrix3f normal = new Matrix3f();
-	private final Matrix4f poseComposed = new Matrix4f();
-	private final Matrix3f normalComposed = new Matrix3f();
+	public final Matrix4f pose = new Matrix4f();
+	public final Matrix3f normal = new Matrix3f();
+	public final Matrix4f poseComposed = new Matrix4f();
+	public final Matrix3f normalComposed = new Matrix3f();
 
 	public int matrixIndex = 0;
 

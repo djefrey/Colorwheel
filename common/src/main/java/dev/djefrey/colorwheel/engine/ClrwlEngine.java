@@ -85,7 +85,7 @@ public class ClrwlEngine implements Engine
 		this.drawManager = new ClrwlInstancedDrawManager(dimension, irisPipeline, pack, programs);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
-		this.lightStorage = new LightStorage(level);
+		this.lightStorage = Colorwheel.getModCompat().makeLightStorage(level);
 
 		((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$setBeginTranslucentsCallback(drawManager::renderTranslucent);
 
@@ -252,7 +252,7 @@ public class ClrwlEngine implements Engine
 		@Override
 		public VisualEmbedding createEmbedding(Vec3i renderOrigin)
 		{
-			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.undefined(), renderOrigin);
+			var out = Colorwheel.getModCompat().makeEmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.undefined(), renderOrigin, null);
 			environmentStorage.track(out);
 			return out;
 		}
@@ -289,7 +289,7 @@ public class ClrwlEngine implements Engine
 		@Override
 		public VisualEmbedding createEmbedding(Vec3i renderOrigin)
 		{
-			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId, lightEmission), renderOrigin);
+			var out = Colorwheel.getModCompat().makeEmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.blockEntity(irisId, lightEmission), renderOrigin, null);
 			environmentStorage.track(out);
 			return out;
 		}
@@ -320,7 +320,7 @@ public class ClrwlEngine implements Engine
 		@Override
 		public VisualEmbedding createEmbedding(Vec3i renderOrigin)
 		{
-			var out = new EmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.entity(irisId), renderOrigin);
+			var out = Colorwheel.getModCompat().makeEmbeddedEnvironment(ClrwlEngine.this, ClrwlInstanceVisual.entity(irisId), renderOrigin, null);
 			environmentStorage.track(out);
 			return out;
 		}

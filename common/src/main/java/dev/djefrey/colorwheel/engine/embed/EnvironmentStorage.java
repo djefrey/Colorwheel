@@ -1,22 +1,24 @@
 package dev.djefrey.colorwheel.engine.embed;
 
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.engine_room.flywheel.backend.engine.CpuArena;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 
 public class EnvironmentStorage
 {
-	public static final int MATRIX_SIZE_BYTES = (16 + 12) * Float.BYTES;
-
 	protected final Object lock = new Object();
 
 	protected final ReferenceSet<EmbeddedEnvironment> environments = new ReferenceLinkedOpenHashSet<>();
 
 	// Note than the arena starts indexing at zero, but we reserve zero for the identity matrix.
 	// Any time an ID from the arena is written we want to add one to it.
-	public final CpuArena arena = new CpuArena(MATRIX_SIZE_BYTES, 32);
+	public final CpuArena arena;
 
 	{
+		int matrixByteSize = Colorwheel.getModCompat().getEmbeddedEnvironmentMatricesByteSize();
+
+		arena = new CpuArena(matrixByteSize, 32);
 		// Reserve the identity matrix. Burns a few bytes but oh well.
 		arena.alloc();
 	}

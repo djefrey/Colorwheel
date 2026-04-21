@@ -50,6 +50,13 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.colorwheel]]
+modId = "sable"
+type = "optional"
+versionRange = "[1.0.6,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.colorwheel]]
 modId = "irisflw"
 type = "incompatible"
 versionRange = "*"

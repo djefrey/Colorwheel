@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
@@ -113,6 +114,11 @@ public class ClrwlPipelineCompiler
 		for (var ext : stage.extensions())
 		{
 			compile.enableExtension(ext);
+		}
+
+		for (var define : Colorwheel.getModCompat().getShaderDefines())
+		{
+			compile.define(define);
 		}
 
 		for (var defines : stage.defines())

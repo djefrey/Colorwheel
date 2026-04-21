@@ -4,6 +4,7 @@ import dev.djefrey.colorwheel.ClrwlXplat;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.Version;
 import net.neoforged.fml.loading.LoadingModList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,5 +86,17 @@ public class ClrwlNeoForgeXplat implements ClrwlXplat
     public boolean doesHavePonder()
     {
         return LoadingModList.get().getModFileById("ponder") != null;
+    }
+
+    @Override
+    @Nullable
+    public String getCustomModCompatClasspath()
+    {
+        if (LoadingModList.get().getModFileById("sable") != null)
+        {
+            return "dev.djefrey.colorwheel.neoforge.mod_compat.sable.ClrwlSableModCompat";
+        }
+
+        return null;
     }
 }

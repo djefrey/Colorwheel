@@ -1,5 +1,7 @@
 package dev.djefrey.colorwheel;
 
+import dev.djefrey.colorwheel.mod_compat.ClrwlDefaultModCompat;
+import dev.djefrey.colorwheel.mod_compat.ClrwlModCompat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.*;
@@ -19,6 +21,7 @@ public final class Colorwheel
     public static String FORMATTED_VERSION = ClrwlXplat.INSTANCE.getFormattedVersion();
 
     private static ClrwlSafeFlw SAFE_FLW_INSTANCE = null;
+    private static ClrwlModCompat MOD_COMPAT_INSTANCE = null;
 
     public static void init(boolean hasFlywheel)
     {
@@ -55,6 +58,33 @@ public final class Colorwheel
         }
 
         return SAFE_FLW_INSTANCE;
+    }
+
+    public static ClrwlModCompat getModCompat()
+    {
+        if (MOD_COMPAT_INSTANCE == null)
+        {
+            var modCompatClasspath = ClrwlXplat.INSTANCE.getCustomModCompatClasspath();
+
+            try
+            {
+                if (modCompatClasspath != null)
+                {
+                    MOD_COMPAT_INSTANCE = (ClrwlModCompat) Class.forName(modCompatClasspath).getConstructor().newInstance();
+                }
+                else
+                {
+                    MOD_COMPAT_INSTANCE = new ClrwlDefaultModCompat();
+                }
+            }
+            catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e)
+            {
+                LOGGER.error("Could not load mod compat class: " + modCompatClasspath, e);
+                throw new RuntimeException("Error while loading Colorwheel", e);
+            }
+        }
+
+        return MOD_COMPAT_INSTANCE;
     }
 
     public static ResourceLocation rl(String path)

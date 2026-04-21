@@ -16,7 +16,7 @@ void main() {
 
     _clrwl_shader_main();
 
-    #ifdef CLRWL_POST_SHADER
+#ifdef CLRWL_POST_SHADER
     _clrwl_post_shader();
-    #endif
+#endif
 }

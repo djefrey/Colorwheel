@@ -41,6 +41,10 @@ subprojects {
         maven { url = "https://maven.createmod.net" }
         maven { url = "https://mvn.devos.one/snapshots" }
         maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" } // ForgeConfigAPIPort
+        maven { url = "https://maven.theillusivec4.top/" } // Curios API
+        maven { url = "https://maven.squiddev.cc" } // CC: Tweaked
+        maven { url = 'https://maven.blamejared.com' } // Veil
+        maven { url = "https://maven.ryanhcode.dev/releases" } // Aeronautics
     }
 
     loom {

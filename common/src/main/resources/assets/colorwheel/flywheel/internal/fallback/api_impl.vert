@@ -10,6 +10,14 @@ vec2 flw_vertexLight;
 vec3 flw_vertexNormal;
 vec4 clrwl_vertexTangent;
 
+#ifdef FLW_EMBEDDED
+    #ifdef HAS_SABLE
+        uint flw_vertexLightingSceneId;
+        float flw_skyLightScale;
+        vec4 flw_vertexLightingPos;
+    #endif
+#endif
+
 vec2 clrwl_vertexEntity;
 vec2 clrwl_vertexMidTexCoord;
 vec4 clrwl_vertexMidMesh;

@@ -90,6 +90,10 @@ unifiedPublishing {
                 modrinth = "flw-vanillin"
             }
             optional {
+                curseforge = "sable"
+                modrinth = "sable"
+            }
+            optional {
                 curseforge = "colorwheel-patcher"
                 modrinth = "colorwheel-patcher"
             }

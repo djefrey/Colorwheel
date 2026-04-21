@@ -43,6 +43,8 @@ dependencies {
     compileOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
     compileOnly("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
     compileOnly("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
+
+    compileOnly("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
     
     localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
     localRuntime "dev.engine-room.vanillin:vanillin-neoforge-${minecraft_version}:${vanillin_version}"
@@ -55,6 +57,9 @@ dependencies {
     modLocalRuntime("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
     modLocalRuntime("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
     modLocalRuntime("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    modLocalRuntime("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
+    modLocalRuntime("dev.simulated_team.simulated:simulated-neoforge-${minecraft_version}:${simulated_version}")
 }
 
 processResources {
@@ -97,6 +102,10 @@ unifiedPublishing {
             optional {
                 curseforge = "vanillin"
                 modrinth = "flw-vanillin"
+            }
+            optional {
+                curseforge = "sable"
+                modrinth = "sable"
             }
             optional {
                 curseforge = "colorwheel-patcher"
