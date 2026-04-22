@@ -57,9 +57,6 @@ dependencies {
     modLocalRuntime("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
     modLocalRuntime("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
     modLocalRuntime("com.tterrag.registrate:Registrate:${registrate_version}")
-
-    modLocalRuntime("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
-    modLocalRuntime("dev.simulated_team.simulated:simulated-neoforge-${minecraft_version}:${simulated_version}")
 }
 
 processResources {
