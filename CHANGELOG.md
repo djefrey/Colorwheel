@@ -1,3 +1,9 @@
+### 1.2.4
+
+- Added compatibility with Sable (only 1.21.1)  
+  This resolves issues related to Create Aeronautics
+- Fixed handling of ambient occlusion when disabled in fallback mode
+
 ### 1.2.3
 
 - Fixed crash on world reload
