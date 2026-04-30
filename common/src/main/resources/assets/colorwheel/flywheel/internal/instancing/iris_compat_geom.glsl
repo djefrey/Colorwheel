@@ -1,5 +1,9 @@
 vec4 clrwl_overlayColor = vec4(0.0);
 
+#ifdef _FLW_CRUMBLING
+uniform sampler2D _flw_crumblingTex;
+#endif
+
 void clrwl_setVertexOut(int i)
 {
     clrwl_out.flw_vertexPos = clrwl_in[i].flw_vertexPos;
