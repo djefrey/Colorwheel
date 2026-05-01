@@ -1,42 +1,43 @@
 package dev.djefrey.colorwheel.neoforge.mixin.mc;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
+import net.irisshaders.iris.vertices.ExtendedDataHelper;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(BlockRenderDispatcher.class)
+@Mixin(value = BlockRenderDispatcher.class, priority = 300)
 public class BlockRenderDispatcherMixin
 {
-    @Inject(method = "renderLiquid",
-            at = @At("HEAD"),
-            remap = false)
-    private void injectBeginBlock(BlockPos pos, BlockAndTintGetter level, VertexConsumer consumer, BlockState blockState, FluidState fluidState, CallbackInfo ci)
+    @WrapMethod(
+        method = "renderLiquid",
+        remap = false
+    )
+    private void injectBeginEndBlock(BlockPos pos, BlockAndTintGetter level, VertexConsumer consumer, BlockState blockState, FluidState fluidState, Operation<Void> original)
     {
         if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
         {
-            blockBuilder.beginBlock(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(blockState),
-                                    (byte) 0, (byte) blockState.getLightEmission(),
-                                    pos.getX(), pos.getY(), pos.getZ());
+            short id = (short) WorldRenderingSettings.INSTANCE.getBlockStateIds().getOrDefault(fluidState.createLegacyBlock(), -1);
+            blockBuilder.beginBlock(id, (byte) ExtendedDataHelper.FLUID_RENDER_TYPE, (byte) blockState.getLightEmission(), pos.getX(), pos.getY(), pos.getZ());
         }
-    }
 
-    @Inject(method = "renderLiquid",
-            at = @At("RETURN"),
-            remap = false)
-    private void injectEndBlock(BlockPos pos, BlockAndTintGetter level, VertexConsumer consumer, BlockState blockState, FluidState fluidState, CallbackInfo ci)
-    {
-        if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
+        try
         {
-            blockBuilder.endBlock();
+            original.call(pos, level, consumer, blockState, fluidState);
+        }
+        finally
+        {
+            if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
+            {
+                blockBuilder.endBlock();
+            }
         }
     }
 }
