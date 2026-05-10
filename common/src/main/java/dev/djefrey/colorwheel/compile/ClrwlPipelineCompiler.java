@@ -3,7 +3,7 @@ package dev.djefrey.colorwheel.compile;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
-import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.gl.GlCompat;

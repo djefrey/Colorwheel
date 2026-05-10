@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.accessors.ProgramDirectivesAccessor;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
@@ -15,7 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Mixin(ProgramDirectives.class)
-public class ProgramDirectivesMixin implements ProgramDirectivesAccessor
+public class ProgramDirectivesMixin
 {
     @Inject(method = "<init>(Lnet/irisshaders/iris/shaderpack/programs/ProgramSource;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Ljava/util/Set;Lnet/irisshaders/iris/gl/blending/BlendModeOverride;)V",
             at = @At("RETURN"))

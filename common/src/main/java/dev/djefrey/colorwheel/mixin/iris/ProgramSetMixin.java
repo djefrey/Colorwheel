@@ -1,9 +1,9 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
-import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
-import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.ShaderPackAccessor;
+import dev.djefrey.colorwheel.accessors.iris.PackShadowDirectivesAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
@@ -18,7 +18,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;

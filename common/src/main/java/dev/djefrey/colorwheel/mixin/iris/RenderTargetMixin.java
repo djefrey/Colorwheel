@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.accessors.RenderTargetAccessor;
+import dev.djefrey.colorwheel.accessors.iris.RenderTargetAccessor;
 import net.irisshaders.iris.gl.texture.PixelFormat;
 import net.irisshaders.iris.gl.texture.PixelType;
 import net.irisshaders.iris.targets.RenderTarget;

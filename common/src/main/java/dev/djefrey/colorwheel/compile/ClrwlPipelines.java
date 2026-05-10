@@ -1,10 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.*;
-import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.compile.oit.*;
-import dev.djefrey.colorwheel.compile.transform.ClrwlTransformOutput;
-import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.djefrey.colorwheel.engine.ClrwlVertex;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;

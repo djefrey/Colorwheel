@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.accessors;
+package dev.djefrey.colorwheel.accessors.iris;
 
 import net.irisshaders.iris.gl.texture.PixelFormat;
 import net.irisshaders.iris.gl.texture.PixelType;

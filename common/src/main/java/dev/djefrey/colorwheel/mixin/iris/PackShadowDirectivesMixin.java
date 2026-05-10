@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
+import dev.djefrey.colorwheel.accessors.iris.PackShadowDirectivesAccessor;
 import net.irisshaders.iris.shaderpack.properties.PackShadowDirectives;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

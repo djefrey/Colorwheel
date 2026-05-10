@@ -1,8 +1,8 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.ShaderType;
-import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.ProgramSourceAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.compile.transform.ClrwlTransformOutput;
 import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;

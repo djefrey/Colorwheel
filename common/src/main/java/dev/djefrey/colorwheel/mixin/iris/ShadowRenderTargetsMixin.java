@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.accessors.ShadowRenderTargetsAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ShadowRenderTargetsAccessor;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import org.spongepowered.asm.mixin.Final;
