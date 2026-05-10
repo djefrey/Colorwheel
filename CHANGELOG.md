@@ -1,3 +1,8 @@
+### 1.2.5
+
+- Fixed gtexture not being available in damagedblocks vertex and geometry stages (required for RenderPearl)
+- Cleaner ModelBlockRenderer/BlockRenderDispatcher mixins
+
 ### 1.2.4
 
 - Added compatibility with Sable (only 1.21.1)  
