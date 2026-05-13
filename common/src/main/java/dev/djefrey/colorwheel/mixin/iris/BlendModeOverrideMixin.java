@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.accessors.BlendModeOverrideAccessor;
+import dev.djefrey.colorwheel.accessors.iris.BlendModeOverrideAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;

@@ -3,7 +3,7 @@ package dev.djefrey.colorwheel.engine;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.*;
-import dev.djefrey.colorwheel.accessors.IrisRenderingPipelineAccessor;
+import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;

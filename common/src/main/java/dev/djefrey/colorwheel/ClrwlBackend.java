@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel;
 
-import dev.djefrey.colorwheel.accessors.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
 import dev.djefrey.colorwheel.util.AccumulateTimer;
 import dev.engine_room.flywheel.api.backend.Backend;

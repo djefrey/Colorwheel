@@ -2,8 +2,8 @@ package dev.djefrey.colorwheel.mixin.iris;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.PackShadowDirectivesAccessor;
-import dev.djefrey.colorwheel.accessors.ShadowRendererAccessor;
+import dev.djefrey.colorwheel.accessors.iris.PackShadowDirectivesAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ShadowRendererAccessor;
 import dev.djefrey.colorwheel.engine.ShadowRenderingPhase;
 import net.irisshaders.iris.mixin.LevelRendererAccessor;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;

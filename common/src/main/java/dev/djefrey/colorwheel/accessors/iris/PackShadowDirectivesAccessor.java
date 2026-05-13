@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.accessors;
+package dev.djefrey.colorwheel.accessors.iris;
 
 public interface PackShadowDirectivesAccessor
 {

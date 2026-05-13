@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.accessors;
+package dev.djefrey.colorwheel.accessors.iris;
 
 import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
