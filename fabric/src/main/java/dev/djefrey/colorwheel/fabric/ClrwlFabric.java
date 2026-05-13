@@ -30,6 +30,11 @@ public final class ClrwlFabric implements ModInitializer
         return FabricLoader.getInstance().isModLoaded("flywheel");
     }
 
+    public static boolean hasPonder()
+    {
+        return FabricLoader.getInstance().isModLoaded("ponder");
+    }
+
     public static boolean isFlywheelVersionSupported()
     {
         var dependencies = FabricLoader.getInstance().getModContainer(Colorwheel.MOD_ID).get().getMetadata().getDependencies();

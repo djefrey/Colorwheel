@@ -1,43 +1,24 @@
-package dev.djefrey.colorwheel.forge.mixin.create;
+package dev.djefrey.colorwheel.mixin.ponder;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.simibubi.create.foundation.events.ClientEvents;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.mod_compat.PonderCompat;
+import net.createmod.catnip.render.DefaultSuperRenderTypeBuffer;
 import net.createmod.catnip.render.SuperRenderTypeBuffer;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import org.objectweb.asm.Opcodes;
+import net.createmod.ponder.PonderClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(ClientEvents.class)
-public class ClientEventsMixin
+@Mixin(PonderClient.class)
+public class PonderClientMixin
 {
-    // This mixin is used to fix Create's schematic rendering with shaders
-
-    @Redirect(method = "onRenderWorld",
-            at = @At(value = "FIELD",
-                    target = "Lnet/minecraftforge/client/event/RenderLevelStageEvent$Stage;AFTER_PARTICLES:Lnet/minecraftforge/client/event/RenderLevelStageEvent$Stage;",
-                    opcode = Opcodes.GETSTATIC),
-            require = 0,
-            remap = false)
-    private static RenderLevelStageEvent.Stage changeRenderStage()
-    {
-        if (Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
-        {
-            return RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES;
-        }
-
-        return RenderLevelStageEvent.Stage.AFTER_PARTICLES;
-    }
-
     @ModifyVariable(method = "onRenderWorld",
-            at = @At("STORE"), name = "buffer",
-            require = 0,
-            remap = false)
+                    at = @At("STORE"), name = "buffer",
+                    require = 0,
+                    remap = false)
     private static SuperRenderTypeBuffer useClrwBuffer(SuperRenderTypeBuffer buffer)
     {
         if (Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
