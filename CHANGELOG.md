@@ -1,3 +1,9 @@
+### 1.2.6
+
+- Fixed Create ghost blocks being invisible with Complementary
+- Fixed some rendering issues related to Create schematics preview
+Deferred shaderpacks (like Photon or Bliss) still have some issues
+
 ### 1.2.5
 
 - Fixed gtexture not being available in damagedblocks vertex and geometry stages (required for RenderPearl)
