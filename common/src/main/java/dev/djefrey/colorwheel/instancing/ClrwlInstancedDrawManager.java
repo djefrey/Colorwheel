@@ -23,6 +23,7 @@ import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.instancing.InstancedLight;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
+import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
@@ -266,6 +267,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private void submitDraws(List<ClrwlInstancedDraw> draws, boolean isShadow)
 	{
 		GlFramebuffer prevFramebuffer = null;
+		ClrwlProgram prevProgram = null;
 
 		for (var drawCall : draws)
 		{
@@ -300,10 +302,20 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
+			if (prevProgram != program)
+			{
+				if (prevProgram != null)
+				{
+					prevProgram.unbind();
+				}
+
+				program.bind();
+			}
+
 			var blendOverride = framebuffers.getBlendModeOverride(programId, pack, programSet).orElse(null);
 			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId, pack, programSet);
 
-			program.bind(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
+			program.prepareDrawCall(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setup(material, blendOverride, bufferBlendOverrides);
 
@@ -317,7 +329,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			drawCall.render(instanceTexture);
 
-			program.unbind();
+			prevProgram = program;
+		}
+
+		if (prevProgram != null)
+		{
+			prevProgram.unbind();
 		}
 	}
 
@@ -325,6 +342,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	{
 		var programId = isShadow ? ClrwlProgramId.SHADOW_TRANSLUCENT : ClrwlProgramId.GBUFFERS_TRANSLUCENT;
 		var blendOverride = framebuffers.getBlendModeOverride(programId, pack, programSet).orElse(null);
+
+		ClrwlProgram prevProgram = null;
 
 		for (var drawCall : oitDraws)
 		{
@@ -351,7 +370,17 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				continue;
 			}
 
-			program.bind(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
+			if (prevProgram != program)
+			{
+				if (prevProgram != null)
+				{
+					prevProgram.unbind();
+				}
+
+				program.bind();
+			}
+
+			program.prepareDrawCall(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setupOit(material);
 
@@ -359,7 +388,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			drawCall.render(instanceTexture);
 
-			program.unbind();
+			prevProgram = program;
+		}
+
+		if (prevProgram != null)
+		{
+			prevProgram.unbind();
 		}
 	}
 
@@ -367,6 +401,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	public void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks)
 	{
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
+		ClrwlProgram prevProgram = null;
 
 		if (isShadow)
 		{
@@ -450,15 +485,32 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 							continue;
 						}
 
-						program.bind(0, index, crumblingMaterial, draw.visual(), draw.mesh().meshCenter(), currentRenderPhase, blendOverride);
+						if (prevProgram != program)
+						{
+							if (prevProgram != null)
+							{
+								prevProgram.unbind();
+							}
+
+							program.bind();
+						}
+
+						program.prepareDrawCall(0, index, crumblingMaterial, draw.visual(), draw.mesh().meshCenter(), currentRenderPhase, blendOverride);
 						ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
 
 						Samplers.INSTANCE_BUFFER.makeActive();
 
 						draw.renderOne(instanceTexture);
+
+						prevProgram = program;
 					}
 				}
 			}
+		}
+
+		if (prevProgram != null)
+		{
+			prevProgram.unbind();
 		}
 
 		ClrwlMaterialRenderState.reset();
