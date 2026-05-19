@@ -1,3 +1,8 @@
+### 1.2.7
+
+- Improved performance
+- Fixed rendering with Vivecraft and latest versions of Vista
+
 ### 1.2.6
 
 - Fixed Create ghost blocks being invisible with Complementary
