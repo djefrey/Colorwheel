@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.BlendModeOverrideAccessor;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
@@ -20,22 +21,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ClrwlProgramFramebuffers
+public class ClrwlFramebuffers
 {
+    private final IrisRenderingPipeline irisPipeline;
+    private final ShaderPack pack;
+    private final ProgramSet programSet;
+
     private final Map<ClrwlProgramId, GlFramebuffer> framebuffers = new HashMap<>();
 
     @Nullable
     private ClrwlOitFramebuffers gbuffersOitFramebuffer;
-
     @Nullable
     private ClrwlOitFramebuffers shadowOitFramebuffer;
 
     private final Map<ClrwlProgramId, List<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
 
-    @Nullable
-    public GlFramebuffer getFramebuffer(ClrwlProgramId program, IrisRenderingPipeline pipeline, ProgramSet programSet)
+    public ClrwlFramebuffers(IrisRenderingPipeline irisPipeline, ShaderPack pack, ProgramSet programSet)
     {
-        var pipelineAccessor = ((IrisRenderingPipelineAccessor) pipeline);
+        this.irisPipeline = irisPipeline;
+        this.pack = pack;
+        this.programSet = programSet;
+    }
+
+    @Nullable
+    public GlFramebuffer getFramebuffer(ClrwlProgramId program)
+    {
+        var pipelineAccessor = ((IrisRenderingPipelineAccessor) irisPipeline);
         var programSetAccessor = ((ProgramSetAccessor) programSet);
 
         // Reset gbuffers framebuffers when resizing window
@@ -86,7 +97,7 @@ public class ClrwlProgramFramebuffers
     }
 
     @Nullable
-    public ClrwlOitFramebuffers getOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms oitPrograms, IrisRenderingPipeline pipeline, ClrwlShaderProperties properties, ProgramDirectives directives)
+    public ClrwlOitFramebuffers getOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms oitPrograms, ClrwlShaderProperties properties, ProgramDirectives directives)
     {
         switch (programGroup)
         {
@@ -94,7 +105,7 @@ public class ClrwlProgramFramebuffers
             {
                 if (gbuffersOitFramebuffer == null)
                 {
-                    gbuffersOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, pipeline, properties, directives);
+                    gbuffersOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, directives);
                 }
 
                 return gbuffersOitFramebuffer;
@@ -103,7 +114,7 @@ public class ClrwlProgramFramebuffers
             {
                 if (shadowOitFramebuffer == null)
                 {
-                    shadowOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, pipeline, properties, directives);
+                    shadowOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, directives);
                 }
 
                 return shadowOitFramebuffer;
@@ -113,7 +124,7 @@ public class ClrwlProgramFramebuffers
         throw new RuntimeException("Unknown program group: " + programGroup);
     }
 
-    public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
+    public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId)
     {
         var programSetAccessor = ((ProgramSetAccessor) programSet);
 
@@ -134,7 +145,7 @@ public class ClrwlProgramFramebuffers
         }
     }
 
-    public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId, ShaderPack pack, ProgramSet programSet)
+    public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId)
     {
         var programSetAccessor = ((ProgramSetAccessor) programSet);
 
@@ -196,9 +207,9 @@ public class ClrwlProgramFramebuffers
         return ImmutableList.copyOf(list);
     }
 
-    public void delete(IrisRenderingPipeline pipeline)
+    public void delete()
     {
-        var pipelineAccessor = ((IrisRenderingPipelineAccessor) pipeline);
+        var pipelineAccessor = ((IrisRenderingPipelineAccessor) irisPipeline);
 
         for (var entry : framebuffers.entrySet())
         {

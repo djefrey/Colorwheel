@@ -135,4 +135,14 @@ public class ClrwlOitPrograms
 
         included.addAll(component.included());
     }
+
+    public void delete()
+    {
+        for (var program : compositeProgramCache.values())
+        {
+            program.delete();
+        }
+
+        compositeProgramCache.clear();
+    }
 }

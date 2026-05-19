@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.accessors.iris;
 
-import dev.djefrey.colorwheel.engine.BeginTranslucentRenderFunction;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
@@ -18,6 +17,4 @@ public interface IrisRenderingPipelineAccessor
 	boolean colorwheel$consumeFramebufferChanged();
 	void colorwheel$destroyGbuffersFramebuffer(GlFramebuffer framebuffer);
 	void colorwheel$destroyShadowFramebuffer(GlFramebuffer framebuffer);
-
-	void colorwheel$setBeginTranslucentsCallback(BeginTranslucentRenderFunction fct);
 }
