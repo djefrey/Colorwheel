@@ -1,9 +1,9 @@
 package dev.djefrey.colorwheel.engine;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
-import dev.djefrey.colorwheel.compile.ClrwlPrograms;
+import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
+import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
@@ -24,7 +24,6 @@ import dev.engine_room.flywheel.backend.gl.GlStateTracker;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.minecraft.client.Camera;
@@ -36,15 +35,16 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ClrwlEngine implements Engine
 {
-	public static Map<IrisRenderingPipeline, ClrwlEngine> ENGINES = new HashMap<>();
+	public static List<ClrwlEngine> ENGINES = new ArrayList<>();
 
-	private final ClrwlInstancedDrawManager drawManager;
+	private final ClrwlDrawManager<?> drawManager;
 	private final int sqrMaxOriginDistance;
 	private final EnvironmentStorage environmentStorage;
 	private final LightStorage lightStorage;
@@ -52,7 +52,6 @@ public class ClrwlEngine implements Engine
 
 	private final LevelAccessor level;
 	private final NamespacedId dimension;
-	private final IrisRenderingPipeline irisPipeline;
 	private final ShaderPack pack;
 
 	public ClrwlEngine(LevelAccessor level, int maxOriginDistance)
@@ -60,25 +59,23 @@ public class ClrwlEngine implements Engine
 		ClientLevel clientLevel = (ClientLevel) level;
 		this.level = level;
 		this.dimension = new NamespacedId(clientLevel.dimension().location().getNamespace(),
-				clientLevel.dimension().location().getPath());
+										  clientLevel.dimension().location().getPath());
 
-		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().preparePipeline(dimension);
-		this.irisPipeline = (IrisRenderingPipeline) worldPipeline;
 		this.pack = Iris.getCurrentPack().orElseThrow();
 
 		var programSet = pack.getProgramSet(dimension);
 		var isFallback = (((ProgramSetAccessor) programSet).colorwheel$isFallbackMode());
 
-		ClrwlPrograms programs = ClrwlPrograms.build(FlwPrograms.SOURCES, pack, dimension, isFallback);
+		ClrwlOitPrograms oitPrograms = new ClrwlOitPrograms(FlwPrograms.SOURCES);
 
-		this.drawManager = new ClrwlInstancedDrawManager(dimension, irisPipeline, pack, programs);
+		this.drawManager = new ClrwlInstancedDrawManager(pack, dimension,
+				(p) -> ClrwlInstancedPrograms.build(FlwPrograms.SOURCES, pack, dimension, isFallback),
+				oitPrograms);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = Colorwheel.getModCompat().makeLightStorage(level);
 
-		((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$setBeginTranslucentsCallback(drawManager::renderTranslucent);
-
-		ENGINES.put(irisPipeline, this);
+		ENGINES.add(this);
 	}
 
 	@Override
@@ -149,6 +146,15 @@ public class ClrwlEngine implements Engine
 					drawManager.renderTranslucent();
 				}
 			}
+			else if (context instanceof TranslucentRenderContext)
+			{
+				ClrwlUniforms.update(context, pack, dimension);
+				environmentStorage.flush();
+				drawManager.prepareFrame(lightStorage, environmentStorage);
+
+
+				drawManager.renderTranslucent();
+			}
 			else
 			{
 				ClrwlUniforms.update(context, pack, dimension);
@@ -156,7 +162,6 @@ public class ClrwlEngine implements Engine
 				drawManager.prepareFrame(lightStorage, environmentStorage);
 
 				drawManager.renderSolid();
-				// Translucents will be rendered by beginTranslucent hook
 			}
 		}
 		catch (Exception e)
@@ -180,12 +185,15 @@ public class ClrwlEngine implements Engine
 		}
 	}
 
+	public void onIrisPipelineDestroy(IrisRenderingPipeline pipeline)
+	{
+		drawManager.onIrisPipelineDestroy(pipeline);
+	}
+
 	@Override
 	public void delete()
 	{
-		ENGINES.remove(irisPipeline);
-
-		((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$setBeginTranslucentsCallback(null);
+		ENGINES.remove(this);
 
 		drawManager.delete();
 		lightStorage.delete();

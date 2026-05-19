@@ -7,6 +7,7 @@
   "client": [
     "iris.FullyBufferedMultiBufferSourceMixin",
     "mc.BufferBuilderMixin",
+    "mc.LevelRendererMixin",
     "mc.OptionsMixin",
     "mc.RenderSystemMixin"
   ],
@@ -14,7 +15,6 @@
     "flw.BlockEntityStorageMixin",
     "flw.EntityStorageMixin",
     "flw.MeshHelperMixin",
-    "flw.VisualizationManagerImplMixin",
     "flw.v10000.MeshEmitterMixin",
     "flw.v10006.MeshEmitterManagerMixin",
     "iris.BlendModeOverrideMixin",

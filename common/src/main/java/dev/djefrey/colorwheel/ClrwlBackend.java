@@ -97,9 +97,7 @@ public class ClrwlBackend
             }
         }
 
-        WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
-
-        return worldPipeline instanceof IrisRenderingPipeline;
+        return true;
     }
 
     public static Optional<String> findPatchedShaderpack(String shaderpack)

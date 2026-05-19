@@ -1,29 +1,25 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ClrwlPrograms
+public class ClrwlInstancedPrograms
 {
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 
 	private final ClrwlPipelineCompiler compiler;
-	private final ClrwlOitPrograms oitPrograms;
 
-	private ClrwlPrograms(ClrwlPipelineCompiler compiler, ClrwlOitPrograms oitPrograms)
+	private ClrwlInstancedPrograms(ClrwlPipelineCompiler compiler)
 	{
 		this.compiler = compiler;
-		this.oitPrograms = oitPrograms;
 	}
 
 	private static List<String> getExtensions(GlslVersion glslVersion)
@@ -35,7 +31,7 @@ public class ClrwlPrograms
 		return extensions.build();
 	}
 
-	public static ClrwlPrograms build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean fallback)
+	public static ClrwlInstancedPrograms build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean fallback)
 	{
 		if (!GlCompat.SUPPORTS_INSTANCING)
 		{
@@ -47,9 +43,8 @@ public class ClrwlPrograms
 				: ClrwlPipelines.INSTANCING;
 
 		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, dimension);
-		var oit = new ClrwlOitPrograms(sources);
 
-        return new ClrwlPrograms(compiler, oit);
+        return new ClrwlInstancedPrograms(compiler);
 	}
 
 	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
@@ -80,10 +75,5 @@ public class ClrwlPrograms
 	public void delete()
 	{
 		deleteCache();
-	}
-
-	public ClrwlOitPrograms getOitPrograms()
-	{
-		return oitPrograms;
 	}
 }

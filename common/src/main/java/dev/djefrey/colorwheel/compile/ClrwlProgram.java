@@ -203,10 +203,24 @@ public class ClrwlProgram
 							    customUniforms, pipeline);
 	}
 
-	public void bind(int baseVertex, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
+	public void bind()
 	{
 		ProgramManager.glUseProgram(this.handle);
 
+		samplers.update();
+		uniforms.update();
+		customUniforms.push(this);
+		images.update();
+	}
+
+	public void unbind()
+	{
+		ProgramUniforms.clearActiveUniforms();
+		ProgramSamplers.clearActiveSamplers();
+	}
+
+	public void prepareDrawCall(int baseVertex, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
+	{
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
 
 		var abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(material.texture());
@@ -247,17 +261,6 @@ public class ClrwlProgram
 		setUniformS(renderPhaseUniform, phase.getValue());
 		setUniformI(blendFuncUniform, blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
 		setUniformI(atlasSizeUniform, atlasWidth, atlasHeight);
-
-		samplers.update();
-		uniforms.update();
-		customUniforms.push(this);
-		images.update();
-	}
-
-	public void unbind()
-	{
-		ProgramUniforms.clearActiveUniforms();
-		ProgramSamplers.clearActiveSamplers();
 	}
 
 	public void setEmbeddedMatrices(Matrix4f model,  Matrix3f normal)

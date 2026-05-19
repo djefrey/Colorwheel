@@ -17,6 +17,7 @@ import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.lib.task.ForEachPlan;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.minecraft.client.resources.model.ModelBakery;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,13 +84,15 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	public abstract void renderSolid();
 	public abstract void renderTranslucent();
 
+	public abstract void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks);
+
+	public abstract void onIrisPipelineDestroy(IrisRenderingPipeline pipeline);
+
 	public void onRenderOriginChanged()
 	{
 		instancers.values()
 				.forEach(ClrwlAbstractInstancer::clear);
 	}
-
-	public abstract void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks);
 
 	protected abstract <I extends Instance> N create(ClrwlInstancerKey<I> type);
 

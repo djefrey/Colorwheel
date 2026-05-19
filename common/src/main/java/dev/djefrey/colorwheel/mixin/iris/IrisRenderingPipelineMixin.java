@@ -6,7 +6,6 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShadowRenderTargetsAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShadowRendererAccessor;
-import dev.djefrey.colorwheel.engine.BeginTranslucentRenderFunction;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
@@ -94,25 +93,6 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 		}
 	}
 
-	@Unique
-	private BeginTranslucentRenderFunction colorwheel$beginTranslucentCallback = null;
-
-	@Inject(method = "beginTranslucents()V",
-			at = @At("RETURN"),
-			remap = false)
-	private void onBeginTranslucents(CallbackInfo ci)
-	{
-		if (colorwheel$beginTranslucentCallback != null)
-		{
-			colorwheel$beginTranslucentCallback.onBeginTranslucent();
-		}
-	}
-
-	public void colorwheel$setBeginTranslucentsCallback(BeginTranslucentRenderFunction fct)
-	{
-		this.colorwheel$beginTranslucentCallback = fct;
-	}
-
 	public void colorwheel$destroyGbuffersFramebuffer(GlFramebuffer framebuffer)
 	{
 		renderTargets.destroyFramebuffer(framebuffer);
@@ -130,6 +110,6 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 			remap = false)
 	public void colorwheel$onDelete(CallbackInfo ci)
 	{
-		Colorwheel.getSafeFlw().resetVisuals((IrisRenderingPipeline) (Object) this);
+		Colorwheel.getSafeFlw().onIrisPipelineDestroy((IrisRenderingPipeline) (Object) this);
 	}
 }

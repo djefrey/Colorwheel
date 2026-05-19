@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
 import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.djefrey.colorwheel.engine.ShadowRenderingPhase;
+import dev.djefrey.colorwheel.engine.TranslucentRenderContext;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlOptionsUniforms;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.internal.FlwApiLink;
@@ -15,6 +16,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.multiplayer.ClientLevel;
+import org.joml.Matrix4f;
 import org.joml.Vector3d;
 
 public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
@@ -32,16 +34,11 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
     }
 
     @Override
-    public void resetVisuals(IrisRenderingPipeline pipeline)
+    public void onIrisPipelineDestroy(IrisRenderingPipeline pipeline)
     {
-        ClrwlEngine engine = ClrwlEngine.ENGINES.get(pipeline);
-
-        if (engine != null)
+        for (var engine : ClrwlEngine.ENGINES)
         {
-            // Direct access to the implementation is required as no method in the public API
-            // allows you to reset a visualization manager
-
-            VisualizationManagerImpl.reset(engine.level());
+            engine.onIrisPipelineDestroy(pipeline);
         }
     }
 
@@ -62,6 +59,27 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
                     (float) cameraPos.x(), (float) cameraPos.y(), (float) cameraPos.z(),
                     tickDelta,
                     phase
+            );
+
+            manager.renderDispatcher().afterEntities(ctx);
+        }
+    }
+
+    @Override
+    public void submitTranslucentRenderContext(ClientLevel level, Camera playerCamera, Matrix4f modelMatrix, Matrix4f projectionMatrix, float tickDelta)
+    {
+        VisualizationManager manager = VisualizationManager.get(level);
+
+        if (manager != null)
+        {
+            RenderContext ctx = TranslucentRenderContext.create(
+                    Minecraft.getInstance().levelRenderer,
+                    level,
+                    Minecraft.getInstance().renderBuffers(),
+                    modelMatrix,
+                    projectionMatrix,
+                    playerCamera,
+                    tickDelta
             );
 
             manager.renderDispatcher().afterEntities(ctx);

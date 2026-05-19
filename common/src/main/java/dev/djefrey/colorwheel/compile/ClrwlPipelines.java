@@ -55,7 +55,7 @@ public class ClrwlPipelines
             .minVersion(GlCompat.MAX_GLSL_VERSION)
             .onSetup((b) ->
             {
-                for (String ext : ClrwlPrograms.EXTENSIONS)
+                for (String ext : ClrwlInstancedPrograms.EXTENSIONS)
                 {
                     b.requireExtension(ext);
                 }
@@ -178,7 +178,7 @@ public class ClrwlPipelines
             .minVersion(GlCompat.MAX_GLSL_VERSION)
             .onSetup((b) ->
             {
-                for (String ext : ClrwlPrograms.EXTENSIONS)
+                for (String ext : ClrwlInstancedPrograms.EXTENSIONS)
                 {
                     b.requireExtension(ext);
                 }
