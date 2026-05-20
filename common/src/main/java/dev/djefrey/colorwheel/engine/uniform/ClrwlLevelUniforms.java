@@ -1,20 +1,17 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
 import dev.engine_room.flywheel.api.backend.RenderContext;
+import dev.engine_room.flywheel.backend.engine.uniform.LevelUniforms;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 public final class ClrwlLevelUniforms extends UniformWriter
 {
 	private static final int SIZE = 16 * 4 + 4 * 12;
 	static final UniformBuffer BUFFER = new UniformBuffer(ClrwlUniforms.LEVEL_INDEX, SIZE);
-
-	public static final Vector3f LIGHT0_DIRECTION = new Vector3f();
-	public static final Vector3f LIGHT1_DIRECTION = new Vector3f();
 
 	private ClrwlLevelUniforms()
 	{
@@ -32,8 +29,8 @@ public final class ClrwlLevelUniforms extends UniformWriter
 		ptr = writeVec4(ptr, (float) skyColor.x, (float) skyColor.y, (float) skyColor.z, 1f);
 		ptr = writeVec4(ptr, (float) cloudColor.x, (float) cloudColor.y, (float) cloudColor.z, 1f);
 
-		ptr = writeVec3(ptr, LIGHT0_DIRECTION);
-		ptr = writeVec3(ptr, LIGHT1_DIRECTION);
+		ptr = writeVec3(ptr, LevelUniforms.LIGHT0_DIRECTION);
+		ptr = writeVec3(ptr, LevelUniforms.LIGHT1_DIRECTION);
 
 		long dayTime = level.getDayTime();
 		long levelDay = dayTime / 24000L;
