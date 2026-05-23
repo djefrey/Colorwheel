@@ -29,12 +29,16 @@ public abstract class BufferBuilderMixin implements ColorwheelBufferBuilder
     private boolean colorwheel$isFlwBuffer = false;
 
     @Unique
+    private byte colorwheel$lightEmission = 0;
+
+    @Unique
     private boolean colorwheel$isTerrain = false;
 
     @Override
-    public void clrwlBeginBlock(short block, short renderType, boolean isTerrain, int posX, int posY, int posZ)
+    public void clrwlBeginBlock(short block, short renderType, byte lightEmission, boolean isTerrain, int posX, int posY, int posZ)
     {
         colorwheel$isFlwBuffer = true;
+        colorwheel$lightEmission = lightEmission;
         colorwheel$isTerrain = isTerrain;
         beginBlock(block, renderType, posX, posY, posZ);
     }
@@ -45,7 +49,7 @@ public abstract class BufferBuilderMixin implements ColorwheelBufferBuilder
     {
         if (colorwheel$isFlwBuffer && format == IrisVertexFormats.TERRAIN)
         {
-            buffer.put(nextElementByte - 1, colorwheel$isTerrain ? (byte) 0 : (byte) -1);
+            buffer.put(nextElementByte - 1, colorwheel$isTerrain ? colorwheel$lightEmission : (byte) -1);
         }
     }
 }

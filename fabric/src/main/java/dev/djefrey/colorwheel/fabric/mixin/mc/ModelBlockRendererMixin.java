@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
 import net.irisshaders.iris.vertices.ExtendedDataHelper;
@@ -21,10 +22,18 @@ public class ModelBlockRendererMixin
     @WrapMethod(method = "tesselateBlock")
     private void injectBeginEndBlock(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, Operation<Void> original)
     {
-        if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
+        if (WorldRenderingSettings.INSTANCE.getBlockStateIds() != null)
         {
             short id = (short) WorldRenderingSettings.INSTANCE.getBlockStateIds().getOrDefault(state, -1);
-            blockBuilder.beginBlock(id, ExtendedDataHelper.BLOCK_RENDER_TYPE,  pos.getX(), pos.getY(), pos.getZ());
+
+            if (consumer instanceof ColorwheelBufferBuilder clrwlBlockBuilder)
+            {
+                clrwlBlockBuilder.clrwlBeginBlock(id, ExtendedDataHelper.BLOCK_RENDER_TYPE, (byte) state.getLightEmission(), true, pos.getX(), pos.getY(), pos.getZ());
+            }
+            else if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
+            {
+                blockBuilder.beginBlock(id, ExtendedDataHelper.BLOCK_RENDER_TYPE,  pos.getX(), pos.getY(), pos.getZ());
+            }
         }
 
         try
@@ -33,7 +42,11 @@ public class ModelBlockRendererMixin
         }
         finally
         {
-            if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
+            if (consumer instanceof ColorwheelBufferBuilder clrwlBlockBuilder)
+            {
+                clrwlBlockBuilder.clrwlEndBlock();
+            }
+            else if (consumer instanceof BlockSensitiveBufferBuilder blockBuilder)
             {
                 blockBuilder.endBlock();
             }

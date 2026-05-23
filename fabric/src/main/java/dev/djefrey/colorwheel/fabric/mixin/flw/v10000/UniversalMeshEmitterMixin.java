@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.UniversalMeshEmitter")
 @Pseudo
-public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferBuilder, UniversalMeshEmitterAccessor
+public abstract class UniversalMeshEmitterMixin implements ColorwheelBufferBuilder, UniversalMeshEmitterAccessor
 {
     @Unique
     private boolean colorwheel$isTerrain = false;
@@ -26,6 +26,8 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
     private short colorwheel$currentBlock = -1;
     @Unique
     private short colorwheel$currentRenderType = -1;
+    @Unique
+    private byte colorwheel$lightEmission = 0;
     @Unique
     private int colorwheel$currentLocalPosX = 0;
     @Unique
@@ -47,7 +49,7 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
     {
         if (this.currentDelegate instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
-            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$isTerrain, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
+            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$lightEmission, colorwheel$isTerrain, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
         }
         else if (this.currentDelegate instanceof BlockSensitiveBufferBuilder blockBuilder)
         {
@@ -56,10 +58,18 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
     }
 
     @Override
+    public void clrwlBeginBlock(short block, short renderType, byte lightEmission, boolean isTerrain, int posX, int posY, int posZ)
+    {
+        ColorwheelBufferBuilder.super.clrwlBeginBlock(block, renderType, lightEmission, isTerrain, posX, posY, posZ);
+        this.colorwheel$lightEmission = lightEmission;
+    }
+
+    @Override
     public void beginBlock(short block, short renderType, int localPosX, int localPosY, int localPosZ)
     {
         this.colorwheel$currentBlock = block;
         this.colorwheel$currentRenderType = renderType;
+        this.colorwheel$lightEmission = 0;
         this.colorwheel$currentLocalPosX = localPosX;
         this.colorwheel$currentLocalPosY = localPosY;
         this.colorwheel$currentLocalPosZ = localPosZ;
@@ -70,6 +80,7 @@ public abstract class UniversalMeshEmitterMixin implements BlockSensitiveBufferB
     {
         this.colorwheel$currentBlock = -1;
         this.colorwheel$currentRenderType = -1;
+        this.colorwheel$lightEmission = 0;
         this.colorwheel$currentLocalPosX = 0;
         this.colorwheel$currentLocalPosY = 0;
         this.colorwheel$currentLocalPosZ = 0;

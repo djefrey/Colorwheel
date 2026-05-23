@@ -18,12 +18,14 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(targets = "dev.engine_room.flywheel.lib.model.baked.ForgeMeshEmitter")
 @Pseudo
-public abstract class ForgeMeshEmitterMixin implements BlockSensitiveBufferBuilder, VertexConsumer
+public abstract class ForgeMeshEmitterMixin implements ColorwheelBufferBuilder, VertexConsumer
 {
     @Unique
     private short colorwheel$currentBlock = -1;
     @Unique
     private short colorwheel$currentRenderType = -1;
+    @Unique
+    private byte colorwheel$lightEmission = 0;
     @Unique
     private int colorwheel$currentLocalPosX = 0;
     @Unique
@@ -34,12 +36,20 @@ public abstract class ForgeMeshEmitterMixin implements BlockSensitiveBufferBuild
     @Unique
     private boolean colorwheel$isTerrain = false;
 
+    @Override
+    public void clrwlBeginBlock(short block, short renderType, byte lightEmission, boolean isTerrain, int posX, int posY, int posZ)
+    {
+        ColorwheelBufferBuilder.super.clrwlBeginBlock(block, renderType, lightEmission, isTerrain, posX, posY, posZ);
+        this.colorwheel$lightEmission = lightEmission;
+    }
+
     // Called by ModelBlockRendererMixin::injectBeginEndBlock
     @Override
     public void beginBlock(short block, short renderType, int localPosX, int localPosY, int localPosZ)
     {
         this.colorwheel$currentBlock = block;
         this.colorwheel$currentRenderType = renderType;
+        this.colorwheel$lightEmission = 0;
         this.colorwheel$currentLocalPosX = localPosX;
         this.colorwheel$currentLocalPosY = localPosY;
         this.colorwheel$currentLocalPosZ = localPosZ;
@@ -51,6 +61,7 @@ public abstract class ForgeMeshEmitterMixin implements BlockSensitiveBufferBuild
     {
         this.colorwheel$currentBlock = -1;
         this.colorwheel$currentRenderType = -1;
+        this.colorwheel$lightEmission = 0;
         this.colorwheel$currentLocalPosX = 0;
         this.colorwheel$currentLocalPosY = 0;
         this.colorwheel$currentLocalPosZ = 0;
@@ -79,7 +90,7 @@ public abstract class ForgeMeshEmitterMixin implements BlockSensitiveBufferBuild
     {
         if (bufferBuilder instanceof ColorwheelBufferBuilder clrwlBuilder)
         {
-            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$isTerrain, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
+            clrwlBuilder.clrwlBeginBlock(colorwheel$currentBlock, colorwheel$currentRenderType, colorwheel$lightEmission, colorwheel$isTerrain, colorwheel$currentLocalPosX, colorwheel$currentLocalPosY, colorwheel$currentLocalPosZ);
         }
         else if (bufferBuilder instanceof BlockSensitiveBufferBuilder blockBuilder)
         {

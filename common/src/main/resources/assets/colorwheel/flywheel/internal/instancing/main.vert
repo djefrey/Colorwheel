@@ -139,8 +139,8 @@ void main()
     clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
     #endif
 
-    // at_midBlock.w doesn't exists on 1.20.1, but it's used to flag vertices as terrain
-    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, -1);
+    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0,
+                               clrwl_vertexMidMesh.w == -1 ? _clrwl_meshCenter.w : clrwl_vertexMidMesh.w);
 
     flw_vertexNormal = normalize(flw_vertexNormal);
 
