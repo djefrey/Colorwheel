@@ -1,3 +1,8 @@
+### 1.2.8
+
+- Fixed old lighting
+- Added support for at_midblock.w on 1.20.1
+
 ### 1.2.7
 
 - Improved performance
