@@ -161,7 +161,7 @@ void main()
 #endif
 
     clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0,
-                                clrwl_vertexMidMesh.w == -1 ? _clrwl_meshCenter.w : clrwl_vertexMidMesh.w);
+                               clrwl_vertexMidMesh.w == -1 ? _clrwl_meshCenter.w : clrwl_vertexMidMesh.w);
 
     flw_vertexNormal = normalize(flw_vertexNormal);
 
