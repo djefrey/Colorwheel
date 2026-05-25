@@ -25,5 +25,7 @@
     "command.colorwheel.fallback_mode.get.on": "Fallback mode is enabled",
     "command.colorwheel.fallback_mode.get.off": "Fallback mode is disabled",
     "command.colorwheel.fallback_mode.set.on": "Fallback mode is now enabled. Here be dragons !",
-    "command.colorwheel.fallback_mode.set.off": "Fallback mode is now disabled"
+    "command.colorwheel.fallback_mode.set.off": "Fallback mode is now disabled",
+
+    "colorwheel.click_here": "click here"
 }

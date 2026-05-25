@@ -595,11 +595,15 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		{
 			Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"), true);
 
-			var disableComp = Component.translatable("colorwheel.alert.ask_disable").withStyle(
-					Style.EMPTY
-						.withUnderlined(true)
-						.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertBrokenPack off"))
-						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.broken_pack.disable"))));
+			var clickHereComp = Component.translatable("colorwheel.click_here");
+			var disableComp = Component.translatable("colorwheel.alert.ask_disable")
+					.append(" (").append(clickHereComp).append(")")
+					.withStyle(
+						Style.EMPTY
+							.withUnderlined(true)
+							.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertBrokenPack off"))
+							.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.broken_pack.disable")))
+					);
 
 			Colorwheel.sendWarnMessage(disableComp, false);
 		}
