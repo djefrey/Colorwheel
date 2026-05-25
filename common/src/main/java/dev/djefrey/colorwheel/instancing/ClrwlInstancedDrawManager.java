@@ -152,7 +152,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		light.flush(lightStorage);
 	}
 
-	public void renderSolid()
+	public void renderSolid(boolean isShadow)
 	{
 		if (solidDraws.isEmpty())
 		{
@@ -164,7 +164,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
 		{
 			var pipelineData = getPipelineData(irisPipeline);
-			renderSolidImpl(pipelineData);
+			renderSolidImpl(pipelineData, isShadow);
 		}
 		else
 		{
@@ -172,10 +172,28 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		}
 	}
 
-	private void renderSolidImpl(PipelineData pipelineData)
+	public void renderTranslucent(boolean isShadow)
 	{
-		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
+		if (translucentDraws.isEmpty() && oitDraws.isEmpty())
+		{
+			return;
+		}
 
+		var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
+
+		if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
+		{
+			var pipelineData = getPipelineData(irisPipeline);
+			renderTranslucentImpl(pipelineData, isShadow);
+		}
+		else
+		{
+			handleInvalidPipeline(curPipeline);
+		}
+	}
+
+	private void renderSolidImpl(PipelineData pipelineData, boolean isShadow)
+	{
 		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(ClrwlProgramId.SHADOW).isEmpty())
 		{
 			// No base shadow shader, skip
@@ -195,31 +213,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		TextureBinder.resetLightAndOverlay();
 	}
 
-	public void renderTranslucent()
-	{
-		if (translucentDraws.isEmpty() && oitDraws.isEmpty())
-		{
-			return;
-		}
-
-		var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
-
-		if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
-		{
-			var pipelineData = getPipelineData(irisPipeline);
-			renderTranslucentImpl(pipelineData);
-		}
-		else
-		{
-			handleInvalidPipeline(curPipeline);
-		}
-	}
-
-	private void renderTranslucentImpl(PipelineData pipelineData)
+	private void renderTranslucentImpl(PipelineData pipelineData, boolean isShadow)
 	{
 		var framebuffers = pipelineData.framebuffers();
-
-		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
 
 		setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
 

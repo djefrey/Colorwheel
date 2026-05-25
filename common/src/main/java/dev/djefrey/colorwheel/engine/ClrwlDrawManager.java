@@ -70,19 +70,25 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	{
 		// Thread safety: flush is called from the render thread after all visual updates have been made,
 		// so there are no:tm: threads we could be racing with.
-		for (var init : initializationQueue) {
+		for (var init : initializationQueue)
+		{
 			var instancer = init.instancer();
-			if (instancer.instanceCount() > 0) {
+
+			if (instancer.instanceCount() > 0)
+			{
 				initialize(init.key(), instancer);
-			} else {
+			}
+			else
+			{
 				instancers.remove(init.key());
 			}
 		}
+
 		initializationQueue.clear();
 	}
 
-	public abstract void renderSolid();
-	public abstract void renderTranslucent();
+	public abstract void renderSolid(boolean isShadow);
+	public abstract void renderTranslucent(boolean isShadow);
 
 	public abstract void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks);
 

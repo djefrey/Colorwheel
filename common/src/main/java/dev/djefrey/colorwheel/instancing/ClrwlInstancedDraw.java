@@ -6,7 +6,8 @@ import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.engine.GroupKey;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 
-public class ClrwlInstancedDraw {
+public class ClrwlInstancedDraw
+{
 	public final GroupKey<?> groupKey;
 	private final ClrwlInstancedInstancer<?> instancer;
 	private final ClrwlMeshPool.PooledMesh mesh;
