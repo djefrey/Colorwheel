@@ -47,12 +47,7 @@ import java.util.*;
 
 public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
 {
-	public interface ProgramsFactory
-	{
-		ClrwlInstancedPrograms build(IrisRenderingPipeline pipeline);
-	}
-
-	public record PipelineData(ClrwlInstancedPrograms programs, ClrwlFramebuffers framebuffers)
+	public record PipelineData(ClrwlInstancedPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers)
 	{
 		public void delete()
 		{
@@ -73,11 +68,11 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final List<ClrwlInstancedDraw> oitDraws = new ArrayList<>();
 
 	private final Map<IrisRenderingPipeline, PipelineData> pipelineData = new HashMap<>();
-	private final ClrwlOitPrograms oitPrograms;
 
 	/**
 	 * A map of vertex types to their mesh pools.
 	 */
+	private final ClrwlInstancedPrograms programs;
 	private final ClrwlMeshPool meshPool;
 	private final GlVertexArray vao;
 	private final TextureBuffer instanceTexture;
@@ -86,17 +81,14 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final ShaderPack pack;
 	private final NamespacedId dimension;
 	private final ProgramSet programSet;
-	private final ProgramsFactory programsFactory;
 
-	public ClrwlInstancedDrawManager(ShaderPack pack, NamespacedId dimension, ProgramsFactory programsFactory, ClrwlOitPrograms oitPrograms)
+	public ClrwlInstancedDrawManager(ShaderPack pack, NamespacedId dimension, ClrwlInstancedPrograms programs)
 	{
 		this.pack = pack;
 		this.dimension = dimension;
 		this.programSet = pack.getProgramSet(dimension);
-		this.programsFactory = programsFactory;
 
-		this.oitPrograms = oitPrograms;
-
+		this.programs = programs;
 		this.meshPool = new ClrwlMeshPool();
 		this.vao = GlVertexArray.create();
 		this.instanceTexture = new TextureBuffer();
@@ -225,7 +217,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private void renderTranslucentImpl(PipelineData pipelineData)
 	{
-		var programs = pipelineData.programs();
 		var framebuffers = pipelineData.framebuffers();
 
 		var isShadow = ShadowRenderingState.areShadowsCurrentlyBeingRendered();
@@ -263,7 +254,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				var directives = maybeSrc.get().getDirectives();
 
 				var framebuffer = framebuffers.getFramebuffer(program);
-				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), oitPrograms, properties, directives);
+				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), properties, directives);
 				var blendOverride = framebuffers.getBlendModeOverride(program).orElse(null);
 				var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program);
 
@@ -623,12 +614,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private PipelineData createPipelineData(IrisRenderingPipeline irisPipeline)
 	{
-		var programs = programsFactory.build(irisPipeline);
+		var pipelinePrograms = programs.createPipelineProgramsCache();
 		var framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
 
 		Colorwheel.LOGGER.info("Created pipeline data for {}", irisPipeline);
 
-		return new PipelineData(programs, framebuffers);
+		return new PipelineData(pipelinePrograms, framebuffers);
 	}
 
 	public void onIrisPipelineDestroy(IrisRenderingPipeline irisPipeline)
@@ -691,7 +682,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		light.delete();
 
 		deletePipelinesData();
-		oitPrograms.delete();
+		programs.delete();
 
 		super.delete();
 	}

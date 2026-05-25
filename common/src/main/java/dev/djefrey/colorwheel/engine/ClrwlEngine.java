@@ -66,12 +66,9 @@ public class ClrwlEngine implements Engine
 
 		var programSet = pack.getProgramSet(dimension);
 		var isFallback = (((ProgramSetAccessor) programSet).colorwheel$isFallbackMode());
+		var programs = ClrwlInstancedPrograms.build(FlwPrograms.SOURCES, pack, dimension, isFallback);
 
-		ClrwlOitPrograms oitPrograms = new ClrwlOitPrograms(FlwPrograms.SOURCES);
-
-		this.drawManager = new ClrwlInstancedDrawManager(pack, dimension,
-				(p) -> ClrwlInstancedPrograms.build(FlwPrograms.SOURCES, pack, dimension, isFallback),
-				oitPrograms);
+		this.drawManager = new ClrwlInstancedDrawManager(pack, dimension, programs);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = new LightStorage(level);
