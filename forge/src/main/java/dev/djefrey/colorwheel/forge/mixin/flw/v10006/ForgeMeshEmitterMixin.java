@@ -39,7 +39,7 @@ public abstract class ForgeMeshEmitterMixin implements ColorwheelBufferBuilder, 
     @Override
     public void clrwlBeginBlock(short block, short renderType, byte lightEmission, boolean isTerrain, int posX, int posY, int posZ)
     {
-        ColorwheelBufferBuilder.super.clrwlBeginBlock(block, renderType, lightEmission, isTerrain, posX, posY, posZ);
+        beginBlock(block, renderType, posX, posY, posZ);
         this.colorwheel$lightEmission = lightEmission;
     }
 
