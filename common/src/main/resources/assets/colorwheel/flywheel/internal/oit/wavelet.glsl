@@ -18,12 +18,14 @@ void _clrwl_add_absorbance(inout vec4[4] coefficients, float signal, float depth
 
     for (int i = 0; i < (rank+1); ++i) {
         int power = rank - i;
+        float power_f = float(power);
+
         int new_index = (index - 1) >> 1;
         float k = float((new_index + 1) & ((1 << power) - 1));
 
-        int wavelet_sign = ((index & 1) << 1) - 1;
-        float wavelet_phase = ((index + 1) & 1) * exp2(-power);
-        float addend = fma(fma(-exp2(-power), k, depth), wavelet_sign, wavelet_phase) * exp2(power * 0.5) * signal;
+        float wavelet_sign = float(((index & 1) << 1) - 1);
+        float wavelet_phase = float((index + 1) & 1) * exp2(-power_f);
+        float addend = fma(fma(-exp2(-power_f), k, depth), wavelet_sign, wavelet_phase) * exp2(power_f * 0.5) * signal;
         _clrwl_add_to_index(coefficients, new_index, addend);
 
         index = new_index;
@@ -152,24 +154,25 @@ float _clrwl_signal_corrected_absorbance(in sampler2DArray coefficients, float d
 
     for (int i = 0; i < (rank+1); ++i) {
         int power = rank - i;
+        float power_f = float(power);
 
         int new_index_b = (index_b - 1) >> 1;
         int wavelet_sign_b = ((index_b & 1) << 1) - 1;
         float coeff_b = _clrwl_get_coefficients(coefficients, new_index_b);
 
-        float wavelet_phase_b = ((index_b + 1) & 1) * exp2(-power);
+        float wavelet_phase_b = ((index_b + 1) & 1) * exp2(-power_f);
         float k = float((new_index_b + 1) & ((1 << power) - 1));
-        float addend = fma(fma(-exp2(-power), k, depth), wavelet_sign_b, wavelet_phase_b) * exp2(power * 0.5) * signal;
+        float addend = fma(fma(-exp2(-power_f), k, depth), wavelet_sign_b, wavelet_phase_b) * exp2(power_f * 0.5) * signal;
         coeff_b -= addend;
 
-        b -= exp2(float(power) * 0.5) * coeff_b * wavelet_sign_b;
+        b -= exp2(power_f * 0.5) * coeff_b * wavelet_sign_b;
         index_b = new_index_b;
 
         if (sample_a) {
             int new_index_a = (index_a - 1) >> 1;
             int wavelet_sign_a = ((index_a & 1) << 1) - 1;
             float coeff_a = (new_index_a == new_index_b) ? coeff_b : _clrwl_get_coefficients(coefficients, new_index_a);// No addend here on purpose, the original signal didn't contribute to this coefficient
-            a -= exp2(float(power) * 0.5) * coeff_a * wavelet_sign_a;
+            a -= exp2(power_f * 0.5) * coeff_a * wavelet_sign_a;
             index_a = new_index_a;
         }
     }
