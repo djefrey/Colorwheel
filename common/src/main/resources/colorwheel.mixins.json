@@ -19,7 +19,6 @@
     "flw.v10006.MeshEmitterManagerMixin",
     "iris.BlendModeOverrideMixin",
     "iris.BlockMaterialMappingMixin",
-    "iris.IrisMixin",
     "iris.IrisRenderingPipelineMixin",
     "iris.PackShadowDirectivesMixin",
     "iris.ProgramDirectivesMixin",
