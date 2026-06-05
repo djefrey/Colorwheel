@@ -230,7 +230,7 @@ public class ClrwlProgram
 		if (abstractTexture instanceof TextureAtlas atlas)
 		{
 			atlasWidth = ((TextureAtlasAccessor) atlas).callGetWidth();
-			atlasHeight = ((TextureAtlasAccessor) atlas).callGetWidth();
+			atlasHeight = ((TextureAtlasAccessor) atlas).callGetHeight();
 		}
 
 		BlendMode blendMode;
