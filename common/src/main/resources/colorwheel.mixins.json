@@ -21,7 +21,6 @@
     "iris.BlockMaterialMappingMixin",
     "iris.IrisRenderingPipelineMixin",
     "iris.PackShadowDirectivesMixin",
-    "iris.ProgramDirectivesMixin",
     "iris.ProgramSetMixin",
     "iris.ProgramSourceMixin",
     "iris.RenderTargetMixin",

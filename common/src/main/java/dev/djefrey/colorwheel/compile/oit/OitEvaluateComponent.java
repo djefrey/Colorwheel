@@ -15,10 +15,10 @@ import java.util.Map;
 
 public class OitEvaluateComponent implements SourceComponent
 {
-    private int[] drawBuffers;
-    private int[] ranks;
-    private List<ClrwlOitAccumulateOverride> overrides;
-    private Map<Integer, String> shaderOutputs;
+    private final int[] drawBuffers;
+    private final int[] ranks;
+    private final List<ClrwlOitAccumulateOverride> overrides;
+    private final Map<Integer, String> shaderOutputs;
 
     public OitEvaluateComponent(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides, Map<Integer, String> shaderOutputs)
     {

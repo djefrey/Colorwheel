@@ -391,26 +391,23 @@ public class ClrwlTransformPatcher
 		}
 	}
 
-	public static String patchVertex(String vertex, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchVertex(String vertex, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, isCrumbling, false, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, isCrumbling, false, textureMap);
 
 		return transformer.transform(vertex, parameters).code();
 	}
 
-	public static String patchGeometry(String vertex, boolean isCrumbling, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchGeometry(String vertex, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var directives =  ClrwlTransformParameters.Directives.fromVertex(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, isCrumbling, false, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, isCrumbling, false, textureMap);
 
 		return transformer.transform(vertex, parameters).code();
 	}
 
-	public static ClrwlTransformOutput patchFragment(String fragment, boolean isCrumbling, boolean customOutputs, ProgramDirectives programDirectives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static ClrwlTransformOutput patchFragment(String fragment, boolean isCrumbling, boolean customOutputs, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var directives =  ClrwlTransformParameters.Directives.fromFragment(programDirectives);
-		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, isCrumbling, customOutputs, directives, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, isCrumbling, customOutputs, textureMap);
 
 		return transformer.transform(fragment, parameters);
 	}

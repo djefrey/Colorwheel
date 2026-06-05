@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class FallbackCutoutComponent implements SourceComponent
 {
-    private Map<Integer, String> shaderOutputs;
+    private final Map<Integer, String> shaderOutputs;
 
     public FallbackCutoutComponent(Map<Integer, String> shaderOutputs)
     {
