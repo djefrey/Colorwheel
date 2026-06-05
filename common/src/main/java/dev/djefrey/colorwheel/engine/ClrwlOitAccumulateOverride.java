@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public class ClrwlOitAccumulateOverride
 {
-    private int drawBuffer;
+    private final int drawBuffer;
     private Optional<Integer> coefficientId; // Empty = frontmost
     private InternalTextureFormat format;
 

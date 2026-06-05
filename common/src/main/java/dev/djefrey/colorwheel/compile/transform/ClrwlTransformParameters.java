@@ -19,15 +19,13 @@ public class ClrwlTransformParameters extends Parameters
 {
 	private final boolean isCrumbling;
 	private final boolean customOutputs;
-	private final Directives directives;
 
-	public ClrwlTransformParameters(PatchShaderType type, boolean isCrumbling, boolean customOutputs, Directives directives, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public ClrwlTransformParameters(PatchShaderType type, boolean isCrumbling, boolean customOutputs, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		super(Patch.VANILLA, textureMap);
 		super.type = type;
 		this.isCrumbling = isCrumbling;
 		this.customOutputs = customOutputs;
-		this.directives = directives;
 	}
 
 	public boolean usesCustomOutputs()
@@ -38,11 +36,6 @@ public class ClrwlTransformParameters extends Parameters
 	public boolean isCrumbling()
 	{
 		return isCrumbling;
-	}
-
-	public Directives directives()
-	{
-		return directives;
 	}
 
 	@Override
@@ -60,20 +53,6 @@ public class ClrwlTransformParameters extends Parameters
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + (isCrumbling ? 0 : 1);
 		result = prime * result + (customOutputs ? 0 : 1);
-		result = prime * result + directives.hashCode();
 		return result;
-	}
-
-	public record Directives()
-	{
-		public static Directives fromVertex(ProgramDirectives directives)
-		{
-			return new Directives();
-		}
-
-		public static Directives fromFragment(ProgramDirectives directives)
-		{
-			return new Directives();
-		}
 	}
 }

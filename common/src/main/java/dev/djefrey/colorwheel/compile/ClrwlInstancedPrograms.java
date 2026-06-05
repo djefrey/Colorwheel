@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
@@ -16,18 +17,23 @@ public class ClrwlInstancedPrograms
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 
 	private final ClrwlPipelineCompiler compiler;
+	private final ClrwlOitPrograms oitPrograms;
 
-	private ClrwlInstancedPrograms(ClrwlPipelineCompiler compiler)
+	private ClrwlInstancedPrograms(ClrwlPipelineCompiler compiler, ClrwlOitPrograms oitPrograms)
 	{
 		this.compiler = compiler;
+		this.oitPrograms = oitPrograms;
 	}
 
 	private static List<String> getExtensions(GlslVersion glslVersion)
 	{
 		var extensions = ImmutableList.<String>builder();
-		if (glslVersion.compareTo(GlslVersion.V330) < 0) {
+
+		if (glslVersion.compareTo(GlslVersion.V330) < 0)
+		{
 			extensions.add("GL_ARB_shader_bit_encoding");
 		}
+
 		return extensions.build();
 	}
 
@@ -39,41 +45,55 @@ public class ClrwlInstancedPrograms
 		}
 
 		var pipeline = fallback
-				? ClrwlPipelines.FALLBACK_INSTANCING
+				? ClrwlPipelines.INSTANCING_FALLBACK
 				: ClrwlPipelines.INSTANCING;
 
 		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, dimension);
+		var oitPrograms = new ClrwlOitPrograms(sources);
 
-        return new ClrwlInstancedPrograms(compiler);
+        return new ClrwlInstancedPrograms(compiler, oitPrograms);
 	}
 
-	private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
-
-	public ClrwlProgram get(ClrwlShaderKey key)
+	public PipelineProgramCache createPipelineProgramsCache()
 	{
-		ClrwlProgram program = programCache.get(key);
-
-		if (program == null)
-		{
-			program = this.compiler.get(key);
-			programCache.put(key, program);
-		}
-
-		return program;
+		return new PipelineProgramCache();
 	}
 
-	private void deleteCache()
+	public ClrwlOitPrograms getOitPrograms()
 	{
-		for (ClrwlProgram program : programCache.values())
-		{
-			program.free();
-		}
-
-		programCache.clear();
+		return oitPrograms;
 	}
 
 	public void delete()
 	{
-		deleteCache();
+		oitPrograms.delete();
+	}
+
+	public class PipelineProgramCache
+	{
+		private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
+
+		public ClrwlProgram get(ClrwlShaderKey key)
+		{
+			ClrwlProgram program = programCache.get(key);
+
+			if (program == null)
+			{
+				program = ClrwlInstancedPrograms.this.compiler.get(key);
+				programCache.put(key, program);
+			}
+
+			return program;
+		}
+
+		public void delete()
+		{
+			for (ClrwlProgram program : programCache.values())
+			{
+				program.free();
+			}
+
+			programCache.clear();
+		}
 	}
 }

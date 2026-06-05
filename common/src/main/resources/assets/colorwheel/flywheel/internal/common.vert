@@ -1,5 +1,4 @@
 #include "colorwheel:internal/packed_material.glsl"
-#include "flywheel:internal/instancing/light.glsl"
 #include "colorwheel:internal/diffuse.glsl"
 
 #ifdef _FLW_CRUMBLING
@@ -11,7 +10,8 @@ const int _CLRWL_WEST = 4;
 const int _CLRWL_EAST = 5;
 
 // based on net.minecraftforge.client.ForgeHooksClient.getNearestStable
-int _clrwl_getNearestFacing(vec3 normal) {
+int _clrwl_getNearestFacing(vec3 normal)
+{
     float maxAlignment = -2;
     int face = 2;
 
@@ -23,27 +23,33 @@ int _clrwl_getNearestFacing(vec3 normal) {
     dot(normal, vec3(0., 0., 1.))
     );
 
-    if (-alignment.y > maxAlignment) {
+    if (-alignment.y > maxAlignment)
+    {
         maxAlignment = -alignment.y;
         face = _CLRWL_DOWN;
     }
-    if (alignment.y > maxAlignment) {
+    if (alignment.y > maxAlignment)
+    {
         maxAlignment = alignment.y;
         face = _CLRWL_UP;
     }
-    if (-alignment.z > maxAlignment) {
+    if (-alignment.z > maxAlignment)
+    {
         maxAlignment = -alignment.z;
         face = _CLRWL_NORTH;
     }
-    if (alignment.z > maxAlignment) {
+    if (alignment.z > maxAlignment)
+    {
         maxAlignment = alignment.z;
         face = _CLRWL_SOUTH;
     }
-    if (-alignment.x > maxAlignment) {
+    if (-alignment.x > maxAlignment)
+    {
         maxAlignment = -alignment.x;
         face = _CLRWL_WEST;
     }
-    if (alignment.x > maxAlignment) {
+    if (alignment.x > maxAlignment)
+    {
         maxAlignment = alignment.x;
         face = _CLRWL_EAST;
     }
@@ -51,8 +57,10 @@ int _clrwl_getNearestFacing(vec3 normal) {
     return face;
 }
 
-vec2 _clrwl_getCrumblingTexCoord() {
-    switch (_clrwl_getNearestFacing(flw_vertexNormal)) {
+vec2 _clrwl_getCrumblingTexCoord()
+{
+    switch (_clrwl_getNearestFacing(flw_vertexNormal))
+    {
         case _CLRWL_DOWN: return vec2(flw_vertexPos.x, -flw_vertexPos.z);
         case _CLRWL_UP: return vec2(flw_vertexPos.x, flw_vertexPos.z);
         case _CLRWL_NORTH: return vec2(-flw_vertexPos.x, -flw_vertexPos.y);
@@ -65,24 +73,6 @@ vec2 _clrwl_getCrumblingTexCoord() {
     return vec2(-flw_vertexPos.x, -flw_vertexPos.y);
 }
 #endif
-
-uniform uint _clrwl_packedMaterial;
-uniform int _flw_baseInstance = 0;
-
-#ifdef FLW_EMBEDDED
-    uniform mat4 _flw_modelMatrixUniform;
-    uniform mat3 _flw_normalMatrixUniform;
-
-    #ifdef HAS_SABLE
-        uniform uint _flw_lightingSceneUniform;
-        uniform float _flw_lightingSkyLightScaleUniform;
-        uniform mat4 _flw_lightingSceneMatrixUniform;
-    #endif
-#endif
-
-uniform uint _flw_baseVertex;
-
-uniform vec4 _clrwl_meshCenter;
 
 float _clrwl_diffuseFactor()
 {
@@ -107,24 +97,22 @@ float _clrwl_diffuseFactor()
     }
 }
 
-void main()
-{
-    flw_vertexId = gl_VertexID - _flw_baseVertex;
-
-    _flw_unpackMaterialProperties(_clrwl_packedMaterial, flw_material);
-
-    FlwInstance instance = _flw_unpackInstance(_flw_baseInstance + gl_InstanceID);
-
 #ifdef FLW_EMBEDDED
-    mat4 _flw_modelMatrix = _flw_modelMatrixUniform;
-    mat3 _flw_normalMatrix = _flw_normalMatrixUniform;
+    mat4 _flw_modelMatrix;
+    mat3 _flw_normalMatrix;
 
     #ifdef HAS_SABLE
-        uint _flw_lightingSceneId = _flw_lightingSceneUniform;
-        float _flw_skyLightScale = _flw_lightingSkyLightScaleUniform;
-        mat4 _flw_lightingSceneMatrix = _flw_lightingSceneMatrixUniform;
+        uint _flw_lightingSceneId;
+        float _flw_lightingSkyLightScale;
+        mat4 _flw_lightingSceneMatrix;
     #endif
 #endif
+
+vec4 _clrwl_meshCenter;
+
+void _clrwl_main(FlwInstance instance, uint stableInstanceID, uint baseVertex)
+{
+    flw_vertexId = gl_VertexID - baseVertex;
 
     _clrwl_layoutVertex();
 
@@ -164,95 +152,97 @@ void main()
     flw_instanceVertex(instance);
     flw_materialVertex();
 
-#ifdef _FLW_CRUMBLING
-    flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
-#endif
-
-#ifdef FLW_EMBEDDED
-    #ifdef HAS_SABLE
-        flw_vertexLightingPos = _flw_lightingSceneMatrix * flw_vertexPos;
+    #ifdef _FLW_CRUMBLING
+        flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
     #endif
 
-    flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
-    transformedMeshCenter = _flw_modelMatrix * transformedMeshCenter;
-    flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
-    clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
+    #ifdef FLW_EMBEDDED
+        #ifdef HAS_SABLE
+            flw_vertexLightingPos = _flw_lightingSceneMatrix * flw_vertexPos;
+        #endif
 
-    #ifdef HAS_SABLE
-        flw_vertexLightingSceneId = _flw_lightingSceneId;
-        flw_skyLightScale = _flw_skyLightScale;
+        flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
+        transformedMeshCenter = _flw_modelMatrix * transformedMeshCenter;
+        flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
+        clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
+
+        #ifdef HAS_SABLE
+            flw_vertexLightingSceneId = _flw_lightingSceneId;
+            flw_skyLightScale = _flw_lightingSkyLightScale;
+        #endif
     #endif
-#endif
 
-    // at_midBlock.w doesn't exists on 1.20.1, but it's used to flag vertices as terrain
-    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, -1);
+    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0,
+                               clrwl_vertexMidMesh.w == -1 ? _clrwl_meshCenter.w : clrwl_vertexMidMesh.w);
 
     flw_vertexNormal = normalize(flw_vertexNormal);
 
-#ifndef HAS_SABLE
-    FlwLightAo light;
-    if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
-    {
-        if (!flw_material.ambientOcclusion)
+#ifdef CLRWL_IS_FALLBACK
+    #ifndef HAS_SABLE
+        FlwLightAo light;
+        if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
         {
-            light.ao = 1.0;
-        }
+            if (!flw_material.ambientOcclusion)
+            {
+                light.ao = 1.0;
+            }
 
-        #ifdef _CLRWL_SEPARATE_AO
-            flw_vertexLight = max(flw_vertexLight, light.light);
-            flw_vertexColor.a = light.ao;
-        #else
-            flw_vertexLight = max(flw_vertexLight, light.light);
-            flw_vertexColor.rgb *= light.ao;
-        #endif
-    }
-#else
-    uint sceneId = 0;
-    vec4 vertexLightingPos;
-    ivec3 renderOrigin;
-
-    #ifdef FLW_EMBEDDED
-        renderOrigin = flw_renderOrigin;
-        sceneId = flw_vertexLightingSceneId;
-        vertexLightingPos = flw_vertexLightingPos;
-
-        if (sceneId != 0)
-        {
-            renderOrigin = ivec3(0);
+            #ifdef _CLRWL_SEPARATE_AO
+                flw_vertexLight = max(flw_vertexLight, light.light);
+                flw_vertexColor.a = light.ao;
+            #else
+                flw_vertexLight = max(flw_vertexLight, light.light);
+                flw_vertexColor.rgb *= light.ao;
+            #endif
         }
     #else
-        renderOrigin = flw_renderOrigin;
-        vertexLightingPos = flw_vertexPos;
-    #endif
+        uint sceneId = 0;
+        vec4 vertexLightingPos;
+        ivec3 renderOrigin;
 
-    FlwLightAo light;
-    if (flw_light(sceneId, vertexLightingPos.xyz, flw_vertexNormal, renderOrigin, light))
-    {
-        if (!flw_material.ambientOcclusion)
+        #ifdef FLW_EMBEDDED
+            renderOrigin = flw_renderOrigin;
+            sceneId = flw_vertexLightingSceneId;
+            vertexLightingPos = flw_vertexLightingPos;
+
+            if (sceneId != 0)
+            {
+                renderOrigin = ivec3(0);
+            }
+        #else
+            renderOrigin = flw_renderOrigin;
+            vertexLightingPos = flw_vertexPos;
+        #endif
+
+        FlwLightAo light;
+        if (flw_light(sceneId, vertexLightingPos.xyz, flw_vertexNormal, renderOrigin, light))
         {
-            light.ao = 1.0;
+            if (!flw_material.ambientOcclusion)
+            {
+                light.ao = 1.0;
+            }
+
+            #ifdef _CLRWL_SEPARATE_AO
+                flw_vertexLight = max(flw_vertexLight, light.light);
+                flw_vertexColor.a = light.ao;
+            #else
+                flw_vertexLight = max(flw_vertexLight, light.light);
+                flw_vertexColor.rgb *= light.ao;
+            #endif
         }
 
-        #ifdef _CLRWL_SEPARATE_AO
-            flw_vertexLight = max(flw_vertexLight, light.light);
-            flw_vertexColor.a = light.ao;
-        #else
-            flw_vertexLight = max(flw_vertexLight, light.light);
-            flw_vertexColor.rgb *= light.ao;
+        #ifdef FLW_EMBEDDED
+            flw_vertexLight.y *= flw_skyLightScale;
         #endif
-    }
-
-    #ifdef FLW_EMBEDDED
-        flw_vertexLight.y *= flw_skyLightScale;
     #endif
-#endif
-
-#ifdef CLRWL_OLD_LIGHTING
-    flw_vertexColor.rgb *= _clrwl_diffuseFactor();
+    
+    #ifdef CLRWL_OLD_LIGHTING
+        flw_vertexColor.rgb *= _clrwl_diffuseFactor();
+    #endif
 #endif
 
 #ifdef _FLW_DEBUG
-    clrwl_debugIds = uvec2(gl_InstanceID, _flw_baseVertex);
+    clrwl_debugIds = uvec2(stableInstanceID, baseVertex);
 
     if (_flw_debugMode == 6u) // midMesh
     {

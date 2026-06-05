@@ -2,7 +2,7 @@ package dev.djefrey.colorwheel.engine;
 
 public record ClrwlInstanceVisual(Type type, int irisId, int lightEmission)
 {
-    private static final int UNDEFINED_ID = -1;
+    private static final int UNDEFINED_ID = 65535;
     private static final ClrwlInstanceVisual UNDEFINED = new ClrwlInstanceVisual(Type.UNDEFINED, UNDEFINED_ID, 0);
 
     public static ClrwlInstanceVisual undefined()

@@ -219,10 +219,8 @@ public class ClrwlProgram
 		ProgramSamplers.clearActiveSamplers();
 	}
 
-	public void prepareDrawCall(int baseVertex, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter, ClrwlRenderingPhase phase, ClrwlBlendModeOverride blendModeOverride)
+	public void setClrwlCommonUniforms(Material material, ClrwlBlendModeOverride blendModeOverride, ClrwlRenderingPhase phase)
 	{
-		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
-
 		var abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(material.texture());
 		int atlasWidth = 0;
 		int atlasHeight = 0;
@@ -230,7 +228,7 @@ public class ClrwlProgram
 		if (abstractTexture instanceof TextureAtlas atlas)
 		{
 			atlasWidth = ((TextureAtlasAccessor) atlas).callGetWidth();
-			atlasHeight = ((TextureAtlasAccessor) atlas).callGetWidth();
+			atlasHeight = ((TextureAtlasAccessor) atlas).callGetHeight();
 		}
 
 		BlendMode blendMode;
@@ -251,6 +249,15 @@ public class ClrwlProgram
 			blendMode = Utils.transparencyToBlendMode(material.transparency());
 		}
 
+		setUniformI(blendFuncUniform, blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
+		setUniformI(atlasSizeUniform, atlasWidth, atlasHeight);
+		setUniformS(renderPhaseUniform, phase.getValue());
+	}
+
+	public void setInstancingUniforms(int baseVertex, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter)
+	{
+		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
+
 		setUniformU(baseVertexUniform, baseVertex);
 		setUniformS(baseInstanceUniform, baseInstance);
 		setUniformU(packedMaterialUniform, packedMaterialProperties);
@@ -258,9 +265,6 @@ public class ClrwlProgram
 		setUniformS(blockEntityUniform, visual.getBlockEntity());
 		setUniformS(entityUniform, visual.getEntity());
 		setUniform(meshCenterUniform, meshCenter.x(), meshCenter.y(), meshCenter.z(), (float) visual.lightEmission());
-		setUniformS(renderPhaseUniform, phase.getValue());
-		setUniformI(blendFuncUniform, blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
-		setUniformI(atlasSizeUniform, atlasWidth, atlasHeight);
 	}
 
 	public void setEmbeddedMatrices(Matrix4f model,  Matrix3f normal)

@@ -2,13 +2,12 @@ package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
+import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.djefrey.colorwheel.util.AccumulateTimer;
 import dev.engine_room.flywheel.api.backend.Backend;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;
 import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.network.chat.ClickEvent;
@@ -23,7 +22,7 @@ import java.util.Optional;
 public class ClrwlBackend
 {
     public static final Backend IRIS_INSTANCING = SimpleBackend.builder()
-            .engineFactory(level -> new ClrwlEngine(level, 256))
+            .engineFactory(level -> new ClrwlEngine(level, 256, ClrwlInstancedDrawManager::build))
             .priority(500)
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(Colorwheel.rl("instancing"));
@@ -63,6 +62,8 @@ public class ClrwlBackend
                         var packComp = Component.literal(name).setStyle(Style.EMPTY.withItalic(true));
                         Colorwheel.sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack", packComp), true);
 
+                        var clickHereComp = Component.translatable("colorwheel.click_here");
+
                         if (patch.isPresent())
                         {
                             var patchComp = Component.literal(patch.get()).setStyle(Style.EMPTY.withItalic(true));
@@ -70,20 +71,26 @@ public class ClrwlBackend
                         }
                         else
                         {
-                            var fallbackComp = Component.translatable("colorwheel.fallback_mode").withStyle(
-                                    Style.EMPTY
+                            var fallbackComp = Component.translatable("colorwheel.fallback_mode")
+                                    .append(" (").append(clickHereComp).append(")")
+                                    .withStyle(
+                                        Style.EMPTY
                                             .withUnderlined(true)
                                             .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel enableFallbackMode on"))
-                                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.fallback_mode.enable"))));
+                                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.fallback_mode.enable")))
+                                    );
 
                             Colorwheel.sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.ask_fallback_mode", fallbackComp), false);
                         }
 
-                        var disableComp = Component.translatable("colorwheel.alert.ask_disable").withStyle(
-                                Style.EMPTY
+                        var disableComp = Component.translatable("colorwheel.alert.ask_disable")
+                                .append(" (").append(clickHereComp).append(")")
+                                .withStyle(
+                                    Style.EMPTY
                                         .withUnderlined(true)
                                         .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertIncompatiblePack off"))
-                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.incompatible_pack.disable"))));
+                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.incompatible_pack.disable")))
+                                );
 
                         Colorwheel.sendEmptyMessage();
 

@@ -1,6 +1,7 @@
 #include "colorwheel:internal/material.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
+#ifndef CLRWL_IS_FALLBACK
 in ClrwlVertexData
 {
     vec4 flw_vertexPos;
@@ -52,6 +53,11 @@ out ClrwlVertexData
     flat uvec2 clrwl_debugIds;
 #endif
 } clrwl_out;
+#endif
 
 uniform sampler2D flw_diffuseTex;
 uniform sampler2D flw_overlayTex;
+
+#ifdef _FLW_CRUMBLING
+uniform sampler2D _flw_crumblingTex;
+#endif

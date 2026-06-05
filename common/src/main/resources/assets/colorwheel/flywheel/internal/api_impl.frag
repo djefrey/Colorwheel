@@ -2,6 +2,7 @@
 #include "flywheel:internal/api_impl.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
+#ifndef CLRWL_IS_FALLBACK
 in ClrwlVertexData
 {
     vec4 flw_vertexPos;
@@ -31,12 +32,17 @@ in ClrwlVertexData
 vec4 flw_sampleColor;
 float flw_distance;
 
-FlwMaterial flw_material;
-
 bool flw_fragDiffuse;
 vec4 flw_fragColor;
 ivec2 flw_fragOverlay;
 vec2 flw_fragLight;
+#endif
+
+FlwMaterial flw_material;
 
 uniform sampler2D flw_diffuseTex;
 uniform sampler2D flw_overlayTex;
+
+#ifdef _FLW_CRUMBLING
+uniform sampler2D _flw_crumblingTex;
+#endif

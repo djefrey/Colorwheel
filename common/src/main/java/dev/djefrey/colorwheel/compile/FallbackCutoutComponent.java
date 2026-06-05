@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class FallbackCutoutComponent implements SourceComponent
 {
-    private Map<Integer, String> shaderOutputs;
+    private final Map<Integer, String> shaderOutputs;
 
     public FallbackCutoutComponent(Map<Integer, String> shaderOutputs)
     {
@@ -43,7 +43,7 @@ public class FallbackCutoutComponent implements SourceComponent
         builder.function()
                 .signature(FnSignature.create()
                         .returnType("void")
-                        .name("_clrwl_fallback_cutout")
+                        .name(ClrwlPipelines.CLRWL_POST_FRAGMENT_FCT)
                         .build())
                 .body(body);
 

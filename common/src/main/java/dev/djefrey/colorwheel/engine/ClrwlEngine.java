@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.engine;
 
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.ExtendedEngine;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
@@ -21,6 +22,7 @@ import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.GlStateTracker;
+import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -40,8 +42,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ClrwlEngine implements Engine
+public class ClrwlEngine implements ExtendedEngine
 {
+	public interface DrawManagerFactory
+	{
+		ClrwlDrawManager<?> build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean isFallback);
+	}
+
 	public static List<ClrwlEngine> ENGINES = new ArrayList<>();
 
 	private final ClrwlDrawManager<?> drawManager;
@@ -54,7 +61,7 @@ public class ClrwlEngine implements Engine
 	private final NamespacedId dimension;
 	private final ShaderPack pack;
 
-	public ClrwlEngine(LevelAccessor level, int maxOriginDistance)
+	public ClrwlEngine(LevelAccessor level, int maxOriginDistance, DrawManagerFactory drawManagerFactory)
 	{
 		ClientLevel clientLevel = (ClientLevel) level;
 		this.level = level;
@@ -66,11 +73,7 @@ public class ClrwlEngine implements Engine
 		var programSet = pack.getProgramSet(dimension);
 		var isFallback = (((ProgramSetAccessor) programSet).colorwheel$isFallbackMode());
 
-		ClrwlOitPrograms oitPrograms = new ClrwlOitPrograms(FlwPrograms.SOURCES);
-
-		this.drawManager = new ClrwlInstancedDrawManager(pack, dimension,
-				(p) -> ClrwlInstancedPrograms.build(FlwPrograms.SOURCES, pack, dimension, isFallback),
-				oitPrograms);
+		this.drawManager = drawManagerFactory.build(FlwPrograms.SOURCES, pack, dimension, isFallback);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = Colorwheel.getModCompat().makeLightStorage(level);
@@ -126,42 +129,52 @@ public class ClrwlEngine implements Engine
 		lightStorage.onLightUpdate(sectionPos.asLong());
 	}
 
+	private boolean shouldPrepareFrame = false;
+
+	@Override
+	public void beginFrame(RenderContext ctx)
+	{
+		shouldPrepareFrame = true;
+	}
+
+	private void prepareFrame()
+	{
+		if (shouldPrepareFrame)
+		{
+			shouldPrepareFrame = false;
+
+			environmentStorage.flush();
+			drawManager.prepareFrame(lightStorage, environmentStorage);
+		}
+	}
+
 	@Override
 	public void render(RenderContext context)
 	{
 		try (var state = GlStateTracker.getRestoreState())
 		{
+			prepareFrame();
+
 			if (context instanceof ShadowRenderContext shadowContext)
 			{
 				if (shadowContext.phase() == ShadowRenderingPhase.SOLID)
 				{
 					ClrwlUniforms.update(context, pack, dimension);
-					environmentStorage.flush();
-					drawManager.prepareFrame(lightStorage, environmentStorage);
-
-					drawManager.renderSolid();
+					drawManager.renderSolid(true);
 				}
 				else
 				{
-					drawManager.renderTranslucent();
+					drawManager.renderTranslucent(true);
 				}
 			}
 			else if (context instanceof TranslucentRenderContext)
 			{
-				ClrwlUniforms.update(context, pack, dimension);
-				environmentStorage.flush();
-				drawManager.prepareFrame(lightStorage, environmentStorage);
-
-
-				drawManager.renderTranslucent();
+				drawManager.renderTranslucent(false);
 			}
 			else
 			{
 				ClrwlUniforms.update(context, pack, dimension);
-				environmentStorage.flush();
-				drawManager.prepareFrame(lightStorage, environmentStorage);
-
-				drawManager.renderSolid();
+				drawManager.renderSolid(false);
 			}
 		}
 		catch (Exception e)

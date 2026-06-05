@@ -25,5 +25,7 @@
     "command.colorwheel.fallback_mode.get.on": "降级模式已§e§l开启§r",
     "command.colorwheel.fallback_mode.get.off": "降级模式已§e§l关闭§r",
     "command.colorwheel.fallback_mode.set.on": "降级模式已§e§l开启§r。可能引发问题！",
-    "command.colorwheel.fallback_mode.set.off": "降级模式已§e§l关闭§r"
+    "command.colorwheel.fallback_mode.set.off": "降级模式已§e§l关闭§r",
+
+    "colorwheel.click_here": "点击此处"
 }

@@ -40,9 +40,9 @@ public class ClrwlProgramSources
             Map<ShaderType, List<String>> extensions = ((ProgramSourceAccessor) sources).colorwheel$getShaderExtensions();
             int[] drawBuffers = sources.getDirectives().getDrawBuffers();
 
-            String vertexSource = ClrwlTransformPatcher.patchVertex(sources.getVertexSource().orElseThrow(), k.isCrumbling(), sources.getDirectives(), pipeline.getTextureMap());
-            Optional<String> geometrySource = sources.getGeometrySource().map(s -> ClrwlTransformPatcher.patchGeometry(s, k.isCrumbling(), sources.getDirectives(), pipeline.getTextureMap()));
-            ClrwlTransformOutput fragmentSource = ClrwlTransformPatcher.patchFragment(sources.getFragmentSource().orElseThrow(), k.isCrumbling(), k.customOutputs(), sources.getDirectives(), pipeline.getTextureMap());
+            String vertexSource = ClrwlTransformPatcher.patchVertex(sources.getVertexSource().orElseThrow(), k.isCrumbling(), pipeline.getTextureMap());
+            Optional<String> geometrySource = sources.getGeometrySource().map(s -> ClrwlTransformPatcher.patchGeometry(s, k.isCrumbling(), pipeline.getTextureMap()));
+            ClrwlTransformOutput fragmentSource = ClrwlTransformPatcher.patchFragment(sources.getFragmentSource().orElseThrow(), k.isCrumbling(), k.customOutputs(), pipeline.getTextureMap());
 
             return new PatchedSources(vertexSource, geometrySource, fragmentSource, extensions, drawBuffers);
         });

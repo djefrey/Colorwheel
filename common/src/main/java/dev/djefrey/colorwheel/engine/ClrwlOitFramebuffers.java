@@ -131,36 +131,9 @@ public class ClrwlOitFramebuffers
      */
     public void prepare()
     {
-        int depthTexture;
-        int width;
-        int height;
+        var depthInfo = ((IrisRenderingPipelineAccessor) irisPipeline).getProgramGroupDepthInfo(programGroup);
 
-        switch (programGroup)
-        {
-            case GBUFFERS ->
-            {
-                RenderTargets targets = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getGbuffersRenderTargets();
-
-                depthTexture = targets.getDepthTexture();
-                width = targets.getCurrentWidth();
-                height = targets.getCurrentHeight();
-            }
-            case SHADOW ->
-            {
-                ShadowRenderTargets targets = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getShadowRenderTargets();
-
-                depthTexture = targets.getDepthTexture().getTextureId();
-                width = targets.getResolution();
-                height = targets.getResolution();
-            }
-
-            default ->
-            {
-                throw new RuntimeException("Unknown program group: " + programGroup);
-            }
-        }
-
-        maybeResizeFBOS(width, height);
+        maybeResizeFBOS(depthInfo.width(), depthInfo.height());
 
         if (this.coeffsFbo != -1)
         {
@@ -185,11 +158,11 @@ public class ClrwlOitFramebuffers
         if (coeffsFbo != -1)
         {
             GlStateManager._glBindFramebuffer(GL32.GL_FRAMEBUFFER, coeffsFbo);
-            GL32.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, depthTexture, 0);
+            GL32.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, depthInfo.textureId(), 0);
         }
 
         GlStateManager._glBindFramebuffer(GL32.GL_FRAMEBUFFER, mainFbo);
-        GL32.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, depthTexture, 0);
+        GL32.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, depthInfo.textureId(), 0);
     }
 
     /**
