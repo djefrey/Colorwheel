@@ -24,6 +24,7 @@ import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.instancing.InstancedLight;
 import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
+import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
@@ -95,6 +96,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		this.light = new InstancedLight();
 
 		this.meshPool.bind(vao);
+	}
+
+	public static ClrwlInstancedDrawManager build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean isFallback)
+	{
+		var programs = ClrwlInstancedPrograms.build(sources, pack, dimension, isFallback);
+		return new ClrwlInstancedDrawManager(pack, dimension, programs);
 	}
 
 	@Override
@@ -266,9 +273,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				oitFramebuffer.prepareDepthRange();
 				submitOitDraws(pipelineData, isShadow, ClrwlPipelineCompiler.OitMode.DEPTH_RANGE);
 
+				setPhase(ClrwlRenderingPhase.OIT_COEFFICIENTS, isShadow);
+
 				if (oitFramebuffer.prepareRenderTransmittance())
 				{
-					setPhase(ClrwlRenderingPhase.OIT_COEFFICIENTS, isShadow);
 					submitOitDraws(pipelineData, isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
 				}
 
@@ -353,7 +361,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			var blendOverride = framebuffers.getBlendModeOverride(programId).orElse(null);
 			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId);
 
-			program.prepareDrawCall(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
+			program.setClrwlCommonUniforms(material, blendOverride, currentRenderPhase);
+			program.setInstancingUniforms(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter());
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setup(material, blendOverride, bufferBlendOverrides);
 
@@ -421,7 +430,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				program.bind();
 			}
 
-			program.prepareDrawCall(drawCall.mesh().baseVertex(),0, material, drawCall.visual(), drawCall.mesh().meshCenter(), currentRenderPhase, blendOverride);
+			program.setClrwlCommonUniforms(material, blendOverride, currentRenderPhase);
+			program.setInstancingUniforms(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter());
 			environment.setupDraw(program.getProgram());
 			ClrwlMaterialRenderState.setupOit(material);
 
@@ -554,7 +564,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 							program.bind();
 						}
 
-						program.prepareDrawCall(0, index, crumblingMaterial, draw.visual(), draw.mesh().meshCenter(), currentRenderPhase, blendOverride);
+						program.setClrwlCommonUniforms(crumblingMaterial, blendOverride, currentRenderPhase);
+						program.setInstancingUniforms(0, index, crumblingMaterial, draw.visual(), draw.mesh().meshCenter());
 						ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
 
 						Samplers.INSTANCE_BUFFER.makeActive();
@@ -641,21 +652,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		pipelineData.clear();
 	}
 
-	private boolean alreadyGotInvalidPipeline = false;
-
-	private void handleInvalidPipeline(WorldRenderingPipeline worldPipeline)
-	{
-		if (alreadyGotInvalidPipeline)
-		{
-			return;
-		}
-
-		Colorwheel.LOGGER.warn("Got unexpected rendering pipeline, rendering issues may occur.");
-		Colorwheel.LOGGER.warn("Got pipeline: {}", worldPipeline);
-
-		alreadyGotInvalidPipeline = true;
-	}
-
 	@Override
 	public void delete()
 	{
@@ -713,22 +709,5 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	@Override
 	public void triggerFallback()
 	{
-	}
-
-	private String getShaderPackName()
-	{
-		return Iris.getCurrentPackName();
-	}
-
-	private ClrwlRenderingPhase currentRenderPhase = ClrwlRenderingPhase.SOLID;
-
-	private void setPhase(ClrwlRenderingPhase phase, boolean shadow)
-	{
-		var name = "Clrwl " + (shadow ? "Shadow " : "") + StringUtils.capitalize(phase.name().toLowerCase(Locale.ROOT).replace("_", " "));
-
-		GLDebug.popGroup();
-		GLDebug.pushGroup(phase.getValue(), name);
-
-		currentRenderPhase = phase;
 	}
 }

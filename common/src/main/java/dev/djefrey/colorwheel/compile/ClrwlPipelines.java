@@ -7,6 +7,7 @@ import dev.djefrey.colorwheel.engine.ClrwlVertex;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.util.Utils;
+import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.backend.BackendConfig;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
@@ -18,31 +19,21 @@ import dev.engine_room.flywheel.lib.material.CutoutShaders;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ClrwlPipelines
 {
     public static final ResourceLocation API_IMPL_VERT = Colorwheel.rl("internal/api_impl.vert");
     public static final ResourceLocation API_IMPL_GEOM = Colorwheel.rl("internal/api_impl_geom.glsl");
     public static final ResourceLocation API_IMPL_FRAG = Colorwheel.rl("internal/api_impl.frag");
-    public static final ResourceLocation FALLBACK_API_IMPL_VERT = Colorwheel.rl("internal/fallback/api_impl.vert");
-    public static final ResourceLocation FALLBACK_API_IMPL_GEOM = Colorwheel.rl("internal/fallback/api_impl_geom.glsl");
-    public static final ResourceLocation FALLBACK_API_IMPL_FRAG = Colorwheel.rl("internal/fallback/api_impl.frag");
 
-    public static final ResourceLocation IRIS_COMPAT_VERT = Colorwheel.rl("internal/instancing/iris_compat.vert");
-    public static final ResourceLocation IRIS_COMPAT_GEOM = Colorwheel.rl("internal/instancing/iris_compat_geom.glsl");
-    public static final ResourceLocation IRIS_COMPAT_FRAG = Colorwheel.rl("internal/instancing/iris_compat.frag");
-    public static final ResourceLocation FALLBACK_IRIS_COMPAT_VERT = Colorwheel.rl("internal/fallback/instancing/iris_compat.vert");
-    public static final ResourceLocation FALLBACK_IRIS_COMPAT_GEOM = Colorwheel.rl("internal/fallback/instancing/iris_compat_geom.glsl");
-    public static final ResourceLocation FALLBACK_IRIS_COMPAT_FRAG = Colorwheel.rl("internal/fallback/instancing/iris_compat.frag");
+    public static final ResourceLocation IRIS_COMPAT_VERT = Colorwheel.rl("internal/iris_compat.vert");
+    public static final ResourceLocation IRIS_COMPAT_GEOM = Colorwheel.rl("internal/iris_compat_geom.glsl");
+    public static final ResourceLocation IRIS_COMPAT_FRAG = Colorwheel.rl("internal/iris_compat.frag");
 
-    public static final ResourceLocation MAIN_VERT = Colorwheel.rl("internal/instancing/main.vert");
-    public static final ResourceLocation MAIN_GEOM = Colorwheel.rl("internal/instancing/main_geom.glsl");
-    public static final ResourceLocation MAIN_FRAG = Colorwheel.rl("internal/instancing/main.frag");
-    public static final ResourceLocation FALLBACK_MAIN_VERT = Colorwheel.rl("internal/fallback/instancing/main.vert");
-    public static final ResourceLocation FALLBACK_MAIN_GEOM = Colorwheel.rl("internal/fallback/instancing/main_geom.glsl");
-    public static final ResourceLocation FALLBACK_MAIN_FRAG = Colorwheel.rl("internal/fallback/instancing/main.frag");
+    public static final ResourceLocation INSTANCING_MAIN_VERT = Colorwheel.rl("internal/instancing/main.vert");
+    public static final ResourceLocation INSTANCING_MAIN_GEOM = Colorwheel.rl("internal/instancing/main_geom.glsl");
+    public static final ResourceLocation INSTANCING_MAIN_FRAG = Colorwheel.rl("internal/instancing/main.frag");
 
     public static final ResourceLocation OIT_DEPTH_RANGE_FRAG = Colorwheel.rl("internal/oit/depth_range.frag");
 
@@ -50,37 +41,124 @@ public class ClrwlPipelines
 
     private static final ResourceLocation FULLSCREEN = ResourceUtil.rl("internal/fullscreen.vert");
 
-    public static ClrwlPipeline INSTANCING = ClrwlPipeline.builder()
-            .id("instancing")
-            .minVersion(GlCompat.MAX_GLSL_VERSION)
-            .onSetup((b) ->
-            {
-                for (String ext : ClrwlInstancedPrograms.EXTENSIONS)
-                {
-                    b.requireExtension(ext);
-                }
-            })
-            .vertex(ClrwlPipeline.vertexStage()
-                    .define("IS_COLORWHEEL")
-                    .onCompile((k, c) ->
-                    {
-                        if (k.isDebugEnabled())
-                        {
-                            c.define("_FLW_DEBUG");
-                        }
-                    })
-                    .onCompile(ClrwlPipelines::setIrisDefines)
-                    .onCompile((k, c) ->
-                    {
-                        var exts = c.getIrisSources().extensions().get(ShaderType.VERTEX);
+    public static final String CLRWL_POST_FRAGMENT_FCT = "_clrwl_post_shader";
 
-                        for (var ext : exts)
-                        {
-                            c.enableExtension(ext);
-                        }
-                    })
+    private static final SimpleClrwlPipelineBuilder INSTANCING_BUILDER = SimpleClrwlPipelineBuilder.builder()
+            .id("instancing")
+            .extensions(ClrwlInstancedPrograms.EXTENSIONS)
+            .assembler(BufferTextureInstanceComponent::new)
+            .vertex(INSTANCING_MAIN_VERT)
+            .geometry(INSTANCING_MAIN_GEOM)
+            .fragment(INSTANCING_MAIN_FRAG);
+
+    public static ClrwlPipeline INSTANCING = INSTANCING_BUILDER.build(false);
+    public static ClrwlPipeline INSTANCING_FALLBACK = INSTANCING_BUILDER.build(true);
+
+    public static ClrwlOitCompositePipeline OIT_COMPOSITE = ClrwlOitCompositePipeline.builder()
+            .id("oit_composite")
+            .minVersion(GlCompat.MAX_GLSL_VERSION)
+            .vertex(ClrwlOitCompositePipeline.vertexStage()
+                    .withResource(FULLSCREEN)
+                    .build()
+            )
+            .fragment(ClrwlOitCompositePipeline.fragmentStage()
                     .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .onCompile((k, c) -> setContextDefine(k.context(), c))
+                    .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.drawBuffers(), k.ranks(), k.overrides()))
+                    .build())
+            .build();
+
+    public static class SimpleClrwlPipelineBuilder
+    {
+        public interface InstanceAssembler
+        {
+            SourceComponent assemble(InstanceType<?> type);
+        }
+
+        private String id;
+        private List<String> extensions;
+        private InstanceAssembler assembler;
+        private ResourceLocation vertexMain;
+        private ResourceLocation geometryMain;
+        private ResourceLocation fragmentMain;
+
+        private SimpleClrwlPipelineBuilder() {}
+
+        public static SimpleClrwlPipelineBuilder builder()
+        {
+            return new SimpleClrwlPipelineBuilder();
+        }
+
+        public SimpleClrwlPipelineBuilder id(String id)
+        {
+            this.id = id;
+            return this;
+        }
+
+        public SimpleClrwlPipelineBuilder extensions(List<String> extensions)
+        {
+            this.extensions = extensions;
+            return this;
+        }
+
+        public SimpleClrwlPipelineBuilder assembler(InstanceAssembler assembler)
+        {
+            this.assembler = assembler;
+            return this;
+        }
+
+        public SimpleClrwlPipelineBuilder vertex(ResourceLocation vertex)
+        {
+            this.vertexMain = vertex;
+            return this;
+        }
+
+        public SimpleClrwlPipelineBuilder geometry(ResourceLocation geometry)
+        {
+            this.geometryMain = geometry;
+            return this;
+        }
+
+        public SimpleClrwlPipelineBuilder fragment(ResourceLocation fragment)
+        {
+            this.fragmentMain = fragment;
+            return this;
+        }
+
+        private ClrwlPipelineStage<ClrwlShaderKey> buildVertexStage(boolean fallback)
+        {
+            var stage = ClrwlPipeline.vertexStage()
+                .define("IS_COLORWHEEL");
+
+            if (fallback)
+            {
+                stage = stage
+                        .define("CLRWL_IS_FALLBACK");
+            }
+
+            stage = stage
+                .onCompile((k, c) ->
+                {
+                    if (k.isDebugEnabled())
+                    {
+                        c.define("_FLW_DEBUG");
+                    }
+                })
+                .onCompile(ClrwlPipelines::setIrisDefines)
+                .onCompile((k, c) ->
+                {
+                    var exts = c.getIrisSources().extensions().get(ShaderType.VERTEX);
+
+                    for (var ext : exts)
+                    {
+                        c.enableExtension(ext);
+                    }
+                })
+                .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                .onCompile((k, c) -> setContextDefine(k.context(), c));
+
+            if (!fallback)
+            {
+                stage = stage
                     .onCompile((k, c) ->
                     {
                         if (k.oit() != ClrwlPipelineCompiler.OitMode.OFF)
@@ -88,20 +166,36 @@ public class ClrwlPipelines
                             c.define("CLRWL_OIT");
                             c.define(k.oit().define);
                         }
-                    })
-                    .onCompile(ClrwlPipelines::setLightSmoothness)
-                    .withResource(API_IMPL_VERT)
-                    .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
-                    .withLoader((k, sources) -> sources.get(k.instanceType().vertexShader()))
-                    .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
-                    .withResource(ClrwlVertex.LAYOUT_SHADER)
-                    .withResource(IRIS_COMPAT_VERT)
-                    .withComponent((k) -> new BufferTextureInstanceComponent(k.instanceType()))
-                    .with(ClrwlPipelines::getIrisShaderVertexSource)
-                    .withResource(MAIN_VERT)
-                    .build())
-            .geometry(ClrwlPipeline.geometryStage()
-                    .define("IS_COLORWHEEL")
+                    });
+            }
+
+            stage = stage
+                .onCompile(ClrwlPipelines::setLightSmoothness)
+                .withResource(API_IMPL_VERT)
+                .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
+                .withLoader((k, sources) -> sources.get(k.instanceType().vertexShader()))
+                .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
+                .withResource(ClrwlVertex.LAYOUT_SHADER)
+                .withResource(IRIS_COMPAT_VERT)
+                .withComponent((k) -> assembler.assemble(k.instanceType()))
+                .with(ClrwlPipelines::getIrisShaderVertexSource)
+                .withResource(vertexMain);
+
+            return stage.build();
+        }
+
+        private ClrwlPipelineStage<ClrwlShaderKey> buildGeometryStage(boolean fallback)
+        {
+            var stage = ClrwlPipeline.geometryStage()
+                    .define("IS_COLORWHEEL");
+
+            if (fallback)
+            {
+                stage = stage
+                        .define("CLRWL_IS_FALLBACK");
+            }
+
+            stage = stage
                     .onCompile((k, c) ->
                     {
                         if (k.isDebugEnabled())
@@ -122,31 +216,49 @@ public class ClrwlPipelines
                     .withResource(API_IMPL_GEOM)
                     .withResource(IRIS_COMPAT_GEOM)
                     .with(ClrwlPipelines::getIrisShaderGeometrySource)
-                    .withResource(MAIN_GEOM)
-                    .build())
-            .fragment(ClrwlPipeline.fragmentStage()
-                    .define("IS_COLORWHEEL")
-                    .onCompile((k, c) ->
-                    {
-                        if (k.isDebugEnabled())
-                        {
-                            c.define("_FLW_DEBUG");
-                        }
-                    })
-                    .onCompile(ClrwlPipelines::setIrisDefines)
-                    .enableExtension("GL_ARB_conservative_depth")
-                    .onCompile((k, c) ->
-                    {
-                        var exts = c.getIrisSources().extensions().get(ShaderType.FRAGMENT);
+                    .withResource(geometryMain);
 
-                        for (var ext : exts)
-                        {
-                            c.enableExtension(ext);
-                        }
-                    })
-                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .onCompile((k, c) -> setContextDefine(k.context(), c))
-                    .onCompile((k, c) -> setCutoutDefine(k.cutout(), c))
+            return stage.build();
+        }
+
+        private ClrwlPipelineStage<ClrwlShaderKey> buildFragmentStage(boolean fallback)
+        {
+            var stage = ClrwlPipeline.fragmentStage()
+                .define("IS_COLORWHEEL");
+
+            if (fallback)
+            {
+                stage = stage
+                    .define("CLRWL_IS_FALLBACK");
+            }
+
+            stage = stage
+                .onCompile((k, c) ->
+                {
+                    if (k.isDebugEnabled())
+                    {
+                        c.define("_FLW_DEBUG");
+                    }
+                })
+                .onCompile(ClrwlPipelines::setIrisDefines)
+                .enableExtension("GL_ARB_conservative_depth")
+                .onCompile((k, c) ->
+                {
+                    var exts = c.getIrisSources().extensions().get(ShaderType.FRAGMENT);
+
+                    for (var ext : exts)
+                    {
+                        c.enableExtension(ext);
+                    }
+                })
+                .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                .onCompile((k, c) -> setContextDefine(k.context(), c))
+                .onCompile((k, c) -> setCutoutDefine(k.cutout(), c))
+                .onCompile((k, c) -> setSeparateAoDefine(c));
+
+            if (!fallback)
+            {
+                stage = stage
                     .onCompile((k, c) ->
                     {
                         if (k.oit() != ClrwlPipelineCompiler.OitMode.OFF)
@@ -154,142 +266,60 @@ public class ClrwlPipelines
                             c.define("CLRWL_OIT");
                             c.define(k.oit().define);
                         }
-                    })
-                    .onCompile(ClrwlPipelines::setLightSmoothness)
-                    .withResource(COMPONENTS_HEADER_FRAG)
-                    .withResource(API_IMPL_FRAG)
+                    });
+            }
+
+            stage = stage
+                .onCompile(ClrwlPipelines::setLightSmoothness)
+                .withResource(COMPONENTS_HEADER_FRAG)
+                .withResource(API_IMPL_FRAG)
+                .withLoader((k, sources) ->
+                        k.cutout() == CutoutShaders.OFF
+                            ? sources.get(CutoutShaders.OFF.source())
+                            : sources.get(k.cutout().source()));
+
+            if (!fallback)
+            {
+                stage = stage
                     .withLoader((k, sources) -> sources.get(k.material().fragmentSource()))
                     .withLoader((k, sources) -> sources.get(k.fog().source()))
                     .withLoader((k, sources) -> sources.get(k.light().source()))
-                    .withLoader((k, sources) ->
-                            k.cutout() == CutoutShaders.OFF
-                                    ? sources.get(CutoutShaders.OFF.source())
-                                    : sources.get(k.cutout().source()))
                     .withLoader(($, sources) -> sources.get(IRIS_COMPAT_FRAG))
                     .with(ClrwlPipelines::getOitInouts)
                     .with(ClrwlPipelines::getIrisShaderFragmentSource)
-                    .with(ClrwlPipelines::getPostShaderFragmentSource)
-                    .withResource(MAIN_FRAG)
-                    .build())
-            .build();
-
-    public static ClrwlPipeline FALLBACK_INSTANCING = ClrwlPipeline.builder()
-            .id("fallback_instancing")
-            .minVersion(GlCompat.MAX_GLSL_VERSION)
-            .onSetup((b) ->
+                    .withResource(fragmentMain)
+                    .with(ClrwlPipelines::getPostShaderFragmentSource);
+            }
+            else
             {
-                for (String ext : ClrwlInstancedPrograms.EXTENSIONS)
-                {
-                    b.requireExtension(ext);
-                }
-            })
-            .vertex(ClrwlPipeline.vertexStage()
-                    .define("IS_COLORWHEEL")
-                    .onCompile((k, c) ->
-                    {
-                        if (k.isDebugEnabled())
-                        {
-                            c.define("_FLW_DEBUG");
-                        }
-                    })
-                    .onCompile(ClrwlPipelines::setIrisDefines)
-                    .onCompile((k, c) ->
-                    {
-                        var exts = c.getIrisSources().extensions().get(ShaderType.VERTEX);
-
-                        for (var ext : exts)
-                        {
-                            c.enableExtension(ext);
-                        }
-                    })
-                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .onCompile((k, c) -> setContextDefine(k.context(), c))
-                    .onCompile(ClrwlPipelines::setLightSmoothness)
-                    .withResource(FALLBACK_API_IMPL_VERT)
-                    .withComponent((k) -> new InstanceStructComponent(k.instanceType()))
-                    .withLoader((k, sources) -> sources.get(k.instanceType().vertexShader()))
-                    .withLoader((k, sources) -> sources.get(k.material().vertexSource()))
-                    .withResource(ClrwlVertex.LAYOUT_SHADER)
-                    .withResource(FALLBACK_IRIS_COMPAT_VERT)
-                    .withComponent((k) -> new BufferTextureInstanceComponent(k.instanceType()))
-                    .with(ClrwlPipelines::getIrisShaderVertexSource)
-                    .withResource(FALLBACK_MAIN_VERT)
-                    .build())
-            .geometry(ClrwlPipeline.geometryStage()
-                    .define("IS_COLORWHEEL")
-                    .onCompile((k, c) ->
-                    {
-                        if (k.isDebugEnabled())
-                        {
-                            c.define("_FLW_DEBUG");
-                        }
-                    })
-                    .onCompile(ClrwlPipelines::setIrisDefines)
-                    .onCompile((k, c) ->
-                    {
-                        var exts = c.getIrisSources().extensions().get(ShaderType.GEOMETRY);
-
-                        for (var ext : exts)
-                        {
-                            c.enableExtension(ext);
-                        }
-                    })
-                    .withResource(FALLBACK_API_IMPL_GEOM)
-                    .withResource(FALLBACK_IRIS_COMPAT_GEOM)
-                    .with(ClrwlPipelines::getIrisShaderGeometrySource)
-                    .withResource(FALLBACK_MAIN_GEOM)
-                    .build())
-            .fragment(ClrwlPipeline.fragmentStage()
-                    .define("IS_COLORWHEEL")
-                    .onCompile((k, c) ->
-                    {
-                        if (k.isDebugEnabled())
-                        {
-                            c.define("_FLW_DEBUG");
-                        }
-                    })
-                    .onCompile(ClrwlPipelines::setIrisDefines)
-                    .enableExtension("GL_ARB_conservative_depth")
-                    .onCompile((k, c) ->
-                    {
-                        var exts = c.getIrisSources().extensions().get(ShaderType.FRAGMENT);
-
-                        for (var ext : exts)
-                        {
-                            c.enableExtension(ext);
-                        }
-                    })
-                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .onCompile((k, c) -> setContextDefine(k.context(), c))
-                    .onCompile((k, c) -> setCutoutDefine(k.cutout(), c))
-                    .onCompile((k, c) -> setSeparateAoDefine(c))
-                    .onCompile(ClrwlPipelines::setLightSmoothness)
-                    .withResource(COMPONENTS_HEADER_FRAG)
-                    .withResource(FALLBACK_API_IMPL_FRAG)
-                    .withLoader((k, sources) ->
-                            k.cutout() == CutoutShaders.OFF
-                                    ? sources.get(CutoutShaders.OFF.source())
-                                    : sources.get(k.cutout().source()))
-                    .withLoader(($, sources) -> sources.get(FALLBACK_IRIS_COMPAT_FRAG))
-                    .with(ClrwlPipelines::getOitInouts)
+                stage = stage
+                    .withLoader(($, sources) -> sources.get(IRIS_COMPAT_FRAG))
                     .with(ClrwlPipelines::getIrisShaderFragmentSource)
-                    .with(ClrwlPipelines::getFallbackCutoutFragmentSource)
-                    .withResource(FALLBACK_MAIN_FRAG)
-                    .build())
-            .build();
+                    .withResource(fragmentMain)
+                    .with(ClrwlPipelines::getFallbackCutoutFragmentSource);
+            }
 
-    public static ClrwlOitCompositePipeline OIT_COMPOSITE = ClrwlOitCompositePipeline.builder()
-            .id("oit_composite")
-            .minVersion(GlCompat.MAX_GLSL_VERSION)
-            .vertex(ClrwlOitCompositePipeline.vertexStage()
-                    .withResource(FULLSCREEN)
-                    .build()
-            )
-            .fragment(ClrwlOitCompositePipeline.fragmentStage()
-                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
-                    .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.drawBuffers(), k.ranks(), k.overrides()))
-                    .build())
-            .build();
+            return stage.build();
+        }
+
+        public ClrwlPipeline build(boolean fallback)
+        {
+            return ClrwlPipeline.builder()
+                    .id(id + (fallback ? "_fallback" : ""))
+                    .minVersion(GlCompat.MAX_GLSL_VERSION)
+                    .onSetup((b) ->
+                    {
+                        for (String ext : extensions)
+                        {
+                            b.requireExtension(ext);
+                        }
+                    })
+                    .vertex(buildVertexStage(fallback))
+                    .geometry(buildGeometryStage(fallback))
+                    .fragment(buildFragmentStage(fallback))
+                    .build();
+        }
+    }
 
     private static void setIrisDefines(ClrwlShaderKey k, ClrwlCompilation c)
     {
@@ -405,7 +435,6 @@ public class ClrwlPipelines
         {
             case DEPTH_RANGE ->
             {
-                c.define("CLRWL_POST_SHADER");
                 return c.getLoader().get(OIT_DEPTH_RANGE_FRAG);
             }
 
@@ -429,7 +458,6 @@ public class ClrwlPipelines
                     }
                 }
 
-                c.define("CLRWL_POST_SHADER");
                 return new OitCollectCoeffsComponent(ranks, coeffFrag, c.getIrisSources().fragment().outputs());
             }
 
@@ -440,12 +468,30 @@ public class ClrwlPipelines
                 var overrides = c.getProperties().getOitAccumulateOverrides(programGroup);
                 var outputs = c.getIrisSources().fragment().outputs();
 
-                c.define("CLRWL_POST_SHADER");
                 return new OitEvaluateComponent(drawBuffers, ranks, overrides, outputs);
             }
         }
 
-        return null;
+        return new SourceComponent()
+        {
+            @Override
+            public Collection<? extends SourceComponent> included()
+            {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public String source()
+            {
+                return "void " + CLRWL_POST_FRAGMENT_FCT + "() {}";
+            }
+
+            @Override
+            public String name()
+            {
+                return Colorwheel.rl("noop_post_fragment").toString();
+            }
+        };
     }
 
     private static void setSeparateAoDefine(ClrwlCompilation c)

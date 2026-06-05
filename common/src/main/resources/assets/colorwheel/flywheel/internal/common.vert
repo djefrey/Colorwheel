@@ -1,5 +1,4 @@
 #include "colorwheel:internal/packed_material.glsl"
-#include "flywheel:internal/instancing/light.glsl"
 #include "colorwheel:internal/diffuse.glsl"
 
 #ifdef _FLW_CRUMBLING
@@ -11,7 +10,8 @@ const int _CLRWL_WEST = 4;
 const int _CLRWL_EAST = 5;
 
 // based on net.minecraftforge.client.ForgeHooksClient.getNearestStable
-int _clrwl_getNearestFacing(vec3 normal) {
+int _clrwl_getNearestFacing(vec3 normal)
+{
     float maxAlignment = -2;
     int face = 2;
 
@@ -23,27 +23,33 @@ int _clrwl_getNearestFacing(vec3 normal) {
     dot(normal, vec3(0., 0., 1.))
     );
 
-    if (-alignment.y > maxAlignment) {
+    if (-alignment.y > maxAlignment)
+    {
         maxAlignment = -alignment.y;
         face = _CLRWL_DOWN;
     }
-    if (alignment.y > maxAlignment) {
+    if (alignment.y > maxAlignment)
+    {
         maxAlignment = alignment.y;
         face = _CLRWL_UP;
     }
-    if (-alignment.z > maxAlignment) {
+    if (-alignment.z > maxAlignment)
+    {
         maxAlignment = -alignment.z;
         face = _CLRWL_NORTH;
     }
-    if (alignment.z > maxAlignment) {
+    if (alignment.z > maxAlignment)
+    {
         maxAlignment = alignment.z;
         face = _CLRWL_SOUTH;
     }
-    if (-alignment.x > maxAlignment) {
+    if (-alignment.x > maxAlignment)
+    {
         maxAlignment = -alignment.x;
         face = _CLRWL_WEST;
     }
-    if (alignment.x > maxAlignment) {
+    if (alignment.x > maxAlignment)
+    {
         maxAlignment = alignment.x;
         face = _CLRWL_EAST;
     }
@@ -51,8 +57,10 @@ int _clrwl_getNearestFacing(vec3 normal) {
     return face;
 }
 
-vec2 _clrwl_getCrumblingTexCoord() {
-    switch (_clrwl_getNearestFacing(flw_vertexNormal)) {
+vec2 _clrwl_getCrumblingTexCoord()
+{
+    switch (_clrwl_getNearestFacing(flw_vertexNormal))
+    {
         case _CLRWL_DOWN: return vec2(flw_vertexPos.x, -flw_vertexPos.z);
         case _CLRWL_UP: return vec2(flw_vertexPos.x, flw_vertexPos.z);
         case _CLRWL_NORTH: return vec2(-flw_vertexPos.x, -flw_vertexPos.y);
@@ -65,18 +73,6 @@ vec2 _clrwl_getCrumblingTexCoord() {
     return vec2(-flw_vertexPos.x, -flw_vertexPos.y);
 }
 #endif
-
-uniform uint _clrwl_packedMaterial;
-uniform int _flw_baseInstance = 0;
-
-#ifdef FLW_EMBEDDED
-uniform mat4 _flw_modelMatrixUniform;
-uniform mat3 _flw_normalMatrixUniform;
-#endif
-
-uniform uint _flw_baseVertex;
-
-uniform vec4 _clrwl_meshCenter;
 
 float _clrwl_diffuseFactor()
 {
@@ -101,18 +97,16 @@ float _clrwl_diffuseFactor()
     }
 }
 
-void main()
+#ifdef FLW_EMBEDDED
+mat4 _flw_modelMatrix;
+mat3 _flw_normalMatrix;
+#endif
+
+vec4 _clrwl_meshCenter;
+
+void _clrwl_main(FlwInstance instance, uint stableInstanceID, uint baseVertex)
 {
-    flw_vertexId = gl_VertexID - _flw_baseVertex;
-
-    _flw_unpackMaterialProperties(_clrwl_packedMaterial, flw_material);
-
-    FlwInstance instance = _flw_unpackInstance(_flw_baseInstance + gl_InstanceID);
-
-    #ifdef FLW_EMBEDDED
-    mat4 _flw_modelMatrix = _flw_modelMatrixUniform;
-    mat3 _flw_normalMatrix = _flw_normalMatrixUniform;
-    #endif
+    flw_vertexId = gl_VertexID - baseVertex;
 
     _clrwl_layoutVertex();
 
@@ -126,8 +120,8 @@ void main()
     vec3 flw_vertexNormal_bkp = flw_vertexNormal;
 
     vec3 midMesh = clrwl_vertexMidMesh.w == -1
-        ? _clrwl_meshCenter.xyz
-        : flw_vertexPos.xyz + clrwl_vertexMidMesh.xyz / 64.0;
+    ? _clrwl_meshCenter.xyz
+    : flw_vertexPos.xyz + clrwl_vertexMidMesh.xyz / 64.0;
 
     flw_vertexPos = vec4(midMesh.xyz, 1.0);
     flw_vertexNormal = clrwl_vertexTangent.xyz;
@@ -153,49 +147,51 @@ void main()
     flw_materialVertex();
 
     #ifdef _FLW_CRUMBLING
-    flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
+        flw_vertexTexCoord = _clrwl_getCrumblingTexCoord();
     #endif
 
     #ifdef FLW_EMBEDDED
-    flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
-    transformedMeshCenter = _flw_modelMatrix * transformedMeshCenter;
-    flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
-    clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
+        flw_vertexPos = _flw_modelMatrix * flw_vertexPos;
+        transformedMeshCenter = _flw_modelMatrix * transformedMeshCenter;
+        flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
+        clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
     #endif
 
-    // at_midBlock.w doesn't exists on 1.20.1, but it's used to flag vertices as terrain
-    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0, -1);
+    clrwl_vertexMidMesh = vec4((transformedMeshCenter.xyz - flw_vertexPos.xyz) * 64.0,
+                               clrwl_vertexMidMesh.w == -1 ? _clrwl_meshCenter.w : clrwl_vertexMidMesh.w);
 
     flw_vertexNormal = normalize(flw_vertexNormal);
 
-    FlwLightAo light;
-    if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
-    {
-        if (!flw_material.ambientOcclusion)
+    #ifdef CLRWL_IS_FALLBACK
+        FlwLightAo light;
+        if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
         {
-            light.ao = 1.0;
+            if (!flw_material.ambientOcclusion)
+            {
+                light.ao = 1.0;
+            }
+
+            #ifdef _CLRWL_SEPARATE_AO
+            flw_vertexLight = max(flw_vertexLight, light.light);
+            flw_vertexColor.a = light.ao;
+            #else
+            flw_vertexLight = max(flw_vertexLight, light.light);
+            flw_vertexColor.rgb *= light.ao;
+            #endif
         }
 
-        #ifdef _CLRWL_SEPARATE_AO
-        flw_vertexLight = max(flw_vertexLight, light.light);
-        flw_vertexColor.a = light.ao;
-        #else
-        flw_vertexLight = max(flw_vertexLight, light.light);
-        flw_vertexColor.rgb *= light.ao;
+        #if CLRWL_OLD_LIGHTING
+            flw_vertexColor.rgb *= _clrwl_diffuseFactor();
         #endif
-    }
-
-    #ifdef CLRWL_OLD_LIGHTING
-    flw_vertexColor.rgb *= _clrwl_diffuseFactor();
     #endif
 
     #ifdef _FLW_DEBUG
-    clrwl_debugIds = uvec2(gl_InstanceID, _flw_baseVertex);
+        clrwl_debugIds = uvec2(stableInstanceID, baseVertex);
 
-    if (_flw_debugMode == 6u) // midMesh
-    {
-        flw_vertexPos.xyz += (clrwl_vertexMidMesh.xyz / 64.0) * (sin(flw_renderSeconds * 3.14159) * 0.5 + 0.5);
-    }
+        if (_flw_debugMode == 6u) // midMesh
+        {
+            flw_vertexPos.xyz += (clrwl_vertexMidMesh.xyz / 64.0) * (sin(flw_renderSeconds * 3.14159) * 0.5 + 0.5);
+        }
     #endif
 
     if (flw_material.useOverlay)

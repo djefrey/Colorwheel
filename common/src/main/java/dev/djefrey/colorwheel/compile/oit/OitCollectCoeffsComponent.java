@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.compile.ClrwlPipelines;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBlock;
@@ -81,7 +82,7 @@ public class OitCollectCoeffsComponent implements SourceComponent
         builder.function()
                 .signature(FnSignature.create()
                         .returnType("void")
-                        .name("_clrwl_post_shader")
+                        .name(ClrwlPipelines.CLRWL_POST_FRAGMENT_FCT)
                         .build())
                 .body(body);
 

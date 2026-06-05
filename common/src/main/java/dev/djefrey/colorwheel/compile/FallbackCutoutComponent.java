@@ -43,7 +43,7 @@ public class FallbackCutoutComponent implements SourceComponent
         builder.function()
                 .signature(FnSignature.create()
                         .returnType("void")
-                        .name("_clrwl_fallback_cutout")
+                        .name(ClrwlPipelines.CLRWL_POST_FRAGMENT_FCT)
                         .build())
                 .body(body);
 

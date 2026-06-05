@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.mojang.datafixers.util.Pair;
+import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.backend.RenderContext;
@@ -17,8 +18,12 @@ import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.lib.task.ForEachPlan;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.minecraft.client.resources.model.ModelBakery;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -182,6 +187,21 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 		return byType;
 	}
 
+	protected boolean alreadyGotInvalidPipeline = false;
+
+	protected void handleInvalidPipeline(WorldRenderingPipeline worldPipeline)
+	{
+		if (alreadyGotInvalidPipeline)
+		{
+			return;
+		}
+
+		Colorwheel.LOGGER.warn("Got unexpected rendering pipeline, rendering issues may occur.");
+		Colorwheel.LOGGER.warn("Got pipeline: {}", worldPipeline);
+
+		alreadyGotInvalidPipeline = true;
+	}
+
 	public void delete()
 	{
 		instancers.clear();
@@ -189,6 +209,23 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 	}
 
 	public abstract void triggerFallback();
+
+	protected String getShaderPackName()
+	{
+		return Iris.getCurrentPackName();
+	}
+
+	protected ClrwlRenderingPhase currentRenderPhase = ClrwlRenderingPhase.SOLID;
+
+	protected void setPhase(ClrwlRenderingPhase phase, boolean shadow)
+	{
+		var name = "Clrwl " + (shadow ? "Shadow " : "") + StringUtils.capitalize(phase.name().toLowerCase(Locale.ROOT).replace("_", " "));
+
+		GLDebug.popGroup();
+		GLDebug.pushGroup(phase.getValue(), name);
+
+		currentRenderPhase = phase;
+	}
 
 	protected record UninitializedInstancer<N, I extends Instance>(ClrwlInstancerKey<I> key, N instancer) {
 	}

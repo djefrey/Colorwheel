@@ -1,10 +1,10 @@
+#ifdef CLRWL_IS_FALLBACK
 out ClrwlFallbackVertexData
 {
     vec4 clrwl_overlayColor;
 };
-
-#ifdef _FLW_CRUMBLING
-uniform sampler2D _flw_crumblingTex;
+#else
+vec4 clrwl_overlayColor = vec4(0.0);
 #endif
 
 vec4 ftransform()

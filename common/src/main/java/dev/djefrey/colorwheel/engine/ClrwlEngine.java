@@ -23,6 +23,7 @@ import dev.engine_room.flywheel.backend.compile.FlwPrograms;
 import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.backend.gl.GlStateTracker;
+import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -44,6 +45,11 @@ import java.util.Map;
 
 public class ClrwlEngine implements ExtendedEngine
 {
+	public interface DrawManagerFactory
+	{
+		ClrwlDrawManager<?> build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean isFallback);
+	}
+
 	public static List<ClrwlEngine> ENGINES = new ArrayList<>();
 
 	private final ClrwlDrawManager<?> drawManager;
@@ -56,7 +62,7 @@ public class ClrwlEngine implements ExtendedEngine
 	private final NamespacedId dimension;
 	private final ShaderPack pack;
 
-	public ClrwlEngine(LevelAccessor level, int maxOriginDistance)
+	public ClrwlEngine(LevelAccessor level, int maxOriginDistance, DrawManagerFactory drawManagerFactory)
 	{
 		ClientLevel clientLevel = (ClientLevel) level;
 		this.level = level;
@@ -67,9 +73,8 @@ public class ClrwlEngine implements ExtendedEngine
 
 		var programSet = pack.getProgramSet(dimension);
 		var isFallback = (((ProgramSetAccessor) programSet).colorwheel$isFallbackMode());
-		var programs = ClrwlInstancedPrograms.build(FlwPrograms.SOURCES, pack, dimension, isFallback);
 
-		this.drawManager = new ClrwlInstancedDrawManager(pack, dimension, programs);
+		this.drawManager = drawManagerFactory.build(FlwPrograms.SOURCES, pack, dimension, isFallback);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = new LightStorage(level);

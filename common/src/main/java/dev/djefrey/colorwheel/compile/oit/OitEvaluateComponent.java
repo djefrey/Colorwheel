@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.compile.oit;
 
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.compile.ClrwlPipelines;
 import dev.djefrey.colorwheel.util.Utils;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
@@ -85,7 +86,7 @@ public class OitEvaluateComponent implements SourceComponent
         builder.function()
                 .signature(FnSignature.create()
                         .returnType("void")
-                        .name("_clrwl_post_shader")
+                        .name(ClrwlPipelines.CLRWL_POST_FRAGMENT_FCT)
                         .build())
                 .body(body);
 

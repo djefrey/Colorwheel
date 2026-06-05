@@ -1,48 +1,28 @@
-#include "flywheel:internal/instancing/light.glsl"
 #include "colorwheel:internal/depth.glsl"
 #include "colorwheel:internal/diffuse.glsl"
 #include "colorwheel:internal/oit/wavelet.glsl"
 #include "colorwheel:internal/colorizer.glsl"
 
+#ifdef CLRWL_IS_FALLBACK
+in ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+};
+#else
 vec4 clrwl_overlayColor = vec4(0.0);
-
-#ifdef _FLW_CRUMBLING
-uniform sampler2D _flw_crumblingTex;
 #endif
 
-#ifdef CLRWL_OIT
-
-uniform sampler2D _flw_depthRange;
-uniform sampler2D _flw_blueNoise;
-
-float _clrwl_tented_blue_noise(float normalizedDepth)
+void clrwl_computeDiscard(vec4 color)
 {
-    float tentIn = abs(normalizedDepth * 2. - 1);
-    float tentIn2 = tentIn * tentIn;
-    float tentIn4 = tentIn2 * tentIn2;
-    float tent = 1 - (tentIn2 * tentIn4);
-
-    float b = texture(_flw_blueNoise, gl_FragCoord.xy / vec2(64)).r;
-
-    return b * tent;
+    #ifdef _FLW_USE_DISCARD
+    if (flw_discardPredicate(color))
+    {
+        discard;
+    }
+    #endif
 }
 
-float _clrwl_linear_depth()
-{
-    return _clrwl_linearize_depth(gl_FragCoord.z, _flw_cullData.znear, _flw_cullData.zfar);
-}
-
-#ifdef CLRWL_EVALUATE
-
-float _clrwl_frontmost_transmittance_from_depth(float linear, vec2 range)
-{
-    return linear <= -range.x + 2e-5 ? 1.0 : 0.0;
-}
-
-#endif
-
-#endif
-
+#ifndef CLRWL_IS_FALLBACK
 float _clrwl_diffuseFactor()
 {
     if (flw_material.cardinalLightingMode == 2u)
@@ -83,16 +63,6 @@ void _clrwl_shaderLight_hook()
 
     #ifdef CLRWL_OLD_LIGHTING
     flw_fragColor.rgb *= _clrwl_diffuseFactor();
-    #endif
-}
-
-void clrwl_computeDiscard(vec4 color)
-{
-    #ifdef _FLW_USE_DISCARD
-    if (flw_discardPredicate(color))
-    {
-        discard;
-    }
     #endif
 }
 
@@ -171,3 +141,4 @@ void clrwl_computeFragment(vec4 sampleColor, out vec4 fragColor, out vec2 fragLi
     fragLight = flw_fragLight + 1.0 / 32.0;
     fragOverlay = clrwl_overlayColor;
 }
+#endif

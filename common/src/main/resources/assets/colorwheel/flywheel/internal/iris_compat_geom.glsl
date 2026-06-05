@@ -1,8 +1,16 @@
-vec4 clrwl_overlayColor = vec4(0.0);
+#ifdef CLRWL_IS_FALLBACK
+in ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+} clrwl_in[3];
 
-#ifdef _FLW_CRUMBLING
-uniform sampler2D _flw_crumblingTex;
+out ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+} clrwl_out;
 #endif
+
+vec4 clrwl_overlayColor = vec4(0.0);
 
 void clrwl_setVertexOut(int i)
 {

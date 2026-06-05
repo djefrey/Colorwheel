@@ -45,7 +45,7 @@ public class ClrwlInstancedPrograms
 		}
 
 		var pipeline = fallback
-				? ClrwlPipelines.FALLBACK_INSTANCING
+				? ClrwlPipelines.INSTANCING_FALLBACK
 				: ClrwlPipelines.INSTANCING;
 
 		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, dimension);
