@@ -30,7 +30,7 @@ public class FabricPonderClientMixin
         });
     }
 
-    @Inject(method = "lambda$onInitializeClient$3",
+    @Inject(method = "lambda$onInitializeClient$2",
             at = @At("HEAD"),
             require = 0,
             cancellable = true,
