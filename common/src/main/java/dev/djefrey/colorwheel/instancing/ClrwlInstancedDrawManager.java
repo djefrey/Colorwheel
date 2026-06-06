@@ -709,5 +709,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	@Override
 	public void triggerFallback()
 	{
+		Minecraft.getInstance().levelRenderer.allChanged();
 	}
 }
