@@ -1,3 +1,12 @@
+### 1.2.9
+
+- Fixed IncompatibleClassChangeError crash on 1.20.1
+- Fixed mixin issues on Fabric 1.21.1
+- Fixed shader compilation error on AMD Windows (thanks to Luracasmus)
+- Fixed atlasSize incorrect height
+- Use correct value for undefined blockEntityId and entityId
+- Underlined text is now explicitly stated as clickable in alert messages
+
 ### 1.2.8
 
 - Fixed old lighting
