@@ -60,7 +60,7 @@ public abstract class UniversalMeshEmitterMixin implements ColorwheelBufferBuild
     @Override
     public void clrwlBeginBlock(short block, short renderType, byte lightEmission, boolean isTerrain, int posX, int posY, int posZ)
     {
-        beginBlock(block, renderType, posX, posY, posZ);
+        this.beginBlock(block, renderType, posX, posY, posZ);
         this.colorwheel$lightEmission = lightEmission;
     }
 
