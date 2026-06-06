@@ -22,8 +22,8 @@ out ClrwlVertexData
 
 #ifdef FLW_EMBEDDED
     #ifdef HAS_SABLE
-        flat uint flw_vertexLightingSceneId;
-        flat float flw_skyLightScale;
+        CLRWL_FLAT_OUT uint flw_vertexLightingSceneId;
+        CLRWL_FLAT_OUT float flw_skyLightScale;
         vec4 flw_vertexLightingPos;
     #endif
 #endif
