@@ -92,6 +92,6 @@ public class OitCollectCoeffsComponent implements SourceComponent
     @Override
     public String name()
     {
-        return Colorwheel.rl("oit_collect_coeffs").toString();
+        return Colorwheel.id("oit_collect_coeffs").toString();
     }
 }

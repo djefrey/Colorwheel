@@ -17,6 +17,8 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,6 +36,10 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
     @Final
     private boolean shouldRenderTranslucent;
 
+    @Shadow
+    @Final
+    private LevelRenderState levelRenderState;
+
     @Accessor
     public abstract ShadowRenderTargets getTargets();
 
@@ -47,10 +53,10 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
     }
 
     @Inject(
-            method = "renderShadows(Lnet/irisshaders/iris/mixin/LevelRendererAccessor;Lnet/minecraft/client/Camera;)V",
+            method = "renderShadows",
             at = @At(value = "CONSTANT", args = "stringValue=build blockentities")
     )
-    private void injectRenderShadows(LevelRendererAccessor levelRenderer, Camera playerCamera, CallbackInfo ci)
+    private void injectRenderShadows(LevelRendererAccessor levelRenderer, Camera playerCamera, CameraRenderState renderState, CallbackInfo ci)
     {
         if (colorwheel$shouldRenderShadow && Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
         {
@@ -60,15 +66,15 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
             Vector3d cameraPos = CameraUniforms.getUnshiftedCameraPosition();
             final float tickDelta = CapturedRenderingState.INSTANCE.getTickDelta();
 
-            Colorwheel.getSafeFlw().submitShadowRenderContext(level, playerCamera, cameraPos, tickDelta, ShadowRenderingPhase.SOLID);
+            Colorwheel.getSafeFlw().submitShadowRenderContext(level, renderState, levelRenderState, cameraPos, tickDelta, ShadowRenderingPhase.SOLID);
         }
     }
 
     @Inject(
-            method = "renderShadows(Lnet/irisshaders/iris/mixin/LevelRendererAccessor;Lnet/minecraft/client/Camera;)V",
+            method = "renderShadows",
             at = @At(value = "CONSTANT", args = "stringValue=translucent terrain")
     )
-    private void injectRenderShadowsTranslucent(LevelRendererAccessor levelRenderer, Camera playerCamera, CallbackInfo ci)
+    private void injectRenderShadowsTranslucent(LevelRendererAccessor levelRenderer, Camera playerCamera, CameraRenderState renderState, CallbackInfo ci)
     {
         if (shouldRenderTranslucent && colorwheel$shouldRenderShadow && Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
         {
@@ -78,7 +84,7 @@ public abstract class ShadowRendererMixin implements ShadowRendererAccessor
             Vector3d cameraPos = CameraUniforms.getUnshiftedCameraPosition();
             final float tickDelta = CapturedRenderingState.INSTANCE.getTickDelta();
 
-            Colorwheel.getSafeFlw().submitShadowRenderContext(level, playerCamera, cameraPos, tickDelta, ShadowRenderingPhase.TRANSLUCENT);
+            Colorwheel.getSafeFlw().submitShadowRenderContext(level, renderState, levelRenderState, cameraPos, tickDelta, ShadowRenderingPhase.TRANSLUCENT);
         }
     }
 }

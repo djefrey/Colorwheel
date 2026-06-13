@@ -25,7 +25,7 @@ public class ClrwlBackend
             .engineFactory(level -> new ClrwlEngine(level, 256, ClrwlInstancedDrawManager::build))
             .priority(500)
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
-            .register(Colorwheel.rl("instancing"));
+            .register(Colorwheel.id("instancing"));
 
 
     public static void init()
@@ -76,8 +76,8 @@ public class ClrwlBackend
                                     .withStyle(
                                         Style.EMPTY
                                             .withUnderlined(true)
-                                            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel enableFallbackMode on"))
-                                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.fallback_mode.enable")))
+                                            .withClickEvent(new ClickEvent.SuggestCommand("/colorwheel enableFallbackMode on"))
+                                            .withHoverEvent(new HoverEvent.ShowText(Component.translatable("colorwheel.fallback_mode.enable")))
                                     );
 
                             Colorwheel.sendErrorMessage(Component.translatable("colorwheel.alert.incompatible_pack.ask_fallback_mode", fallbackComp), false);
@@ -88,8 +88,8 @@ public class ClrwlBackend
                                 .withStyle(
                                     Style.EMPTY
                                         .withUnderlined(true)
-                                        .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertIncompatiblePack off"))
-                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.incompatible_pack.disable")))
+                                        .withClickEvent(new ClickEvent.SuggestCommand("/colorwheel alertIncompatiblePack off"))
+                                        .withHoverEvent(new HoverEvent.ShowText(Component.translatable("colorwheel.alert.incompatible_pack.disable")))
                                 );
 
                         Colorwheel.sendEmptyMessage();

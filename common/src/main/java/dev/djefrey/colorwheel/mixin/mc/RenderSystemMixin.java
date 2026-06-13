@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.mixin.mc;
 
+import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.util.GlCompat;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class RenderSystemMixin
 {
     @Inject(method = "initRenderer", at = @At("RETURN"), remap = false)
-    private static void colorwheel$init(int i, boolean bl, CallbackInfo ci)
+    private static void colorwheel$init(GpuDevice device, CallbackInfo ci)
     {
         GlCompat.init();
     }

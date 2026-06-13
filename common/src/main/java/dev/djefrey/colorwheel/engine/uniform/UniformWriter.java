@@ -11,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
+import org.joml.Vector4fc;
 import org.lwjgl.system.MemoryUtil;
 
 public class UniformWriter
@@ -49,6 +50,10 @@ public class UniformWriter
         MemoryUtil.memPutFloat(ptr + 8, z);
         MemoryUtil.memPutFloat(ptr + 12, w);
         return ptr + 16;
+    }
+
+    static long writeVec4(long ptr, Vector4fc vec) {
+        return writeVec4(ptr, vec.x(), vec.y(), vec.z(), vec.w());
     }
 
     static long writeIVec2(long ptr, int x, int y) {

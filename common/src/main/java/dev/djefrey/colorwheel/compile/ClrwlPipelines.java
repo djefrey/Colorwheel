@@ -16,30 +16,30 @@ import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponen
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.material.CutoutShaders;
-import dev.engine_room.flywheel.lib.util.ResourceUtil;
-import net.minecraft.resources.ResourceLocation;
+import dev.engine_room.flywheel.lib.util.IdentifierUtil;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 
 public class ClrwlPipelines
 {
-    public static final ResourceLocation API_IMPL_VERT = Colorwheel.rl("internal/api_impl.vert");
-    public static final ResourceLocation API_IMPL_GEOM = Colorwheel.rl("internal/api_impl_geom.glsl");
-    public static final ResourceLocation API_IMPL_FRAG = Colorwheel.rl("internal/api_impl.frag");
+    public static final Identifier API_IMPL_VERT = Colorwheel.id("internal/api_impl.vert");
+    public static final Identifier API_IMPL_GEOM = Colorwheel.id("internal/api_impl_geom.glsl");
+    public static final Identifier API_IMPL_FRAG = Colorwheel.id("internal/api_impl.frag");
 
-    public static final ResourceLocation IRIS_COMPAT_VERT = Colorwheel.rl("internal/iris_compat.vert");
-    public static final ResourceLocation IRIS_COMPAT_GEOM = Colorwheel.rl("internal/iris_compat_geom.glsl");
-    public static final ResourceLocation IRIS_COMPAT_FRAG = Colorwheel.rl("internal/iris_compat.frag");
+    public static final Identifier IRIS_COMPAT_VERT = Colorwheel.id("internal/iris_compat.vert");
+    public static final Identifier IRIS_COMPAT_GEOM = Colorwheel.id("internal/iris_compat_geom.glsl");
+    public static final Identifier IRIS_COMPAT_FRAG = Colorwheel.id("internal/iris_compat.frag");
 
-    public static final ResourceLocation INSTANCING_MAIN_VERT = Colorwheel.rl("internal/instancing/main.vert");
-    public static final ResourceLocation INSTANCING_MAIN_GEOM = Colorwheel.rl("internal/instancing/main_geom.glsl");
-    public static final ResourceLocation INSTANCING_MAIN_FRAG = Colorwheel.rl("internal/instancing/main.frag");
+    public static final Identifier INSTANCING_MAIN_VERT = Colorwheel.id("internal/instancing/main.vert");
+    public static final Identifier INSTANCING_MAIN_GEOM = Colorwheel.id("internal/instancing/main_geom.glsl");
+    public static final Identifier INSTANCING_MAIN_FRAG = Colorwheel.id("internal/instancing/main.frag");
 
-    public static final ResourceLocation OIT_DEPTH_RANGE_FRAG = Colorwheel.rl("internal/oit/depth_range.frag");
+    public static final Identifier OIT_DEPTH_RANGE_FRAG = Colorwheel.id("internal/oit/depth_range.frag");
 
-    public static final ResourceLocation COMPONENTS_HEADER_FRAG = ResourceUtil.rl("internal/components_header.frag");
+    public static final Identifier COMPONENTS_HEADER_FRAG = IdentifierUtil.id("internal/components_header.frag");
 
-    private static final ResourceLocation FULLSCREEN = ResourceUtil.rl("internal/fullscreen.vert");
+    private static final Identifier FULLSCREEN = IdentifierUtil.id("internal/fullscreen.vert");
 
     public static final String CLRWL_POST_FRAGMENT_FCT = "_clrwl_post_shader";
 
@@ -77,9 +77,9 @@ public class ClrwlPipelines
         private String id;
         private List<String> extensions;
         private InstanceAssembler assembler;
-        private ResourceLocation vertexMain;
-        private ResourceLocation geometryMain;
-        private ResourceLocation fragmentMain;
+        private Identifier vertexMain;
+        private Identifier geometryMain;
+        private Identifier fragmentMain;
 
         private SimpleClrwlPipelineBuilder() {}
 
@@ -106,19 +106,19 @@ public class ClrwlPipelines
             return this;
         }
 
-        public SimpleClrwlPipelineBuilder vertex(ResourceLocation vertex)
+        public SimpleClrwlPipelineBuilder vertex(Identifier vertex)
         {
             this.vertexMain = vertex;
             return this;
         }
 
-        public SimpleClrwlPipelineBuilder geometry(ResourceLocation geometry)
+        public SimpleClrwlPipelineBuilder geometry(Identifier geometry)
         {
             this.geometryMain = geometry;
             return this;
         }
 
-        public SimpleClrwlPipelineBuilder fragment(ResourceLocation fragment)
+        public SimpleClrwlPipelineBuilder fragment(Identifier fragment)
         {
             this.fragmentMain = fragment;
             return this;
@@ -489,7 +489,7 @@ public class ClrwlPipelines
             @Override
             public String name()
             {
-                return Colorwheel.rl("noop_post_fragment").toString();
+                return Colorwheel.id("noop_post_fragment").toString();
             }
         };
     }

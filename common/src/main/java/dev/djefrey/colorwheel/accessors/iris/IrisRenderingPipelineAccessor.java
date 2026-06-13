@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.accessors.iris;
 
+import com.mojang.blaze3d.textures.GpuTexture;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -20,13 +21,13 @@ public interface IrisRenderingPipelineAccessor
 	void colorwheel$destroyGbuffersFramebuffer(GlFramebuffer framebuffer);
 	void colorwheel$destroyShadowFramebuffer(GlFramebuffer framebuffer);
 
-	record ProgramGroupDepthInfo(int textureId, int width, int height)
+	record ProgramGroupDepthInfo(GpuTexture texture, int width, int height)
 	{
 	}
 
 	default ProgramGroupDepthInfo getProgramGroupDepthInfo(ClrwlProgramGroup programGroup)
 	{
-		int depthTexture;
+		GpuTexture depthTexture;
 		int width;
 		int height;
 
@@ -44,7 +45,7 @@ public interface IrisRenderingPipelineAccessor
 			{
 				ShadowRenderTargets targets = this.colorwheel$getShadowRenderTargets();
 
-				depthTexture = targets.getDepthTexture().getTextureId();
+				depthTexture = targets.getDepthTexture();
 				width = targets.getResolution();
 				height = targets.getResolution();
 			}

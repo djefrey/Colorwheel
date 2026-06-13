@@ -30,6 +30,7 @@ import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
@@ -65,8 +66,8 @@ public class ClrwlEngine implements ExtendedEngine
 	{
 		ClientLevel clientLevel = (ClientLevel) level;
 		this.level = level;
-		this.dimension = new NamespacedId(clientLevel.dimension().location().getNamespace(),
-										  clientLevel.dimension().location().getPath());
+		this.dimension = new NamespacedId(clientLevel.dimension().identifier().getNamespace(),
+										  clientLevel.dimension().identifier().getPath());
 
 		this.pack = Iris.getCurrentPack().orElseThrow();
 
@@ -100,9 +101,9 @@ public class ClrwlEngine implements ExtendedEngine
 	}
 
 	@Override
-	public boolean updateRenderOrigin(Camera camera)
+	public boolean updateRenderOrigin(CameraRenderState cameraRenderState)
 	{
-		Vec3 cameraPos = camera.getPosition();
+		Vec3 cameraPos = cameraRenderState.pos;
 		double dx = renderOrigin.getX() - cameraPos.x;
 		double dy = renderOrigin.getY() - cameraPos.y;
 		double dz = renderOrigin.getZ() - cameraPos.z;

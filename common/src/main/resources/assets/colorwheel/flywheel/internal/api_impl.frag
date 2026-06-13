@@ -30,7 +30,8 @@ in ClrwlVertexData
 };
 
 vec4 flw_sampleColor;
-float flw_distance;
+float flw_sphericalDistance;
+float flw_cylindricalDistance;
 
 bool flw_fragDiffuse;
 vec4 flw_fragColor;

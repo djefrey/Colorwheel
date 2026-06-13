@@ -1,18 +1,13 @@
 {
   "required": true,
   "package": "dev.djefrey.colorwheel.fabric.mixin",
-  "plugin": "dev.djefrey.colorwheel.MixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
-    "mc.BlockRenderDispatcherMixin",
-    "mc.ModelBlockRendererMixin"
   ],
   "mixins": [
-    "flw.v10000.BakedModelBuffererMixin",
-    "flw.v10000.UniversalMeshEmitterMixin",
-    "flw.v10006.FabricMeshEmitterManagerMixin",
-    "ponder.FabricPonderClientMixin"
+    "flw.BlockStateModelBuffererMixin",
+    "flw.FabricMeshEmitterMixin"
   ],
   "injectors": {
     "defaultRequire": 1

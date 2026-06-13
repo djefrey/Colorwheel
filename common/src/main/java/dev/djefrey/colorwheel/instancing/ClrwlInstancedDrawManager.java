@@ -1,5 +1,8 @@
 package dev.djefrey.colorwheel.instancing;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
 import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.djefrey.colorwheel.engine.ClrwlMeshPool;
@@ -41,6 +44,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,9 +219,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		light.bind();
 
 		submitDraws(solidDraws, pipelineData, isShadow);
-
-		ClrwlMaterialRenderState.reset();
-		TextureBinder.resetLightAndOverlay();
 	}
 
 	private void renderTranslucentImpl(PipelineData pipelineData, boolean isShadow)
@@ -300,9 +301,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				submitDraws(oitDraws, pipelineData, isShadow);
 			}
 		}
-
-		ClrwlMaterialRenderState.reset();
-		TextureBinder.resetLightAndOverlay();
 	}
 
 	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
@@ -523,8 +521,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			for (var progressEntry : byProgress.int2ObjectEntrySet())
 			{
-				Samplers.CRUMBLING.makeActive();
-				TextureBinder.bind(ModelBakery.BREAKING_LOCATIONS.get(progressEntry.getIntKey()));
+				Identifier crumblingTextureId = ModelBakery.BREAKING_LOCATIONS.get(progressEntry.getIntKey());
+				GpuSampler crumblingTextureSampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
+				TextureBinder.bind(Samplers.CRUMBLING.number, crumblingTextureId, crumblingTextureSampler);
 
 				for (var instanceHandlePair : progressEntry.getValue())
 				{
@@ -582,9 +581,6 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		{
 			prevProgram.unbind();
 		}
-
-		ClrwlMaterialRenderState.reset();
-		TextureBinder.resetLightAndOverlay();
 	}
 
 	private void handleBrokenShader(ClrwlShaderKey key, ClrwlProgramId baseProgramId, Exception e)
@@ -599,8 +595,8 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 					.withStyle(
 						Style.EMPTY
 							.withUnderlined(true)
-							.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertBrokenPack off"))
-							.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.broken_pack.disable")))
+							.withClickEvent(new ClickEvent.SuggestCommand("/colorwheel alertBrokenPack off"))
+							.withHoverEvent(new HoverEvent.ShowText(Component.translatable("colorwheel.alert.broken_pack.disable")))
 					);
 
 			Colorwheel.sendWarnMessage(disableComp, false);

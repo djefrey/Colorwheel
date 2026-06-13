@@ -33,7 +33,6 @@ public class ClrwlUniforms
 
         ClrwlLevelUniforms.update(context);
         ClrwlPlayerUniforms.update(context);
-        ClrwlFogUniforms.update();
     }
 
     public static void bind(boolean isShadow)

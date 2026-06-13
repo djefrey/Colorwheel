@@ -1,18 +1,13 @@
 {
   "required": true,
   "package": "dev.djefrey.colorwheel.neoforge.mixin",
-  "plugin": "dev.djefrey.colorwheel.MixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
   ],
   "mixins": [
-    "create.ClientEventsMixin",
-    "flw.v10000.BakedModelBuffererMixin",
-    "flw.v10006.NeoforgeMeshEmitterMixin",
-    "mc.BlockRenderDispatcherMixin",
-    "mc.ModelBlockRendererMixin",
-    "ponder.NeoForgePonderClientMixin"
+    "flw.BlockStateModelBuffererMixin",
+    "flw.NeoForgeMeshEmitterMixin"
   ],
   "injectors": {
     "defaultRequire": 1

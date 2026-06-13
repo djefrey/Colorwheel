@@ -31,9 +31,9 @@ public class OitCompositeComponent implements SourceComponent
     public Collection<? extends SourceComponent> included()
     {
         return List.of(
-                sources.get(Colorwheel.rl("internal/oit/wavelet.glsl")),
-                sources.get(Colorwheel.rl("internal/uniform/frame.glsl")),
-                sources.get(Colorwheel.rl("internal/depth.glsl"))
+                sources.get(Colorwheel.id("internal/oit/wavelet.glsl")),
+                sources.get(Colorwheel.id("internal/uniform/frame.glsl")),
+                sources.get(Colorwheel.id("internal/depth.glsl"))
             );
     }
 
@@ -104,7 +104,7 @@ public class OitCompositeComponent implements SourceComponent
     @Override
     public String name()
     {
-        return Colorwheel.rl("oit_composite").toString();
+        return Colorwheel.id("oit_composite").toString();
     }
 
     public static void addOutputs(GlslBuilder builder, int targetCnt)

@@ -5,13 +5,15 @@ import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
+import dev.engine_room.flywheel.backend.extension.CameraRenderStateExtension;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
-import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.*;
@@ -72,7 +74,7 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 
 		Vec3i renderOrigin = VisualizationManager.getOrThrow(context.level())
 				.renderOrigin();
-		var camera = context.camera();
+		CameraRenderState cameraRenderState = context.cameraRenderState();
 		var camX = (context.camX() - renderOrigin.getX());
 		var camY = (context.camY() - renderOrigin.getY());
 		var camZ = (context.camZ() - renderOrigin.getZ());
@@ -84,8 +86,8 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		VIEW_PROJECTION.translate(-camX, -camY, -camZ);
 
 		CAMERA_POS.set(camX, camY, camZ);
-		CAMERA_LOOK.set(camera.getLookVector());
-		CAMERA_ROT.set(camera.getXRot(), camera.getYRot());
+		CAMERA_LOOK.set(((CameraRenderStateExtension) cameraRenderState).flywheel$getForwardVector());
+		CAMERA_ROT.set(cameraRenderState.xRot, cameraRenderState.yRot);
 		
 		Matrix4f normal = new Matrix4f(context.modelView())
 				.translate(-camX, -camY, -camZ)
@@ -104,7 +106,7 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 
 		ptr += 96;
 
-		ptr = writeCullData(ptr);
+		ptr = writeCullData(ptr, cameraRenderState);
 
 		ptr = writeMatrices(ptr);
 
@@ -118,11 +120,11 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		ptr = writeFloat(ptr, (float) window.getWidth() / (float) window.getHeight());
 		// default line width: net.minecraft.client.renderer.RenderStateShard.LineStateShard
 		ptr = writeFloat(ptr, Math.max(2.5F, (float) window.getWidth() / 1920.0F * 2.5F));
-		ptr = writeFloat(ptr, Minecraft.getInstance().gameRenderer.getDepthFar());
+		ptr = writeFloat(ptr, cameraRenderState.depthFar);
 
 		ptr = writeTime(ptr, context);
 
-		ptr = writeCameraIn(ptr, camera);
+		ptr = writeCameraIn(ptr, cameraRenderState);
 
 		ptr = writeInt(ptr, DebugMode.OFF.ordinal());
 
@@ -192,20 +194,20 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		return ptr;
 	}
 
-	private static long writeCameraIn(long ptr, Camera camera) {
-		if (!camera.isInitialized()) {
+	private static long writeCameraIn(long ptr, CameraRenderState cameraRenderState) {
+		if (!cameraRenderState.initialized) {
 			ptr = writeInt(ptr, 0);
 			ptr = writeInt(ptr, 0);
 			return ptr;
 		}
 
-		Level level = camera.getEntity().level();
-		BlockPos blockPos = camera.getBlockPosition();
-		Vec3 cameraPos = camera.getPosition();
+		Level level = Minecraft.getInstance().level;
+		BlockPos blockPos = cameraRenderState.blockPos;
+		Vec3 cameraPos = cameraRenderState.pos;
 		return writeInFluidAndBlock(ptr, level, blockPos, cameraPos);
 	}
 
-	private static long writeCullData(long ptr) {
+	private static long writeCullData(long ptr, CameraRenderState cameraRenderState) {
 		var mc = Minecraft.getInstance();
 		var mainRenderTarget = mc.getMainRenderTarget();
 
@@ -213,8 +215,8 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		int pyramidHeight = DepthPyramid.mip0Size(mainRenderTarget.height);
 		int pyramidDepth = DepthPyramid.getImageMipLevels(pyramidWidth, pyramidHeight);
 
-		ptr = writeFloat(ptr, GameRenderer.PROJECTION_Z_NEAR); // zNear
-		ptr = writeFloat(ptr, mc.gameRenderer.getDepthFar()); // zFar
+		ptr = writeFloat(ptr, Camera.PROJECTION_Z_NEAR); // zNear
+		ptr = writeFloat(ptr, cameraRenderState.depthFar); // zFar
 		ptr = writeFloat(ptr, PROJECTION.m00()); // P00
 		ptr = writeFloat(ptr, PROJECTION.m11()); // P11
 		ptr = writeFloat(ptr, pyramidWidth); // pyramidWidth

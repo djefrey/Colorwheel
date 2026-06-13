@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.mixin.flw;
 
-import dev.djefrey.colorwheel.accessors.LateInitAccessor;
+import dev.djefrey.colorwheel.accessors.flw.LateInitAccessor;
 import dev.engine_room.flywheel.api.backend.Engine;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

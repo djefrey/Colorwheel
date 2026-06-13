@@ -6,7 +6,7 @@ import dev.engine_room.flywheel.api.layout.Layout;
 import dev.engine_room.flywheel.api.layout.LayoutBuilder;
 import dev.engine_room.flywheel.backend.LayoutAttributes;
 import dev.engine_room.flywheel.backend.gl.array.VertexAttribute;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public final class ClrwlVertex {
 	public static final List<VertexAttribute> ATTRIBUTES = LayoutAttributes.attributes(LAYOUT);
 	public static final int STRIDE = LAYOUT.byteSize();
 
-	public static final ResourceLocation LAYOUT_SHADER = Colorwheel.rl("internal/vertex_input.vert");
+	public static final Identifier LAYOUT_SHADER = Colorwheel.id("internal/vertex_input.vert");
 
 	private ClrwlVertex() {
 	}

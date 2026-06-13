@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.util;
 
-import com.mojang.blaze3d.platform.GlUtil;
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.Colorwheel;
 
 import java.util.Locale;
@@ -16,7 +16,7 @@ public class GlCompat
 
     private static boolean isOitSupported()
     {
-        var isSupported = !GlUtil.getRenderer().toLowerCase(Locale.ROOT).startsWith("apple");
+        var isSupported = RenderSystem.getDevice().getRenderer().toLowerCase(Locale.ROOT).startsWith("apple");
 
         Colorwheel.LOGGER.info("Is OIT supported: {}", isSupported);
         return isSupported;

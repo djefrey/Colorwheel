@@ -15,10 +15,13 @@ layout(std140) uniform _ClrwlLevelUniforms {
     uint flw_levelHasSkyLight;
 
     float flw_sunAngle;
+    float flw_moonAngle;
+    float flw_starAngle;
 
     float flw_moonBrightness;
 /** There are normally only 8 moon phases. */
     uint flw_moonPhase;
+    float flw_starBrightness;
 
     uint flw_isRaining;
     float flw_rainLevel;

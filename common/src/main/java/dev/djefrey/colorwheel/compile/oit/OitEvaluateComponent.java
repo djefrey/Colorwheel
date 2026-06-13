@@ -96,6 +96,6 @@ public class OitEvaluateComponent implements SourceComponent
     @Override
     public String name()
     {
-        return Colorwheel.rl("oit_evaluate").toString();
+        return Colorwheel.id("oit_evaluate").toString();
     }
 }

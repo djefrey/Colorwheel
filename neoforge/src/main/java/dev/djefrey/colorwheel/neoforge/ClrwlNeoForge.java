@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel.neoforge;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.mod_compat.PonderCompat;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -44,15 +43,6 @@ public final class ClrwlNeoForge
         if (!Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
         {
             return;
-        }
-
-        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES)
-        {
-            PonderCompat.getBufferInstance().drawSolid();
-        }
-        else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS)
-        {
-            PonderCompat.getBufferInstance().drawTranslucent();
         }
     }
 

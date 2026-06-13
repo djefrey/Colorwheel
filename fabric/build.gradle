@@ -9,7 +9,7 @@ dependencies {
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 
     runtimeOnly "org.anarres:jcpp:1.4.14"
-    runtimeOnly "io.github.douira:glsl-transformer:3.0.0-pre3"
+    implementation "io.github.douira:glsl-transformer:3.0.0-pre3"
 
     compileOnly "dev.engine-room.flywheel:flywheel-fabric-26.1:${flywheel_version}"
     //compileOnly "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"

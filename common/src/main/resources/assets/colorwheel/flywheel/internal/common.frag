@@ -41,7 +41,8 @@ void _clrwl_main()
         viewPos /= viewPos.w;
         vec4 flwPos = flw_viewInverse * viewPos;
 
-        flw_distance = _clrwl_fogDistance(flwPos.xyz, flw_cameraPos, flw_fogShape);
+        flw_sphericalDistance = _clrwl_sphericalDistance(flwPos.xyz, flw_cameraPos);
+        flw_cylindricalDistance = _clrwl_cylindricalDistance(flwPos.xyz, flw_cameraPos);
     #endif
 
     _clrwl_shader_main();

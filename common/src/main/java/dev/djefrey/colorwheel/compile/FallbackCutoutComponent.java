@@ -5,7 +5,6 @@ import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBlock;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
-import dev.engine_room.flywheel.backend.glsl.generate.GlslStmt;
 
 import java.util.Collection;
 import java.util.List;
@@ -53,6 +52,6 @@ public class FallbackCutoutComponent implements SourceComponent
     @Override
     public String name()
     {
-        return Colorwheel.rl("fallback_cutout").toString();
+        return Colorwheel.id("fallback_cutout").toString();
     }
 }

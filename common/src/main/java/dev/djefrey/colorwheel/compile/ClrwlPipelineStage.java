@@ -4,7 +4,7 @@ import dev.djefrey.colorwheel.ShaderType;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import net.irisshaders.iris.helpers.StringPair;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,12 +70,12 @@ public record ClrwlPipelineStage<K>(ShaderType type,
             return with((key,  $) -> sourceFetcher.apply(key));
         }
 
-        public Builder<K> withResource(ResourceLocation rl)
+        public Builder<K> withResource(Identifier rl)
         {
             return withResource(($) -> rl);
         }
 
-        public Builder<K> withResource(Function<K, ResourceLocation> sourceFetcher)
+        public Builder<K> withResource(Function<K, Identifier> sourceFetcher)
         {
             return withLoader((key,  loader) -> loader.get(sourceFetcher.apply(key)));
         }

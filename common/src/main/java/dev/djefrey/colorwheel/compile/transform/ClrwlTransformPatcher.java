@@ -129,6 +129,7 @@ public class ClrwlTransformPatcher
 				root.rename("blockEntityId", "_clrwl_blockEntityId");
 				root.rename("entityId", "_clrwl_entityId");
 				root.replaceReferenceExpressions(transformer, "entityColor", "clrwl_overlayColor");
+				root.replaceReferenceExpressions(transformer, "mc_chunkFade", "1.0");
 
 				root.replaceReferenceExpressions(transformer, "gl_ModelViewMatrix", "flw_view");
 				root.replaceReferenceExpressions(transformer, "modelViewMatrix", "flw_view");

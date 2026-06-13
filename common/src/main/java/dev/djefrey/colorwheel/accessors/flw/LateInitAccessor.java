@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.accessors;
+package dev.djefrey.colorwheel.accessors.flw;
 
 import dev.engine_room.flywheel.api.backend.Engine;
 

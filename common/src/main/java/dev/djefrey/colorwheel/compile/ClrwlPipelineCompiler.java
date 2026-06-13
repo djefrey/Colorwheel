@@ -9,7 +9,7 @@ import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
-import dev.engine_room.flywheel.lib.util.ResourceUtil;
+import dev.engine_room.flywheel.lib.util.IdentifierUtil;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
@@ -57,8 +57,8 @@ public class ClrwlPipelineCompiler
 			ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
 			boolean isShadow = key.isShadow();
 
-			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
-			var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().vertexSource());
+			var instanceName = IdentifierUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
+			var materialName = IdentifierUtil.toDebugFileNameNoExtension(key.material().vertexSource());
 			var contextName = key.context().nameLowerCase();
 			var oitName = key.oit().name;
 

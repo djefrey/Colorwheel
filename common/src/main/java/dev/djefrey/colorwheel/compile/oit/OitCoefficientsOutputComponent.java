@@ -52,6 +52,6 @@ public class OitCoefficientsOutputComponent implements SourceComponent
     @Override
     public String name()
     {
-        return Colorwheel.rl("oit_coefficients_output").toString();
+        return Colorwheel.id("oit_coefficients_output").toString();
     }
 }

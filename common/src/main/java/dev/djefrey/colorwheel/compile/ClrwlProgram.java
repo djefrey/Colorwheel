@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.blaze3d.shaders.ProgramManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
@@ -205,7 +205,7 @@ public class ClrwlProgram
 
 	public void bind()
 	{
-		ProgramManager.glUseProgram(this.handle);
+        GlStateManager._glUseProgram(this.handle);
 
 		samplers.update();
 		uniforms.update();

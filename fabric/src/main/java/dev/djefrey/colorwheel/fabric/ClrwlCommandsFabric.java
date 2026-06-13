@@ -6,7 +6,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.DebugMode;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandBuildContext;
@@ -16,12 +17,12 @@ public class ClrwlCommandsFabric
 {
     public static void registerClientCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext buildContext)
     {
-        LiteralArgumentBuilder<FabricClientCommandSource> command = ClientCommandManager.literal("colorwheel");
+        LiteralArgumentBuilder<FabricClientCommandSource> command = ClientCommands.literal("colorwheel");
 
-        var debug = ClientCommandManager.literal("debug");
+        var debug = ClientCommands.literal("debug");
 
-        debug.then(ClientCommandManager.literal("shader")
-                .then(ClientCommandManager.argument("mode", DebugMode.CommandArgument.INSTANCE)
+        debug.then(ClientCommands.literal("shader")
+                .then(ClientCommands.argument("mode", DebugMode.CommandArgument.INSTANCE)
                         .executes(ctx ->
                         {
                             DebugMode mode = ctx.getArgument("mode", DebugMode.class);
@@ -29,15 +30,15 @@ public class ClrwlCommandsFabric
                             return Command.SINGLE_SUCCESS;
                         })));
 
-        debug.then(ClientCommandManager.literal("frustum")
-                .then(ClientCommandManager.literal("capture")
+        debug.then(ClientCommands.literal("frustum")
+                .then(ClientCommands.literal("capture")
                         .executes(ctx ->
                         {
                             ClrwlFrameUniforms.captureFrustum();
                             ClrwlShadowFrameUniforms.captureFrustum();
                             return Command.SINGLE_SUCCESS;
                         }))
-                .then(ClientCommandManager.literal("unpause"))
+                .then(ClientCommands.literal("unpause"))
                 .executes(ctx ->
                 {
                     ClrwlFrameUniforms.unpauseFrustum();
@@ -47,7 +48,7 @@ public class ClrwlCommandsFabric
 
         command.then(debug);
 
-        command.then(ClientCommandManager.literal("alertIncompatiblePack")
+        command.then(ClientCommands.literal("alertIncompatiblePack")
                 .executes(ctx ->
                 {
                     if (ClrwlConfigFabric.INSTANCE.alertIncompatiblePack)
@@ -61,7 +62,7 @@ public class ClrwlCommandsFabric
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(ClientCommandManager.literal("on")
+                .then(ClientCommands.literal("on")
                         .executes(ctx ->
                         {
                             ClrwlConfigFabric.INSTANCE.alertIncompatiblePack = true;
@@ -70,7 +71,7 @@ public class ClrwlCommandsFabric
 
                             return Command.SINGLE_SUCCESS;
                         }))
-                .then(ClientCommandManager.literal("off")
+                .then(ClientCommands.literal("off")
                         .executes(ctx ->
                         {
                             ClrwlConfigFabric.INSTANCE.alertIncompatiblePack = false;
@@ -80,7 +81,7 @@ public class ClrwlCommandsFabric
                             return Command.SINGLE_SUCCESS;
                         })));
 
-        command.then(ClientCommandManager.literal("alertBrokenPack")
+        command.then(ClientCommands.literal("alertBrokenPack")
                 .executes(ctx ->
                 {
                     if (ClrwlConfigFabric.INSTANCE.alertBrokenPack)
@@ -94,7 +95,7 @@ public class ClrwlCommandsFabric
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(ClientCommandManager.literal("on")
+                .then(ClientCommands.literal("on")
                         .executes(ctx ->
                         {
                             ClrwlConfigFabric.INSTANCE.alertBrokenPack = true;
@@ -103,7 +104,7 @@ public class ClrwlCommandsFabric
 
                             return Command.SINGLE_SUCCESS;
                         }))
-                .then(ClientCommandManager.literal("off")
+                .then(ClientCommands.literal("off")
                         .executes(ctx ->
                         {
                             ClrwlConfigFabric.INSTANCE.alertBrokenPack = false;
@@ -113,7 +114,7 @@ public class ClrwlCommandsFabric
                             return Command.SINGLE_SUCCESS;
                         })));
 
-        command.then(ClientCommandManager.literal("enableFallbackMode")
+        command.then(ClientCommands.literal("enableFallbackMode")
                 .executes(ctx ->
                 {
                     if (ClrwlConfigFabric.INSTANCE.fallbackModeEnabled)
@@ -127,7 +128,7 @@ public class ClrwlCommandsFabric
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(ClientCommandManager.literal("on")
+                .then(ClientCommands.literal("on")
                         .executes(ctx ->
                         {
                             ClrwlConfigFabric.INSTANCE.fallbackModeEnabled = true;
@@ -137,7 +138,7 @@ public class ClrwlCommandsFabric
 
                             return Command.SINGLE_SUCCESS;
                         }))
-                .then(ClientCommandManager.literal("off")
+                .then(ClientCommands.literal("off")
                         .executes(ctx ->
                         {
                             ClrwlConfigFabric.INSTANCE.fallbackModeEnabled = false;

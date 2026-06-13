@@ -1,11 +1,9 @@
 {
   "required": true,
   "package": "dev.djefrey.colorwheel.mixin",
-  "plugin": "dev.djefrey.colorwheel.MixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
-    "iris.FullyBufferedMultiBufferSourceMixin",
     "mc.BufferBuilderMixin",
     "mc.LevelRendererMixin",
     "mc.OptionsMixin",
@@ -14,11 +12,12 @@
   "mixins": [
     "flw.BlockEntityStorageMixin",
     "flw.EntityStorageMixin",
+    "flw.FogUniformMixin",
     "flw.LateInitMixin",
+    "flw.MeshEmitterManagerMixin",
+    "flw.MeshEmitterMixin",
     "flw.MeshHelperMixin",
     "flw.VisualizationManagerImplMixin",
-    "flw.v10000.MeshEmitterMixin",
-    "flw.v10006.MeshEmitterManagerMixin",
     "iris.BlendModeOverrideMixin",
     "iris.BlockMaterialMappingMixin",
     "iris.IrisMixin",
@@ -31,8 +30,7 @@
     "iris.ShaderPackSourceNamesMixin",
     "iris.ShadowRendererMixin",
     "iris.ShadowRenderTargetsMixin",
-    "iris.StandardMacrosMixin",
-    "ponder.PonderClientMixin"
+    "iris.StandardMacrosMixin"
   ],
   "injectors": {
     "defaultRequire": 1

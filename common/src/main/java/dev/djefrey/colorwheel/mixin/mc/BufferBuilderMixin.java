@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(BufferBuilder.class)
+// After Iris
+@Mixin(value = BufferBuilder.class, priority = 2000)
 public abstract class BufferBuilderMixin implements ColorwheelBufferBuilder
 {
     @Shadow
@@ -46,8 +47,7 @@ public abstract class BufferBuilderMixin implements ColorwheelBufferBuilder
     }
 
     @Inject(method = "addVertex(FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;",
-            at = @At("RETURN"),
-            order = 2000) // After Iris
+            at = @At("RETURN"))
     private void injectEmission(float x, float y, float z, CallbackInfoReturnable<VertexConsumer> cir)
     {
         if (colorwheel$isFlwBuffer)

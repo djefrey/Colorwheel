@@ -36,7 +36,7 @@ public class OitCoefficientsSamplersComponent implements SourceComponent
     @Override
     public String name()
     {
-        return Colorwheel.rl("oit_coefficients_samplers").toString();
+        return Colorwheel.id("oit_coefficients_samplers").toString();
     }
 
     public static void addSamplers(GlslBuilder builder, int coeffCount)
