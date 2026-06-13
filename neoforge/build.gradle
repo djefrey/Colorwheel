@@ -1,130 +1,83 @@
 plugins {
-    id 'com.gradleup.shadow'
-    id "me.shedaniel.unified-publishing"
-}
-
-architectury {
-    platformSetupLoomIde()
-    neoForge()
-}
-
-configurations {
-    common {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-    compileClasspath.extendsFrom common
-    runtimeClasspath.extendsFrom common
-    developmentNeoForge.extendsFrom common
-
-    // Files in this configuration will be bundled into your mod using the Shadow plugin.
-    // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
-    shadowBundle {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-}
-
-repositories {
-    maven {
-        name = 'NeoForged'
-        url = 'https://maven.neoforged.net/releases'
-    }
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
 }
 
 dependencies {
-    neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
-    // forgeRuntimeLibrary "org.anarres:jcpp:1.4.14"
-    implementation "io.github.douira:glsl-transformer:2.0.1"
+    implementation "io.github.douira:glsl-transformer:3.0.0-pre3"
 
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
+    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-26.1:${flywheel_version}"
 
-    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
-    compileOnly("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
-    compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
+    //compileOnly("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
+    //compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
 
-    compileOnly("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
-    
-    localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
-    localRuntime "dev.engine-room.vanillin:vanillin-neoforge-${minecraft_version}:${vanillin_version}"
+    //compileOnly("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
 
-    modCompileOnly "maven.modrinth:iris:${iris_version}+${minecraft_version}-neoforge"
-    
-    localRuntime "maven.modrinth:iris:${iris_version}+${minecraft_version}-neoforge"
-    localRuntime "maven.modrinth:sodium:mc${minecraft_version}-${sodium_version}-neoforge"
+    runtimeOnly "dev.engine-room.flywheel:flywheel-neoforge-26.1:${flywheel_version}"
+    runtimeOnly "dev.engine-room.vanillin:vanillin-neoforge-26.1:${vanillin_version}"
 
-    localRuntime("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
-    localRuntime("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
-    localRuntime("com.tterrag.registrate:Registrate:${registrate_version}")
+    compileOnly "maven.modrinth:iris:${iris_version}-neoforge"
+
+    runtimeOnly "maven.modrinth:iris:${iris_version}-neoforge"
+    runtimeOnly "maven.modrinth:sodium:${sodium_version}-neoforge"
+
+    //runtimeOnly("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
+    //runtimeOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
+    //runtimeOnly("com.tterrag.registrate:Registrate:${registrate_version}")
 }
 
-processResources {
-    inputs.property 'version', project.version
-
-    filesMatching('META-INF/neoforge.mods.toml') {
-        expand version: project.version
+neoForge {
+    version = neoforge_version
+    // Automatically enable neoforge AccessTransformers if the file exists
+    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+    runs {
+        configureEach {
+            systemProperty('neoforge.enabledGameTestNamespaces', mod_id)
+            ideName = "NeoForge ${it.name.capitalize()} (${project.path})" // Unify the run config names with fabric
+        }
+        client {
+            client()
+            gameDirectory = this.mkdir(this.file("runs/client"))
+        }
+        data {
+            clientData()
+            gameDirectory = this.mkdir(this.file("runs/data"))
+            // DataGen can be run by - "./gradlew :neoforge:runData" in Terminal.
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+        server {
+            server()
+            this.file("runs/server").createParentDirectories()
+            gameDirectory = this.mkdir(this.file("runs/server"))
+        }
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
     }
 }
 
-shadowJar {
-    configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
-}
+sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-remapJar {
-    inputFile.set shadowJar.archiveFile
-}
-
-unifiedPublishing {
-    project {
-        displayName = "$project.version-neoforge"
-        version = "$project.version"
-        releaseType = "release"
-        changelog = new File("${rootProject.rootDir.toPath().toString()}/CHANGELOG.md").getText('UTF-8')
-        gameVersions = ["1.21.1"]
-        gameLoaders = ["neoforge"]
-
-        mainPublication remapJar
-
-        relations {
-            depends {
-                curseforge = "irisshaders"
-                modrinth = "iris"
-            }
-            optional {
-                curseforge = "create"
-                modrinth = "create"
-            }
-            optional {
-                curseforge = "vanillin"
-                modrinth = "flw-vanillin"
-            }
-            optional {
-                curseforge = "sable"
-                modrinth = "sable"
-            }
-            optional {
-                curseforge = "colorwheel-patcher"
-                modrinth = "colorwheel-patcher"
-            }
-            conflicts {
-                curseforge = "iris-flywheel-compat"
-                modrinth = "iris-flw-compat"
-            }
+// Implement mcgradleconventions loader attribute
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements'].each { variant ->
+    configurations.named("$variant") {
+        attributes {
+            attribute(loaderAttribute, 'neoforge')
         }
-
-        if (System.getenv("CF_TOKEN") != null) {
-            curseforge {
-                token = System.getenv("CF_TOKEN")
-                id = "1254143"
-            }
-        }
-
-        if (System.getenv("MODRINTH_TOKEN") != null) {
-            modrinth {
-                token = System.getenv("MODRINTH_TOKEN")
-                id = "BzHgFoGz"
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName, it.getTaskName(null, 'jarJar')].each { variant ->
+        configurations.named("$variant") {
+            attributes {
+                attribute(loaderAttribute, 'neoforge')
             }
         }
     }

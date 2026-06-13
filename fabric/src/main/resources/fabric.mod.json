@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "id": "colorwheel",
+  "id": "${mod_id}",
   "version": "${version}",
-  "name": "Colorwheel",
-  "description": "Allows you to use Iris Shaders with Flywheel",
+  "name": "${mod_name}",
+  "description": "${description}",
   "authors": [
-    "djefrey"
+    "${mod_author}"
   ],
   "contact": {
     "homepage": "https://djefrey.github.io/colorwheel/",
     "sources": "https://github.com/djefrey/Colorwheel",
     "issues": "https://github.com/djefrey/Colorwheel/issues"
   },
-  "license": "MIT",
-  "icon": "logo.png",
+  "license": "${license}",
+  "icon": "${mod_id}.png",
   "environment": "*",
   "entrypoints": {
     "main": [
@@ -28,11 +28,11 @@
     "colorwheel.fabric.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.16.5",
-    "minecraft": "~1.21.1",
-    "java": ">=21",
+    "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": "*",
-    "iris": ">=1.8.0"
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version}",
+    "iris": ">=1.10.7"
   },
   "recommends": {
     "flywheel": "^1.0.0"

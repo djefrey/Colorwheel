@@ -1,62 +1,62 @@
 modLoader = "javafml"
-loaderVersion = "[4,)"
+loaderVersion = "${neoforge_loader_version_range}"
 issueTrackerURL = "https://github.com/djefrey/Colorwheel/issues"
-license = "MIT"
+license = "${license}"
 
 [[mods]]
-modId = "colorwheel"
+modId = "${mod_id}"
 version = "${version}"
-displayName = "Colorwheel"
+displayName = "${mod_name}"
 displayURL = "https://djefrey.github.io/colorwheel/"
 authors = "djefrey"
 description = '''
 Allows you to use Iris Shaders with Flywheel
 '''
-logoFile = "logo.png"
+logoFile="${mod_id}.png"
 
-[[dependencies.colorwheel]]
+[[dependencies.${mod_id}]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.1,)"
+versionRange = "[${neoforge_version},)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.colorwheel]]
+[[dependencies.${mod_id}]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.1,)"
+versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.colorwheel]]
+[[dependencies.${mod_id}]]
 modId = "flywheel"
 type = "optional"
 versionRange = "[1.0.0,2.0.0)"
 ordering = "BEFORE"
 side = "BOTH"
 
-[[dependencies.colorwheel]]
+[[dependencies.${mod_id}]]
 modId = "iris"
 type = "required"
-versionRange = "[1.8.0,)"
+versionRange = "[1.10.7,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.colorwheel]]
+[[dependencies.${mod_id}]]
 modId = "colorwheel_patcher"
 type = "optional"
 versionRange = "[1.0.0,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.colorwheel]]
+[[dependencies.${mod_id}]]
 modId = "sable"
 type = "optional"
 versionRange = "[1.1.1,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.colorwheel]]
+[[dependencies.${mod_id}]]
 modId = "irisflw"
 type = "incompatible"
 versionRange = "*"

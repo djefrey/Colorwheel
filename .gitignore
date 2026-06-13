@@ -1,54 +1,27 @@
-## Based on GitHub's Eclipse .gitignore
-
-run/
-.gradle/
-build/
-gradle-app.setting
-out/
-logs/
-tokens.sh
-
-## IntelliJ IDEA
-
-.idea/
-*.iml
-*.iws
-*.ipr
-
-## Eclipse
-
-eclipse/
-*.pydevproject
-.project
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.classpath
-.settings/
-.loadpath
-
-# External tool builders
-.externalToolBuilders/
-
-# Locally stored "Eclipse launch configurations"
+# eclipse
+bin
 *.launch
+.settings
+.metadata
+.classpath
+.project
 
-# CDT-specific
-.cproject
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea/*
+!.idea/scopes
 
-# PDT-specific
-.buildpath
+# gradle
+build
+.gradle
 
-# Other
-.DS_Store
-mcmodsrepo
-src/*/generatedPackageInfos/
-*/src/*/generatedPackageInfos/
+# other
+eclipse
+run
+runs
 
 forge/run/
 fabric/run/
