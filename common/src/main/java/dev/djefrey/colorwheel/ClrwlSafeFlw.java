@@ -16,5 +16,5 @@ public interface ClrwlSafeFlw
     void updateOptionsUniform(Options options);
     void onIrisPipelineDestroy(IrisRenderingPipeline pipeline);
     void submitShadowRenderContext(ClientLevel level, CameraRenderState cameraRenderState, LevelRenderState levelRenderState, Vector3d cameraPos, float tickDelta, ShadowRenderingPhase phase);
-    void submitTranslucentRenderContext(ClientLevel level, CameraRenderState cameraRenderState, LevelRenderState levelRenderState, Matrix4fc modelMatrix, Matrix4f projectionMatrix, float tickDelta);
+    void submitTranslucentRenderContext(ClientLevel level, CameraRenderState cameraRenderState, LevelRenderState levelRenderState, Matrix4fc modelMatrix, Matrix4fc projectionMatrix, float tickDelta);
 }

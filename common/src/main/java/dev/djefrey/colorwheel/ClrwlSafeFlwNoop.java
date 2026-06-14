@@ -37,7 +37,7 @@ public class ClrwlSafeFlwNoop implements ClrwlSafeFlw
     }
 
     @Override
-    public void submitTranslucentRenderContext(ClientLevel level, CameraRenderState cameraRenderState, LevelRenderState levelRenderState, Matrix4fc modelMatrix, Matrix4f projectionMatrix, float tickDelta)
+    public void submitTranslucentRenderContext(ClientLevel level, CameraRenderState cameraRenderState, LevelRenderState levelRenderState, Matrix4fc modelMatrix, Matrix4fc projectionMatrix, float tickDelta)
     {
 
     }

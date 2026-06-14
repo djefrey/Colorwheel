@@ -67,7 +67,7 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
     }
 
     @Override
-    public void submitTranslucentRenderContext(ClientLevel level, CameraRenderState cameraRenderState, LevelRenderState levelRenderState, Matrix4fc modelMatrix, Matrix4f projectionMatrix, float tickDelta)
+    public void submitTranslucentRenderContext(ClientLevel level, CameraRenderState cameraRenderState, LevelRenderState levelRenderState, Matrix4fc modelMatrix, Matrix4fc projectionMatrix, float tickDelta)
     {
         VisualizationManager manager = VisualizationManager.get(level);
 

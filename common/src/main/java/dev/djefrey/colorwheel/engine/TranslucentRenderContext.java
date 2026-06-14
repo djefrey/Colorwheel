@@ -17,7 +17,7 @@ public record TranslucentRenderContext(LevelRenderer renderer, ClientLevel level
                                        float partialTick) implements RenderContext
 {
     public static TranslucentRenderContext create(LevelRenderer renderer, ClientLevel level, RenderBuffers buffers,
-                                                  Matrix4fc modelView, Matrix4f projection,
+                                                  Matrix4fc modelView, Matrix4fc projection,
                                                   CameraRenderState cameraRenderState, LevelRenderState levelRenderState,
                                                   float partialTick)
     {

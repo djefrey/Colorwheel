@@ -6,6 +6,7 @@ import com.mojang.blaze3d.resource.ResourceHandle;
 import dev.djefrey.colorwheel.Colorwheel;
 import net.irisshaders.iris.MojLambdas;
 import net.irisshaders.iris.NeoLambdas;
+import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -31,11 +32,15 @@ public class LevelRendererMixin
     @Inject(method = { MojLambdas.RENDER_MAIN_PASS, NeoLambdas.NEO_RENDER_MAIN_PASS },
             require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;renderTranslucentFeatures()V"))
-    public void colorwheel$injectRenderTranslucents(CallbackInfo ci, @Local(ordinal = 0, argsOnly = true) LevelRenderState levelRenderState, @Local(ordinal = 0, argsOnly = true) Matrix4fc modelViewMatrix)
+    public void colorwheel$injectRenderTranslucents(CallbackInfo ci, @Local(ordinal = 0, argsOnly = true) LevelRenderState levelRenderState)
     {
         if (Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
         {
-            Colorwheel.getSafeFlw().submitTranslucentRenderContext(level, levelRenderState.cameraRenderState, levelRenderState, modelViewMatrix, levelRenderState.cameraRenderState.projectionMatrix, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+            var modelViewMatrix = CapturedRenderingState.INSTANCE.getGbufferModelView();
+            var projection = CapturedRenderingState.INSTANCE.getGbufferProjection();
+            var deltaTick = CapturedRenderingState.INSTANCE.getTickDelta();
+
+            Colorwheel.getSafeFlw().submitTranslucentRenderContext(level, levelRenderState.cameraRenderState, levelRenderState, modelViewMatrix, projection, deltaTick);
         }
     }
 }
