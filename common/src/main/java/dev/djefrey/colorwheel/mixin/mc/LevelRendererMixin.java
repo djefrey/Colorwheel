@@ -31,7 +31,8 @@ public class LevelRendererMixin
 
     @Inject(method = { MojLambdas.RENDER_MAIN_PASS, NeoLambdas.NEO_RENDER_MAIN_PASS },
             require = 1,
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;renderTranslucentFeatures()V"))
+            at = @At(value = "CONSTANT",
+                     args = "stringValue=translucentTerrain"))
     public void colorwheel$injectRenderTranslucents(CallbackInfo ci, @Local(ordinal = 0, argsOnly = true) LevelRenderState levelRenderState)
     {
         if (Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
