@@ -53,3 +53,6 @@ src/*/generatedPackageInfos/
 forge/run/
 fabric/run/
 neoforge/run/
+
+fabric/runs/
+neoforge/runs/

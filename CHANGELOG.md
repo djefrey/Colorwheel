@@ -5,7 +5,7 @@
 - Fixed shader compilation error on AMD Windows (thanks to Luracasmus)
 - Fixed atlasSize incorrect height
 - Use correct value for undefined blockEntityId and entityId
-- Underlined text is now explicitly stated as clickable in alert messages
+- Underlined text is now clearly indicated as clickable in alert messages
 
 ### 1.2.8
 
