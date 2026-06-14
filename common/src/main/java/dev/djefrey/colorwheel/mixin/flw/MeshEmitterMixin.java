@@ -33,21 +33,6 @@ public abstract class MeshEmitterMixin implements MeshEmitterAccessor
     @Unique
     private int colorwheel$currentLocalPosZ = 0;
 
-    @Redirect(method = "getBuffer(Ldev/engine_room/flywheel/api/material/Material;)Lcom/mojang/blaze3d/vertex/BufferBuilder;",
-                    at = @At(value = "FIELD",
-                             target = "Ldev/engine_room/flywheel/lib/vertex/FlywheelVertexFormats;BLOCK_VERTEX_FORMAT:Lcom/mojang/blaze3d/vertex/VertexFormat;"))
-    private VertexFormat changeVertexFormat()
-    {
-        if (Colorwheel.getSafeFlw().isColorwheelCurrentBackend())
-        {
-            return IrisVertexFormats.TERRAIN;
-        }
-        else
-        {
-            return FlywheelVertexFormats.BLOCK_VERTEX_FORMAT;
-        }
-    }
-
     @Override
     public void beginBlock(int block, byte renderType, byte blockEmission, int localPosX, int localPosY, int localPosZ)
     {
