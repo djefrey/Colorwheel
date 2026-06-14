@@ -5,7 +5,7 @@ license = "${license}"
 
 [[mods]]
 modId = "${mod_id}"
-version = "${version}"
+version = "${mod_version}"
 displayName = "${mod_name}"
 displayURL = "https://djefrey.github.io/colorwheel/"
 authors = "djefrey"

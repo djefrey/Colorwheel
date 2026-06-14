@@ -4,7 +4,7 @@ plugins {
 }
 
 base {
-    archivesName = "${mod_id}-${project.name}-${minecraft_version}"
+    archivesName = "${mod_id}-${project.name}-${version}+mc${minecraft_version}"
 }
 
 java {
@@ -43,6 +43,8 @@ sourcesJar {
     from(rootProject.file('LICENSE')) {
         rename { "${it}_${mod_name}" }
     }
+
+    archiveVersion = ''
 }
 
 jar {
@@ -54,18 +56,20 @@ jar {
         attributes([
                 'Specification-Title'   : mod_name,
                 'Specification-Vendor'  : mod_author,
-                'Specification-Version' : project.jar.archiveVersion,
+                'Specification-Version' : project.version,
                 'Implementation-Title'  : project.name,
-                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Version': project.version,
                 'Implementation-Vendor' : mod_author,
                 'Built-On-Minecraft'    : minecraft_version
         ])
     }
+
+    archiveVersion = ''
 }
 
 processResources {
     var expandProps = [
-            'version'                      : version,
+            'mod_version'                  : "${version}+mc${minecraft_version}",
             'group'                        : project.group, //Else we target the task's group.
             'minecraft_version'            : minecraft_version,
             'minecraft_version_range'      : minecraft_version_range,
