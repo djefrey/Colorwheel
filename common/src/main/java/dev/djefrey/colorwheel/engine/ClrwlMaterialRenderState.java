@@ -24,7 +24,7 @@ import java.util.List;
 
 public final class ClrwlMaterialRenderState
 {
-    public static final Comparator<Material> COMPARATOR = dev.engine_room.flywheel.backend.engine.MaterialRenderState::compare;
+    public static final Comparator<Material> COMPARATOR = ClrwlMaterialRenderState::compare;
 
     private ClrwlMaterialRenderState() {
     }
@@ -158,7 +158,7 @@ public final class ClrwlMaterialRenderState
                     GlStateManager._enableBlend();
                     GlStateManager._blendFuncSeparate(GlConst.GL_DST_COLOR, GlConst.GL_SRC_COLOR, GlConst.GL_ONE, GlConst.GL_ZERO);
                 }
-                case TRANSLUCENT -> {
+                case TRANSLUCENT , ORDER_INDEPENDENT -> {
                     GlStateManager._enableBlend();
                     GlStateManager._blendFuncSeparate(GlConst.GL_SRC_ALPHA, GlConst.GL_ONE_MINUS_SRC_ALPHA, GlConst.GL_ONE, GlConst.GL_ONE_MINUS_SRC_ALPHA);
                 }
