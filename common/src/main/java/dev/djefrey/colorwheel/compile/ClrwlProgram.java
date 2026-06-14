@@ -184,7 +184,7 @@ public class ClrwlProgram
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
 		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityId");
 		this.entityUniform = tryGetUniformLocation2("_clrwl_entityId");
-		this.meshCenterUniform = tryGetUniformLocation2("_clrwl_meshCenter");
+		this.meshCenterUniform = tryGetUniformLocation2("_clrwl_meshCenterUniform");
 		this.renderPhaseUniform = tryGetUniformLocation2("_clrwl_renderPhase");
 		this.blendFuncUniform = tryGetUniformLocation2("_clrwl_blendFunc");
 		this.atlasSizeUniform = tryGetUniformLocation2("_clrwl_atlasSize");
