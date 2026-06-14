@@ -16,7 +16,7 @@ public class GlCompat
 
     private static boolean isOitSupported()
     {
-        var isSupported = RenderSystem.getDevice().getRenderer().toLowerCase(Locale.ROOT).startsWith("apple");
+        var isSupported = !RenderSystem.getDevice().getRenderer().toLowerCase(Locale.ROOT).startsWith("apple");
 
         Colorwheel.LOGGER.info("Is OIT supported: {}", isSupported);
         return isSupported;
