@@ -42,7 +42,7 @@ The [Colorwheel Patcher](https://github.com/djefrey/Colorwheel-Patcher) mod can 
 
 ### License
 
-All code in this repository is licensed under the **MIT** license. You are free to read, distribute and modify the code.  
+All code in this (Colorwheel) repository is completely free and open source, and you are free to read, distribute, and modify the code as long as you abide by the (fairly reasonable) terms of the GNU LGPLv3 license.  
 This does **not** apply to the shaderpack patches provided in the Releases section.
 
 This project is partially based on code from Flywheel, licensed under the MIT license.  
