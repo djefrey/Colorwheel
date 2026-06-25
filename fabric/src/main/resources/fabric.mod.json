@@ -12,7 +12,7 @@
     "sources": "https://github.com/djefrey/Colorwheel",
     "issues": "https://github.com/djefrey/Colorwheel/issues"
   },
-  "license": "MIT",
+  "license": "LGPL",
   "icon": "logo.png",
   "environment": "*",
   "entrypoints": {
