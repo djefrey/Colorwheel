@@ -16,6 +16,7 @@ import dev.engine_room.flywheel.backend.compile.component.InstanceAssemblerCompo
 import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponent;
 import dev.engine_room.flywheel.backend.compile.component.SsboInstanceComponent;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
+import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.material.CutoutShaders;
 import dev.engine_room.flywheel.lib.util.ResourceUtil;
@@ -79,7 +80,13 @@ public class ClrwlPipelines
                     .build()
             )
             .fragment(ClrwlOitCompositePipeline.fragmentStage()
-                    .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                    .onCompile(($, c) ->
+                    {
+                        if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !c.extensions.contains("GL_ARB_gpu_shader5"))
+                        {
+                            c.define("fma(a, b, c)", "((a) * (b) + (c))");
+                        }
+                    })
                     .with((k, c) -> new OitCompositeComponent(c.getLoader(), k.drawBuffers(), k.ranks(), k.overrides()))
                     .build())
             .build();
@@ -171,7 +178,13 @@ public class ClrwlPipelines
                         c.enableExtension(ext);
                     }
                 })
-                .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                .onCompile(($, c) ->
+                {
+                    if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !c.extensions.contains("GL_ARB_gpu_shader5"))
+                    {
+                        c.define("fma(a, b, c)", "((a) * (b) + (c))");
+                    }
+                })
                 .onCompile((k, c) -> setContextDefine(k.context(), c));
 
             if (!fallback)
@@ -271,7 +284,13 @@ public class ClrwlPipelines
                         c.enableExtension(ext);
                     }
                 })
-                .onCompile(($, c) -> c.define("fma(a, b, c)", "((a) * (b) + (c))"))
+                .onCompile(($, c) ->
+                {
+                    if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !c.extensions.contains("GL_ARB_gpu_shader5"))
+                    {
+                        c.define("fma(a, b, c)", "((a) * (b) + (c))");
+                    }
+                })
                 .onCompile((k, c) -> setContextDefine(k.context(), c))
                 .onCompile((k, c) -> setCutoutDefine(k.cutout(), c))
                 .onCompile((k, c) -> setSeparateAoDefine(c));
