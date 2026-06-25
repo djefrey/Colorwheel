@@ -12,7 +12,9 @@ import dev.engine_room.flywheel.api.material.CutoutShader;
 import dev.engine_room.flywheel.backend.BackendConfig;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
 import dev.engine_room.flywheel.backend.compile.component.BufferTextureInstanceComponent;
+import dev.engine_room.flywheel.backend.compile.component.InstanceAssemblerComponent;
 import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponent;
+import dev.engine_room.flywheel.backend.compile.component.SsboInstanceComponent;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.material.CutoutShaders;
@@ -35,6 +37,10 @@ public class ClrwlPipelines
     public static final ResourceLocation INSTANCING_MAIN_GEOM = Colorwheel.rl("internal/instancing/main_geom.glsl");
     public static final ResourceLocation INSTANCING_MAIN_FRAG = Colorwheel.rl("internal/instancing/main.frag");
 
+    public static final ResourceLocation INDIRECT_MAIN_VERT = Colorwheel.rl("internal/indirect/main.vert");
+    public static final ResourceLocation INDIRECT_MAIN_GEOM = Colorwheel.rl("internal/indirect/main_geom.glsl");
+    public static final ResourceLocation INDIRECT_MAIN_FRAG = Colorwheel.rl("internal/indirect/main.frag");
+
     public static final ResourceLocation OIT_DEPTH_RANGE_FRAG = Colorwheel.rl("internal/oit/depth_range.frag");
 
     public static final ResourceLocation COMPONENTS_HEADER_FRAG = ResourceUtil.rl("internal/components_header.frag");
@@ -51,8 +57,19 @@ public class ClrwlPipelines
             .geometry(INSTANCING_MAIN_GEOM)
             .fragment(INSTANCING_MAIN_FRAG);
 
+    private static final SimpleClrwlPipelineBuilder INDIRECT_BUILDER = SimpleClrwlPipelineBuilder.builder()
+            .id("indirect")
+            .extensions(ClrwlIndirectPrograms.EXTENSIONS)
+            .assembler(SsboInstanceComponent::new)
+            .vertex(INDIRECT_MAIN_VERT)
+            .geometry(INDIRECT_MAIN_GEOM)
+            .fragment(INDIRECT_MAIN_FRAG);
+
     public static ClrwlPipeline INSTANCING = INSTANCING_BUILDER.build(false);
     public static ClrwlPipeline INSTANCING_FALLBACK = INSTANCING_BUILDER.build(true);
+
+    public static ClrwlPipeline INDIRECT = INDIRECT_BUILDER.build(false);
+    public static ClrwlPipeline INDIRECT_FALLBACK = INDIRECT_BUILDER.build(true);
 
     public static ClrwlOitCompositePipeline OIT_COMPOSITE = ClrwlOitCompositePipeline.builder()
             .id("oit_composite")
@@ -127,7 +144,8 @@ public class ClrwlPipelines
         private ClrwlPipelineStage<ClrwlShaderKey> buildVertexStage(boolean fallback)
         {
             var stage = ClrwlPipeline.vertexStage()
-                .define("IS_COLORWHEEL");
+                .define("IS_COLORWHEEL")
+                .define("CLRWL_IS_" + id.toUpperCase());
 
             if (fallback)
             {
@@ -187,7 +205,8 @@ public class ClrwlPipelines
         private ClrwlPipelineStage<ClrwlShaderKey> buildGeometryStage(boolean fallback)
         {
             var stage = ClrwlPipeline.geometryStage()
-                    .define("IS_COLORWHEEL");
+                    .define("IS_COLORWHEEL")
+                    .define("CLRWL_IS_" + id.toUpperCase());
 
             if (fallback)
             {
@@ -224,7 +243,8 @@ public class ClrwlPipelines
         private ClrwlPipelineStage<ClrwlShaderKey> buildFragmentStage(boolean fallback)
         {
             var stage = ClrwlPipeline.fragmentStage()
-                .define("IS_COLORWHEEL");
+                .define("IS_COLORWHEEL")
+                .define("CLRWL_IS_" + id.toUpperCase());
 
             if (fallback)
             {

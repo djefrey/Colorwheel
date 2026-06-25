@@ -20,6 +20,10 @@ in ClrwlVertexData
     #endif
 #endif
 
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+#endif
+
 #ifdef _FLW_DEBUG
     vec2 clrwl_vertexEntity;
     vec2 clrwl_vertexMidTexCoord;
@@ -46,11 +50,37 @@ out ClrwlVertexData
     #endif
 #endif
 
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+#endif
+
 #ifdef _FLW_DEBUG
     vec2 clrwl_vertexEntity;
     vec2 clrwl_vertexMidTexCoord;
     vec4 clrwl_vertexMidMesh;
     flat uvec2 clrwl_debugIds;
+#endif
+} clrwl_out;
+
+vec4 clrwl_overlayColor = vec4(0.0);
+
+#else // CLRWL_IS_FALLBACK
+
+in ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+#endif
+} clrwl_in[3];
+
+out ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
 #endif
 } clrwl_out;
 #endif

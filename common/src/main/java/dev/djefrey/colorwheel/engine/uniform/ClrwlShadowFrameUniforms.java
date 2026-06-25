@@ -6,6 +6,11 @@ import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
+import net.irisshaders.iris.shaderpack.ShaderPack;
+import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
+import net.irisshaders.iris.shaderpack.properties.PackShadowDirectives;
+import net.irisshaders.iris.shadows.ShadowMatrices;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -66,7 +71,10 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		frustumPaused = false;
 	}
 
-	public static void update(ShadowRenderContext context) {
+	public static void update(ShadowRenderContext context, ShaderPack pack, NamespacedId dimension)
+	{
+		PackShadowDirectives directives = pack.getProgramSet(dimension).getPackDirectives().getShadowDirectives();
+
 		long ptr = BUFFER.ptr();
 		setPrev();
 
@@ -76,6 +84,21 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		var camX = (context.camX() - renderOrigin.getX());
 		var camY = (context.camY() - renderOrigin.getY());
 		var camZ = (context.camZ() - renderOrigin.getZ());
+
+		int resolution = directives.getResolution();
+		float zNear;
+		float zFar;
+
+		if (directives.getFov() != null)
+		{
+			zNear = ShadowMatrices.NEAR;
+			zFar = ShadowMatrices.FAR;
+		}
+		else
+		{
+			zNear = directives.getNearPlane();
+			zFar = directives.getFarPlane();
+		}
 
 		VIEW.set(context.modelView());
 		VIEW.translate(-camX, -camY, -camZ);
@@ -104,7 +127,7 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 
 		ptr += 96;
 
-		ptr = writeCullData(ptr);
+		ptr = writeCullData(ptr, resolution, zNear, zFar);
 
 		ptr = writeMatrices(ptr);
 
@@ -112,13 +135,12 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 
 		ptr = writeCamera(ptr);
 
-		var window = Minecraft.getInstance()
-				.getWindow();
-		ptr = writeVec2(ptr, window.getWidth(), window.getHeight());
-		ptr = writeFloat(ptr, (float) window.getWidth() / (float) window.getHeight());
+		var window = Minecraft.getInstance().getWindow();
+		ptr = writeVec2(ptr, resolution, resolution);
+		ptr = writeFloat(ptr, 1.0f);
 		// default line width: net.minecraft.client.renderer.RenderStateShard.LineStateShard
 		ptr = writeFloat(ptr, Math.max(2.5F, (float) window.getWidth() / 1920.0F * 2.5F));
-		ptr = writeFloat(ptr, Minecraft.getInstance().gameRenderer.getDepthFar());
+		ptr = writeFloat(ptr, zFar);
 
 		ptr = writeTime(ptr, context);
 
@@ -205,20 +227,17 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		return writeInFluidAndBlock(ptr, level, blockPos, cameraPos);
 	}
 
-	private static long writeCullData(long ptr) {
-		var mc = Minecraft.getInstance();
-		var mainRenderTarget = mc.getMainRenderTarget();
+	private static long writeCullData(long ptr, int resolution, float zNear, float zFar)
+	{
+		int pyramidRes = DepthPyramid.mip0Size(resolution);
+		int pyramidDepth = DepthPyramid.getImageMipLevels(pyramidRes, pyramidRes);
 
-		int pyramidWidth = DepthPyramid.mip0Size(mainRenderTarget.width);
-		int pyramidHeight = DepthPyramid.mip0Size(mainRenderTarget.height);
-		int pyramidDepth = DepthPyramid.getImageMipLevels(pyramidWidth, pyramidHeight);
-
-		ptr = writeFloat(ptr, GameRenderer.PROJECTION_Z_NEAR); // zNear
-		ptr = writeFloat(ptr, mc.gameRenderer.getDepthFar()); // zFar
+		ptr = writeFloat(ptr, zNear);
+		ptr = writeFloat(ptr, zFar);
 		ptr = writeFloat(ptr, PROJECTION.m00()); // P00
 		ptr = writeFloat(ptr, PROJECTION.m11()); // P11
-		ptr = writeFloat(ptr, pyramidWidth); // pyramidWidth
-		ptr = writeFloat(ptr, pyramidHeight); // pyramidHeight
+		ptr = writeFloat(ptr, pyramidRes); // pyramidWidth
+		ptr = writeFloat(ptr, pyramidRes); // pyramidHeight
 		ptr = writeInt(ptr, pyramidDepth - 1); // pyramidLevels
 		ptr = writeInt(ptr, 0); // useMin
 

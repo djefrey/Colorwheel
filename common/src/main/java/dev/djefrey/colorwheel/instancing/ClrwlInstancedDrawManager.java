@@ -80,14 +80,12 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 	private final InstancedLight light;
 
 	private final ShaderPack pack;
-	private final NamespacedId dimension;
 	private final ProgramSet programSet;
 
-	public ClrwlInstancedDrawManager(ShaderPack pack, NamespacedId dimension, ClrwlInstancedPrograms programs)
+	public ClrwlInstancedDrawManager(ShaderPack pack, ProgramSet programSet, ClrwlInstancedPrograms programs)
 	{
 		this.pack = pack;
-		this.dimension = dimension;
-		this.programSet = pack.getProgramSet(dimension);
+		this.programSet = programSet;
 
 		this.programs = programs;
 		this.meshPool = new ClrwlMeshPool();
@@ -98,10 +96,10 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		this.meshPool.bind(vao);
 	}
 
-	public static ClrwlInstancedDrawManager build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean isFallback)
+	public static ClrwlInstancedDrawManager build(ShaderSources sources, ShaderPack pack, ProgramSet programSet, boolean isFallback)
 	{
-		var programs = ClrwlInstancedPrograms.build(sources, pack, dimension, isFallback);
-		return new ClrwlInstancedDrawManager(pack, dimension, programs);
+		var programs = ClrwlInstancedPrograms.build(sources, pack, programSet, isFallback);
+		return new ClrwlInstancedDrawManager(pack, programSet, programs);
 	}
 
 	@Override
@@ -159,54 +157,24 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		light.flush(lightStorage);
 	}
 
-	public void renderSolid(boolean isShadow)
+	public void preparePass(IrisRenderingPipeline pipeline, boolean isShadow)
+	{
+	}
+
+	public void renderSolid(IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
 		if (solidDraws.isEmpty())
 		{
 			return;
 		}
 
-		var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
-
-		if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
-		{
-			var pipelineData = getPipelineData(irisPipeline);
-			renderSolidImpl(pipelineData, isShadow);
-		}
-		else
-		{
-			handleInvalidPipeline(curPipeline);
-		}
-	}
-
-	public void renderTranslucent(boolean isShadow)
-	{
-		if (translucentDraws.isEmpty() && oitDraws.isEmpty())
-		{
-			return;
-		}
-
-		var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
-
-		if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
-		{
-			var pipelineData = getPipelineData(irisPipeline);
-			renderTranslucentImpl(pipelineData, isShadow);
-		}
-		else
-		{
-			handleInvalidPipeline(curPipeline);
-		}
-	}
-
-	private void renderSolidImpl(PipelineData pipelineData, boolean isShadow)
-	{
 		if (isShadow && ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(ClrwlProgramId.SHADOW).isEmpty())
 		{
 			// No base shadow shader, skip
 			return;
 		}
 
+		var pipelineData = getPipelineData(irisPipeline);
 		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
 
 		ClrwlUniforms.bind(isShadow);
@@ -214,14 +182,20 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		TextureBinder.bindLightAndOverlay();
 		light.bind();
 
-		submitDraws(solidDraws, pipelineData, isShadow);
+		submitDraws(solidDraws, pipelineData, irisPipeline, isShadow);
 
 		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
 	}
 
-	private void renderTranslucentImpl(PipelineData pipelineData, boolean isShadow)
+	public void renderTranslucent(IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
+		if (translucentDraws.isEmpty() && oitDraws.isEmpty())
+		{
+			return;
+		}
+
+		var pipelineData = getPipelineData(irisPipeline);
 		var framebuffers = pipelineData.framebuffers();
 
 		setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
@@ -233,7 +207,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		if (!translucentDraws.isEmpty())
 		{
-			submitDraws(translucentDraws, pipelineData, isShadow);
+			submitDraws(translucentDraws, pipelineData, irisPipeline, isShadow);
 		}
 
 		if (!oitDraws.isEmpty())
@@ -271,13 +245,13 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				oitFramebuffer.prepare();
 
 				oitFramebuffer.prepareDepthRange();
-				submitOitDraws(pipelineData, isShadow, ClrwlPipelineCompiler.OitMode.DEPTH_RANGE);
+				submitOitDraws(pipelineData, irisPipeline, isShadow, ClrwlPipelineCompiler.OitMode.DEPTH_RANGE);
 
 				setPhase(ClrwlRenderingPhase.OIT_COEFFICIENTS, isShadow);
 
 				if (oitFramebuffer.prepareRenderTransmittance())
 				{
-					submitOitDraws(pipelineData, isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
+					submitOitDraws(pipelineData, irisPipeline, isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
 				}
 
 //				oitFramebuffer.renderDepthFromTransmittance();
@@ -288,7 +262,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				setPhase(ClrwlRenderingPhase.OIT_ACCUMULATE, isShadow);
 
 				oitFramebuffer.prepareAccumulate();
-				submitOitDraws(pipelineData, isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
+				submitOitDraws(pipelineData, irisPipeline, isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
 
 				setPhase(ClrwlRenderingPhase.OIT_COMPOSITE, isShadow);
 
@@ -297,7 +271,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			else
 			{
 				setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
-				submitDraws(oitDraws, pipelineData, isShadow);
+				submitDraws(oitDraws, pipelineData, irisPipeline, isShadow);
 			}
 		}
 
@@ -307,7 +281,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
 
-	private void submitDraws(List<ClrwlInstancedDraw> draws, PipelineData pipelineData, boolean isShadow)
+	private void submitDraws(List<ClrwlInstancedDraw> draws, PipelineData pipelineData, IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
 		var programs = pipelineData.programs();
 		var framebuffers = pipelineData.framebuffers();
@@ -340,7 +314,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			try
 			{
-				program = programs.get(key);
+				program = programs.get(key, irisPipeline);
 			}
 			catch (Exception e)
 			{
@@ -385,7 +359,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		}
 	}
 
-	private void submitOitDraws(PipelineData pipelineData, boolean isShadow, ClrwlPipelineCompiler.OitMode oit)
+	private void submitOitDraws(PipelineData pipelineData, IrisRenderingPipeline irisPipeline, boolean isShadow, ClrwlPipelineCompiler.OitMode oit)
 	{
 		var programs = pipelineData.programs();
 		var framebuffers = pipelineData.framebuffers();
@@ -412,7 +386,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 			try
 			{
-				program = programs.get(key);
+				program = programs.get(key, irisPipeline);
 			}
 			catch (Exception e)
 			{
@@ -448,24 +422,9 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		}
 	}
 
-	@Override
-	public void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks)
+	public void renderCrumbling(IrisRenderingPipeline irisPipeline, List<Engine.CrumblingBlock> crumblingBlocks)
 	{
-		var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
-
-		if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
-		{
-			var pipelineData = getPipelineData(irisPipeline);
-			renderCrumblingImpl(pipelineData, crumblingBlocks);
-		}
-		else
-		{
-			handleInvalidPipeline(curPipeline);
-		}
-	}
-
-	public void renderCrumblingImpl(PipelineData pipelineData, List<Engine.CrumblingBlock> crumblingBlocks)
-	{
+		var pipelineData = getPipelineData(irisPipeline);
 		var programs = pipelineData.programs();
 		var framebuffers = pipelineData.framebuffers();
 
@@ -546,7 +505,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 						try
 						{
-							program = programs.get(shaderKey);
+							program = programs.get(shaderKey, irisPipeline);
 						}
 						catch (Exception e)
 						{

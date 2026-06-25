@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
+import dev.djefrey.colorwheel.indirect.ClrwlDepthPyramid;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
@@ -101,17 +102,18 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		VIEW_PROJECTION.set(context.viewProjection());
 		VIEW_PROJECTION.translate(-camX, -camY, -camZ);
 
-		var shadowModelView = ShadowRenderer.createShadowModelView(directives.getSunPathRotation(),
-																   directives.getShadowDirectives().getIntervalSize(),
-																   directives.getShadowDirectives().getNearPlane(),
-																   directives.getShadowDirectives().getFarPlane());
-		var shadowProjection = ShadowMatrices.createOrthoMatrix(directives.getShadowDirectives().getDistance(),
-																directives.getShadowDirectives().getNearPlane(),
-																directives.getShadowDirectives().getFarPlane());
-
-		SHADOW_VIEW.set(shadowModelView.last().pose());
-		SHADOW_VIEW.translate(-camX, -camY, -camZ);
-		SHADOW_PROJECTION.set(shadowProjection);
+		if (ShadowRenderer.ACTIVE)
+		{
+			SHADOW_VIEW.set(ShadowRenderer.MODELVIEW);
+			SHADOW_VIEW.translate(-camX, -camY, -camZ);
+			SHADOW_PROJECTION.set(ShadowRenderer.PROJECTION);
+		}
+		else
+		{
+			SHADOW_VIEW.identity();
+			SHADOW_VIEW.translate(-camX, -camY, -camZ);
+			SHADOW_PROJECTION.identity();
+		}
 
 		Matrix4f normal = new Matrix4f(context.modelView())
 				.translate(-camX, -camY, -camZ)
@@ -163,12 +165,14 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		BUFFER.markDirty();
 	}
 
-	private static long writeRenderOrigin(long ptr, Vec3i renderOrigin) {
+	private static long writeRenderOrigin(long ptr, Vec3i renderOrigin)
+	{
 		ptr = writeIVec3(ptr, renderOrigin.getX(), renderOrigin.getY(), renderOrigin.getZ());
 		return ptr;
 	}
 
-	private static void setPrev() {
+	private static void setPrev()
+	{
 		VIEW_PREV.set(VIEW);
 		PROJECTION_PREV.set(PROJECTION);
 		VIEW_PROJECTION_PREV.set(VIEW_PROJECTION);
@@ -177,7 +181,8 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		CAMERA_ROT_PREV.set(CAMERA_ROT);
 	}
 
-	private static long writeMatrices(long ptr) {
+	private static long writeMatrices(long ptr)
+	{
 		ptr = writeMat4(ptr, VIEW);
 		ptr = writeMat4(ptr, VIEW.invert(VIEW_INVERSE));
 		ptr = writeMat4(ptr, VIEW_PREV);
@@ -195,7 +200,8 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		return ptr;
 	}
 
-	private static long writeCamera(long ptr) {
+	private static long writeCamera(long ptr)
+	{
 		ptr = writeVec3(ptr, CAMERA_POS.x, CAMERA_POS.y, CAMERA_POS.z);
 		ptr = writeVec3(ptr, CAMERA_POS_PREV.x, CAMERA_POS_PREV.y, CAMERA_POS_PREV.z);
 		ptr = writeVec3(ptr, CAMERA_LOOK.x, CAMERA_LOOK.y, CAMERA_LOOK.z);
@@ -205,7 +211,8 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		return ptr;
 	}
 
-	private static long writeTime(long ptr, RenderContext context) {
+	private static long writeTime(long ptr, RenderContext context)
+	{
 		int ticks = ((LevelRendererAccessor) context.renderer()).flywheel$getTicks();
 		float partialTick = context.partialTick();
 		float renderTicks = ticks + partialTick;
@@ -222,8 +229,10 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		return ptr;
 	}
 
-	private static long writeCameraIn(long ptr, Camera camera) {
-		if (!camera.isInitialized()) {
+	private static long writeCameraIn(long ptr, Camera camera)
+	{
+		if (!camera.isInitialized())
+		{
 			ptr = writeInt(ptr, 0);
 			ptr = writeInt(ptr, 0);
 			return ptr;
@@ -235,13 +244,15 @@ public final class ClrwlFrameUniforms extends UniformWriter
 		return writeInFluidAndBlock(ptr, level, blockPos, cameraPos);
 	}
 
-	private static long writeCullData(long ptr) {
+	// TODO: move out of FrameUniforms, reset it for each IrisRenderingPipeline ?
+	private static long writeCullData(long ptr)
+	{
 		var mc = Minecraft.getInstance();
 		var mainRenderTarget = mc.getMainRenderTarget();
 
-		int pyramidWidth = DepthPyramid.mip0Size(mainRenderTarget.width);
-		int pyramidHeight = DepthPyramid.mip0Size(mainRenderTarget.height);
-		int pyramidDepth = DepthPyramid.getImageMipLevels(pyramidWidth, pyramidHeight);
+		int pyramidWidth = ClrwlDepthPyramid.mip0Size(mainRenderTarget.width);
+		int pyramidHeight = ClrwlDepthPyramid.mip0Size(mainRenderTarget.height);
+		int pyramidDepth = ClrwlDepthPyramid.getImageMipLevels(pyramidWidth, pyramidHeight);
 
 		ptr = writeFloat(ptr, GameRenderer.PROJECTION_Z_NEAR); // zNear
 		ptr = writeFloat(ptr, mc.gameRenderer.getDepthFar()); // zFar

@@ -1,0 +1,454 @@
+package dev.djefrey.colorwheel.indirect;
+
+import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.compile.ClrwlIndirectPrograms;
+import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
+import dev.djefrey.colorwheel.compile.ClrwlProgram;
+import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
+import dev.djefrey.colorwheel.engine.*;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
+import dev.engine_room.flywheel.api.instance.Instance;
+import dev.engine_room.flywheel.api.instance.InstanceType;
+import dev.engine_room.flywheel.api.material.Material;
+import dev.engine_room.flywheel.api.model.Model;
+import dev.engine_room.flywheel.backend.compile.ContextShader;
+import dev.engine_room.flywheel.backend.compile.PipelineCompiler;
+import dev.engine_room.flywheel.backend.engine.MaterialRenderState;
+import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
+import dev.engine_room.flywheel.backend.gl.GlCompat;
+import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
+import dev.engine_room.flywheel.lib.math.MoreMath;
+import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
+
+import java.util.*;
+
+import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
+import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
+import static org.lwjgl.opengl.GL42.GL_COMMAND_BARRIER_BIT;
+import static org.lwjgl.opengl.GL42.glMemoryBarrier;
+import static org.lwjgl.opengl.GL43.glDispatchCompute;
+
+public class ClrwlIndirectCullingGroup<I extends Instance>
+{
+	private static final Comparator<ClrwlIndirectDraw> DRAW_COMPARATOR = Comparator.comparing(ClrwlIndirectDraw::isEmbedded)
+			.thenComparingInt(ClrwlIndirectDraw::bias)
+			.thenComparingInt(ClrwlIndirectDraw::indexOfMeshInModel)
+			.thenComparing(ClrwlIndirectDraw::material, MaterialRenderState.COMPARATOR);
+
+	private final InstanceType<I> instanceType;
+	private final long instanceStride;
+	private final ClrwlIndirectBuffers buffers;
+	private final List<ClrwlIndirectInstancer<I>> instancers = new ArrayList<>();
+	private final List<ClrwlIndirectDraw> indirectDraws = new ArrayList<>();
+	private final List<MultiDraw> solidDraws = new ArrayList<>();
+	private final List<MultiDraw> translucentDraws = new ArrayList<>();
+	private final List<MultiDraw> oitDraws = new ArrayList<>();
+
+	private final ProgramSet programSet;
+	private final GlProgram cullProgram;
+
+	private boolean needsDrawBarrier;
+	private boolean needsDrawSort;
+	private int instanceCountThisFrame;
+
+	ClrwlIndirectCullingGroup(InstanceType<I> instanceType, ClrwlIndirectPrograms programs, ProgramSet programSet)
+	{
+		this.instanceType = instanceType;
+		instanceStride = MoreMath.align4(instanceType.layout().byteSize());
+		buffers = new ClrwlIndirectBuffers(instanceStride, programSet.getPackDirectives().getShadowDirectives().isShadowEnabled().orElse(true));
+
+		this.programSet = programSet;
+		cullProgram = programs.getCullingProgram(instanceType);
+	}
+
+	public boolean flushInstancers()
+	{
+		instanceCountThisFrame = 0;
+		int modelIndex = 0;
+        for (var iterator = instancers.iterator(); iterator.hasNext();)
+		{
+            var instancer = iterator.next();
+			var instanceCount = instancer.instanceCount();
+
+			if (instanceCount == 0)
+			{
+				iterator.remove();
+				instancer.delete();
+				continue;
+			}
+
+			instancer.update(modelIndex, instanceCountThisFrame);
+			instanceCountThisFrame += instanceCount;
+
+			modelIndex++;
+        }
+
+        if (indirectDraws.removeIf(ClrwlIndirectDraw::deleted))
+		{
+			needsDrawSort = true;
+		}
+
+		var out = indirectDraws.isEmpty();
+
+		if (out)
+		{
+			delete();
+		}
+
+		return out;
+	}
+
+	public void upload(StagingBuffer stagingBuffer)
+	{
+		buffers.updateCounts(instanceCountThisFrame, instancers.size(), indirectDraws.size());
+
+		// Upload only instances that have changed.
+		uploadInstances(stagingBuffer);
+
+		buffers.objectStorage.uploadDescriptors(stagingBuffer);
+
+		// We need to upload the models every frame to reset the instance count.
+		uploadModels(stagingBuffer);
+
+		if (needsDrawSort)
+		{
+			sortDraws();
+			needsDrawSort = false;
+		}
+
+		uploadDraws(stagingBuffer);
+
+		needsDrawBarrier = true;
+	}
+
+	public void dispatchCull(boolean isShadow)
+	{
+		cullProgram.bind();
+
+		buffers.bindForCull(isShadow);
+		glDispatchCompute(buffers.objectStorage.capacity(), 1, 1);
+	}
+
+	public void dispatchApply(boolean isShadow)
+	{
+		buffers.bindForApply(isShadow);
+		glDispatchCompute(GlCompat.getComputeGroupCount(indirectDraws.size()), 1, 1);
+	}
+
+	public boolean hasOitDraws() {
+		return !oitDraws.isEmpty();
+	}
+
+	private void sortDraws()
+	{
+		solidDraws.clear();
+		translucentDraws.clear();
+		oitDraws.clear();
+		// sort by visual type, then material
+		indirectDraws.sort(DRAW_COMPARATOR);
+
+		for (int start = 0, i = 0; i < indirectDraws.size(); i++)
+		{
+			var draw1 = indirectDraws.get(i);
+
+			// if the next draw call has a different VisualType or Material, start a new MultiDraw
+			if (i == indirectDraws.size() - 1 || incompatibleDraws(draw1, indirectDraws.get(i + 1)))
+			{
+				List<ClrwlIndirectCullingGroup.MultiDraw> dst;
+				switch (draw1.material().transparency())
+				{
+					case TRANSLUCENT -> dst = translucentDraws;
+					case ORDER_INDEPENDENT -> dst = oitDraws;
+					default -> dst = solidDraws;
+				}
+
+				dst.add(new MultiDraw(draw1.material(), draw1.isEmbedded(), start, i + 1));
+				start = i + 1;
+			}
+		}
+	}
+
+	private boolean incompatibleDraws(ClrwlIndirectDraw draw1, ClrwlIndirectDraw draw2)
+	{
+		if (draw1.isEmbedded() != draw2.isEmbedded())
+		{
+			return true;
+		}
+
+		return !MaterialRenderState.materialEquals(draw1.material(), draw2.material());
+	}
+
+	public void add(ClrwlIndirectInstancer<I> instancer, ClrwlInstancerKey<I> key, ClrwlMeshPool meshPool)
+	{
+		instancer.mapping = buffers.objectStorage.createMapping();
+		instancer.update(instancers.size(), -1);
+
+		instancers.add(instancer);
+
+        List<Model.ConfiguredMesh> meshes = key.model()
+				.meshes();
+        for (int i = 0; i < meshes.size(); i++)
+		{
+            var entry = meshes.get(i);
+
+            ClrwlMeshPool.PooledMesh mesh = meshPool.alloc(entry.mesh());
+			var draw = new ClrwlIndirectDraw(instancer, entry.material(), mesh, key.bias(), i);
+            indirectDraws.add(draw);
+            instancer.addDraw(draw);
+        }
+
+		needsDrawSort = true;
+	}
+
+	public void submitSolid(ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	{
+		if (solidDraws.isEmpty())
+		{
+			return;
+		}
+
+		buffers.bindForDraw(isShadow);
+
+		drawBarrier();
+
+		ClrwlProgram prevProgram = null;
+		GlFramebuffer prevFramebuffer = null;
+
+		for (var multiDraw : solidDraws)
+		{
+			var key = ClrwlShaderKey.fromMaterial(instanceType,
+												  multiDraw.material,
+												  multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT,
+												  isShadow,
+												  ClrwlPipelineCompiler.OitMode.OFF);
+
+			if (brokenShaders.contains(key))
+			{
+				continue;
+			}
+
+			var programId = ClrwlProgramId.fromTransparency(multiDraw.material.transparency(), isShadow);
+			var framebuffer = framebuffers.getFramebuffer(programId);
+
+			if (framebuffer == null)
+			{
+				continue;
+			}
+
+			ClrwlProgram program;
+
+			try
+			{
+				program = programs.get(key, irisPipeline);
+			}
+			catch (Exception e)
+			{
+				handleBrokenShader(key, programId, e);
+				continue;
+			}
+
+			if (prevProgram != program)
+			{
+				if (prevProgram != null)
+				{
+					prevProgram.unbind();
+				}
+
+				program.bind();
+			}
+
+			var blendOverride = framebuffers.getBlendModeOverride(programId).orElse(null);
+			var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId);
+
+			program.setClrwlCommonUniforms(multiDraw.material, blendOverride, ClrwlRenderingPhase.SOLID);
+			ClrwlMaterialRenderState.setup(multiDraw.material, blendOverride, bufferBlendOverrides);
+
+			if (prevFramebuffer != framebuffer)
+			{
+				prevFramebuffer = framebuffer;
+				framebuffer.bind();
+			}
+
+			multiDraw.submit(program);
+
+			prevProgram = program;
+		}
+	}
+
+	public void submitTranslucent(PipelineCompiler.OitMode oit)
+	{
+//		if (translucentDraws.isEmpty())
+//		{
+//			return;
+//		}
+//
+//		buffers.bindForDraw();
+//
+//		drawBarrier();
+//
+//		GlProgram lastProgram = null;
+//
+//		for (var multiDraw : translucentDraws)
+//		{
+//			var drawProgram = programs.getIndirectProgram(instanceType, multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT, multiDraw.material, PipelineCompiler.OitMode.OFF);
+//			if (drawProgram != lastProgram) {
+//				lastProgram = drawProgram;
+//
+//				// Don't need to do this unless the program changes.
+//				drawProgram.bind();
+//			}
+//
+//			MaterialRenderState.setup(multiDraw.material);
+//
+//			multiDraw.submit(drawProgram);
+//		}
+	}
+
+	public void submitOit(PipelineCompiler.OitMode oit)
+	{
+//		if (oitDraws.isEmpty())
+//		{
+//			return;
+//		}
+//
+//		buffers.bindForDraw();
+//
+//		drawBarrier();
+//
+//		GlProgram lastProgram = null;
+//
+//		for (var multiDraw : oitDraws)
+//		{
+//			var drawProgram = programs.getIndirectProgram(instanceType, multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT, multiDraw.material, oit);
+//			if (drawProgram != lastProgram)
+//			{
+//				lastProgram = drawProgram;
+//
+//				// Don't need to do this unless the program changes.
+//				drawProgram.bind();
+//
+//				drawProgram.setFloat("_flw_blueNoiseFactor", 0.07f);
+//			}
+//
+//			MaterialRenderState.setupOit(multiDraw.material);
+//
+//			multiDraw.submit(drawProgram);
+//		}
+	}
+
+	public void bindForCrumbling(Material material)
+	{
+//		var program = programs.getIndirectProgram(instanceType, ContextShader.CRUMBLING, material, PipelineCompiler.OitMode.OFF);
+//
+//		program.bind();
+//
+//		buffers.bindForCrumbling();
+//
+//		drawBarrier();
+//
+//		program.setUInt("_flw_baseDraw", 0);
+	}
+
+	private void drawBarrier()
+	{
+		if (needsDrawBarrier)
+		{
+			// In theory all command buffer writes will be protected by
+			// the shader storage barrier bit, but better safe than sorry.
+			glMemoryBarrier(GL_COMMAND_BARRIER_BIT);
+			needsDrawBarrier = false;
+		}
+	}
+
+	private void uploadInstances(StagingBuffer stagingBuffer)
+	{
+		for (var instancer : instancers)
+		{
+			instancer.uploadInstances(stagingBuffer, buffers.objectStorage.objectBuffer.handle());
+		}
+	}
+
+	private void uploadModels(StagingBuffer stagingBuffer)
+	{
+		var totalSize = instancers.size() * ClrwlIndirectBuffers.MODEL_STRIDE;
+		var handle = buffers.model.handle();
+
+		stagingBuffer.enqueueCopy(totalSize, handle, 0, this::writeModels);
+	}
+
+	private void uploadDraws(StagingBuffer stagingBuffer)
+	{
+		var totalSize = indirectDraws.size() * ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE;
+
+		if (buffers.shadowDraw != null)
+		{
+			stagingBuffer.enqueueCopy(totalSize, buffers.shadowDraw.handle(), 0, this::writeCommands);
+		}
+
+		stagingBuffer.enqueueCopy(totalSize, buffers.gbuffersDraw.handle(), 0, this::writeCommands);
+	}
+
+	private void writeModels(long writePtr)
+	{
+		for (var model : instancers)
+		{
+			model.writeModel(writePtr);
+			writePtr += ClrwlIndirectBuffers.MODEL_STRIDE;
+		}
+	}
+
+	private void writeCommands(long writePtr)
+	{
+		for (var draw : indirectDraws)
+		{
+			draw.write(writePtr);
+			writePtr += ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE;
+		}
+	}
+
+	public void delete()
+	{
+		buffers.delete();
+	}
+
+	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
+
+	private void handleBrokenShader(ClrwlShaderKey key, ClrwlProgramId baseProgramId, Exception e)
+	{
+		if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
+		{
+			Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"), true);
+
+			var disableComp = Component.translatable("colorwheel.alert.ask_disable").withStyle(
+					Style.EMPTY
+							.withUnderlined(true)
+							.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertBrokenPack off"))
+							.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.broken_pack.disable"))));
+
+			Colorwheel.sendWarnMessage(disableComp, false);
+		}
+
+		brokenShaders.add(key);
+
+		ClrwlProgramId realProgramId = ((ProgramSetAccessor) programSet).colorwheel$getRealClrwlProgram(baseProgramId).orElse(baseProgramId);
+		String shaderPath = realProgramId.programName() + "/" + key.getPath();
+
+		Colorwheel.LOGGER.error("Could not compile shader: " + shaderPath, e);
+	}
+
+	private record MultiDraw(Material material, boolean embedded, int start, int end)
+	{
+		private void submit(ClrwlProgram drawProgram)
+		{
+			GlCompat.safeMultiDrawElementsIndirect(drawProgram.getProgram(), GL_TRIANGLES, GL_UNSIGNED_INT, this.start, this.end, ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE);
+		}
+	}
+}

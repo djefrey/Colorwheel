@@ -24,7 +24,7 @@ public class ClrwlUniforms
     {
         if (context instanceof ShadowRenderContext shadowContext)
         {
-            ClrwlShadowFrameUniforms.update(shadowContext);
+            ClrwlShadowFrameUniforms.update(shadowContext, pack, dimension);
         }
         else
         {

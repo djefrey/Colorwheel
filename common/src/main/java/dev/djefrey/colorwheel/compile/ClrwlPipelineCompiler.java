@@ -30,59 +30,51 @@ public class ClrwlPipelineCompiler
 	private final ShaderSources sources;
 	private final ClrwlPipeline pipeline;
 	private final ShaderPack pack;
-	private final NamespacedId dimension;
+	private final ProgramSet programSet;
 	private final ClrwlProgramSources patchedSources;
 
-	public ClrwlPipelineCompiler(ShaderSources sources, ClrwlPipeline pipeline, ShaderPack pack, NamespacedId dimension)
+	public ClrwlPipelineCompiler(ShaderSources sources, ClrwlPipeline pipeline, ShaderPack pack, ProgramSet programSet)
 	{
 		this.sources = sources;
 		this.pipeline = pipeline;
 		this.pack = pack;
-		this.dimension = dimension;
+		this.programSet = programSet;
 		this.patchedSources = new ClrwlProgramSources();
 	}
 
-	public ClrwlProgram get(ClrwlShaderKey key)
+	public ClrwlProgram get(ClrwlShaderKey key, IrisRenderingPipeline irisPipeline)
 	{
-		return this.compile(key);
+		return this.compile(key, irisPipeline);
 	}
 
-	private ClrwlProgram compile(ClrwlShaderKey key)
+	private ClrwlProgram compile(ClrwlShaderKey key, IrisRenderingPipeline irisPipeline)
 	{
-		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipelineNullable();
+		ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+		boolean isShadow = key.isShadow();
 
-		if (worldPipeline instanceof IrisRenderingPipeline irisPipeline)
-		{
-			ProgramSet programSet = pack.getProgramSet(dimension);
-			ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-			boolean isShadow = key.isShadow();
+		var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
+		var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().vertexSource());
+		var contextName = key.context().nameLowerCase();
+		var oitName = key.oit().name;
 
-			var instanceName = ResourceUtil.toDebugFileNameNoExtension(key.instanceType().vertexShader());
-			var materialName = ResourceUtil.toDebugFileNameNoExtension(key.material().vertexSource());
-			var contextName = key.context().nameLowerCase();
-			var oitName = key.oit().name;
+		ClrwlProgramId baseProgramId = ClrwlProgramId.fromTransparency(key.transparency(), isShadow);
 
-			ClrwlProgramId baseProgramId = ClrwlProgramId.fromTransparency(key.transparency(), isShadow);
+		String name = String.format("%s/%s/%s_%s%s", baseProgramId.programName(), instanceName, materialName, contextName, oitName);
+		var irisSources = this.patchedSources.getSources(baseProgramId, key.oit(), programSet, irisPipeline);
 
-			String name = String.format("%s/%s/%s_%s%s", baseProgramId.programName(), instanceName, materialName, contextName, oitName);
-			var irisSources = this.patchedSources.getSources(baseProgramId, key.oit(), programSet, irisPipeline);
+		var vertex = compileStage(pipeline.vertex(), key, irisPipeline, irisSources);
+		var geometry = compileOptionalStage(pipeline.geometry(), key, irisPipeline, irisSources);
+		var fragment = compileStage(pipeline.fragment(), key, irisPipeline, irisSources);
 
-			var vertex = compileStage(pipeline.vertex(), key, irisPipeline, irisSources);
-			var geometry = compileOptionalStage(pipeline.geometry(), key, irisPipeline, irisSources);
-			var fragment = compileStage(pipeline.fragment(), key, irisPipeline, irisSources);
+		var basePath = "/pipeline/" + Iris.getCurrentPackName() + "/" + baseProgramId.programName() + "/" + key.getPath();
 
-			var basePath = "/pipeline/" + Iris.getCurrentPackName() + "/" + baseProgramId.programName() + "/" + key.getPath();
+		dumpSources(basePath + ".vsh", vertex);
+		geometry.ifPresent(sh -> dumpSources(basePath + ".gsh", sh));
+		dumpSources(basePath + ".fsh", fragment);
 
-			dumpSources(basePath + ".vsh", vertex);
-			geometry.ifPresent(sh -> dumpSources(basePath + ".gsh", sh));
-			dumpSources(basePath + ".fsh", fragment);
+		var customSource = new ClrwlProgramSource(name, vertex, geometry, fragment);
 
-			var customSource = new ClrwlProgramSource(name, vertex, geometry, fragment);
-
-			return ClrwlProgram.createProgram(name, baseProgramId, customSource, properties, irisPipeline.getCustomUniforms(), irisPipeline);
-		}
-
-		return null;
+		return ClrwlProgram.createProgram(name, baseProgramId, customSource, properties, irisPipeline.getCustomUniforms(), irisPipeline);
 	}
 
 	private Optional<String> compileOptionalStage(ClrwlPipelineStage<ClrwlShaderKey> stage, ClrwlShaderKey key, IrisRenderingPipeline irisPipeline, ClrwlProgramSources.PatchedSources irisSources)
@@ -99,7 +91,6 @@ public class ClrwlPipelineCompiler
 
 	private String compileStage(ClrwlPipelineStage<ClrwlShaderKey> stage, ClrwlShaderKey key, IrisRenderingPipeline irisPipeline, ClrwlProgramSources.PatchedSources irisSources)
 	{
-		ProgramSet programSet = pack.getProgramSet(dimension);
 		ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
 
 		var compile = new ClrwlCompilation(irisPipeline, programSet, properties, irisSources, sources);

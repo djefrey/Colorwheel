@@ -8,7 +8,11 @@ public enum ClrwlRenderingPhase
     OIT_COEFFICIENTS,
     OIT_ACCUMULATE,
     OIT_COMPOSITE,
-    CRUMBLING;
+    CRUMBLING,
+    STAGING_BUFFER_FLUSH,
+    INDIRECT_DEPTH_PYRAMID,
+    INDIRECT_CULL,
+    INDIRECT_CULL_APPLY;
 
     public int getValue()
     {
