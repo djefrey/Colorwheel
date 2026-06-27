@@ -224,6 +224,8 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
 
+		TextureBinder.bindLightAndOverlay();
+
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
 		lightBuffers.bind();
