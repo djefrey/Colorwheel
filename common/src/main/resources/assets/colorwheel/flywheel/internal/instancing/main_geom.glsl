@@ -5,7 +5,7 @@ uniform uint _clrwl_packedMaterial;
 
 void main()
 {
-    #ifndef CLRWL_IS_FALLBACK
+    #ifndef _CLRWL_IS_FALLBACK
     _flw_unpackMaterialProperties(_clrwl_packedMaterial, flw_material);
     #endif
 

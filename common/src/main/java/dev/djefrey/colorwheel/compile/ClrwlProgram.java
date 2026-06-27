@@ -189,7 +189,7 @@ public class ClrwlProgram
 		this.blendFuncUniform = tryGetUniformLocation2("_clrwl_blendFunc");
 		this.atlasSizeUniform = tryGetUniformLocation2("_clrwl_atlasSize");
 
-		ClrwlUniforms.setUniformBlockBinding(this);
+		ClrwlUniforms.setUniformsBlockBindings(this);
 	}
 
 	private int tryGetUniformLocation2(CharSequence name) {

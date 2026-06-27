@@ -32,7 +32,7 @@ public class OitCompositeComponent implements SourceComponent
     {
         return List.of(
                 sources.get(Colorwheel.rl("internal/oit/wavelet.glsl")),
-                sources.get(Colorwheel.rl("internal/uniform/frame.glsl")),
+                sources.get(Colorwheel.rl("internal/uniforms.glsl")),
                 sources.get(Colorwheel.rl("internal/depth.glsl"))
             );
     }

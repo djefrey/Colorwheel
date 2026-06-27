@@ -2,7 +2,7 @@
 #include "flywheel:internal/api_impl.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
-#ifndef CLRWL_IS_FALLBACK
+#ifndef _CLRWL_IS_FALLBACK
 in ClrwlVertexData
 {
     vec4 flw_vertexPos;
@@ -43,7 +43,7 @@ vec2 flw_fragLight;
 
 vec4 clrwl_overlayColor = vec4(0.0);
 
-#else // CLRWL_IS_FALLBACK
+#else // _CLRWL_IS_FALLBACK
 
 in ClrwlFallbackVertexData
 {

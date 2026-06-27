@@ -3,7 +3,7 @@
 
 void main()
 {
-    #ifndef CLRWL_IS_FALLBACK
+    #ifndef _CLRWL_IS_FALLBACK
     _flw_unpackMaterialProperties(clrwl_in[0]._clrwl_packedMaterial, flw_material);
     clrwl_out._clrwl_packedMaterial = clrwl_in[0]._clrwl_packedMaterial;
     #endif

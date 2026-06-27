@@ -13,7 +13,7 @@ void clrwl_computeDiscard(vec4 color)
     #endif
 }
 
-#ifndef CLRWL_IS_FALLBACK
+#ifndef _CLRWL_IS_FALLBACK
 float _clrwl_diffuseFactor()
 {
     if (flw_material.cardinalLightingMode == 2u)
