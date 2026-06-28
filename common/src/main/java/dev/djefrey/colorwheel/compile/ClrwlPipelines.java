@@ -76,10 +76,32 @@ public class ClrwlPipelines
             .id("oit_composite")
             .minVersion(GlCompat.MAX_GLSL_VERSION)
             .vertex(ClrwlOitCompositePipeline.vertexStage()
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isShadow())
+                        {
+                            c.define("_CLRWL_IS_SHADOW_PASS");
+                        }
+                        else
+                        {
+                            c.define("_CLRWL_IS_GBUFFERS_PASS");
+                        }
+                    })
                     .withResource(FULLSCREEN)
                     .build()
             )
             .fragment(ClrwlOitCompositePipeline.fragmentStage()
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isShadow())
+                        {
+                            c.define("_CLRWL_IS_SHADOW_PASS");
+                        }
+                        else
+                        {
+                            c.define("_CLRWL_IS_GBUFFERS_PASS");
+                        }
+                    })
                     .onCompile(($, c) ->
                     {
                         if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !c.extensions.contains("GL_ARB_gpu_shader5"))
@@ -153,17 +175,7 @@ public class ClrwlPipelines
             var stage = ClrwlPipeline.vertexStage()
                 .define("IS_COLORWHEEL")
                 .define("CLRWL_IS_" + id.toUpperCase())
-                .onCompile((k, c) ->
-                {
-                    if (k.isShadow())
-                    {
-                        c.define("_CLRWL_IS_SHADOW_PASS");
-                    }
-                    else
-                    {
-                        c.define("_CLRWL_IS_GBUFFERS_PASS");
-                    }
-                });
+                .onCompile(ClrwlPipelines::setClrwlPassDefine);
 
             if (fallback)
             {
@@ -231,17 +243,7 @@ public class ClrwlPipelines
             var stage = ClrwlPipeline.geometryStage()
                     .define("IS_COLORWHEEL")
                     .define("CLRWL_IS_" + id.toUpperCase())
-                    .onCompile((k, c) ->
-                    {
-                        if (k.isShadow())
-                        {
-                            c.define("_CLRWL_IS_SHADOW_PASS");
-                        }
-                        else
-                        {
-                            c.define("_CLRWL_IS_GBUFFERS_PASS");
-                        }
-                    });
+                    .onCompile(ClrwlPipelines::setClrwlPassDefine);
 
             if (fallback)
             {
@@ -280,17 +282,7 @@ public class ClrwlPipelines
             var stage = ClrwlPipeline.fragmentStage()
                 .define("IS_COLORWHEEL")
                 .define("CLRWL_IS_" + id.toUpperCase())
-                .onCompile((k, c) ->
-                {
-                    if (k.isShadow())
-                    {
-                        c.define("_CLRWL_IS_SHADOW_PASS");
-                    }
-                    else
-                    {
-                        c.define("_CLRWL_IS_GBUFFERS_PASS");
-                    }
-                });
+                .onCompile(ClrwlPipelines::setClrwlPassDefine);
 
             if (fallback)
             {
@@ -390,6 +382,18 @@ public class ClrwlPipelines
                     .geometry(buildGeometryStage(fallback))
                     .fragment(buildFragmentStage(fallback))
                     .build();
+        }
+    }
+
+    private static void setClrwlPassDefine(ClrwlShaderKey k, ClrwlCompilation c)
+    {
+        if (k.isShadow())
+        {
+            c.define("_CLRWL_IS_SHADOW_PASS");
+        }
+        else
+        {
+            c.define("_CLRWL_IS_GBUFFERS_PASS");
         }
     }
 

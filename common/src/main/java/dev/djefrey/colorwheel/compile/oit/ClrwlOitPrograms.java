@@ -34,9 +34,9 @@ public class ClrwlOitPrograms
 
     private final Map<ClrwlOitCompositeShaderKey, GlProgram> compositeProgramCache = new HashMap<>();
 
-    public GlProgram getOitCompositeProgram(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides)
+    public GlProgram getOitCompositeProgram(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides, boolean isShadow)
     {
-        ClrwlOitCompositeShaderKey key = new ClrwlOitCompositeShaderKey(drawBuffers, ranks, overrides);
+        ClrwlOitCompositeShaderKey key = new ClrwlOitCompositeShaderKey(drawBuffers, ranks, overrides, isShadow);
 
         return compositeProgramCache.computeIfAbsent(key, this::compileComposite);
     }
@@ -51,7 +51,7 @@ public class ClrwlOitPrograms
         var program = linker.link(List.of(vertex, fragment), ($) -> {});
 
         program.bind();
-        program.setUniformBlockBinding(ClrwlUniforms.FRAME_BLOCK_NAME, ClrwlUniforms.FRAME_INDEX);
+        program.setUniformBlockBinding(ClrwlUniforms.PASS_BLOCK_NAME, ClrwlUniforms.PASS_INDEX);
 
         program.setSamplerBinding("_flw_depthRange", ClrwlSamplers.DEPTH_RANGE);
 
