@@ -16,6 +16,7 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +98,7 @@ public class ClrwlFramebuffers
     }
 
     @Nullable
-    public ClrwlOitFramebuffers getOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms oitPrograms, ClrwlShaderProperties properties, ProgramDirectives directives)
+    public ClrwlOitFramebuffers getOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms oitPrograms, ClrwlShaderProperties properties, PackDirectives packDirectives, ProgramDirectives directives)
     {
         switch (programGroup)
         {
@@ -105,7 +106,7 @@ public class ClrwlFramebuffers
             {
                 if (gbuffersOitFramebuffer == null)
                 {
-                    gbuffersOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, directives);
+                    gbuffersOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, packDirectives, directives);
                 }
 
                 return gbuffersOitFramebuffer;
@@ -114,7 +115,7 @@ public class ClrwlFramebuffers
             {
                 if (shadowOitFramebuffer == null)
                 {
-                    shadowOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, directives);
+                    shadowOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, packDirectives, directives);
                 }
 
                 return shadowOitFramebuffer;

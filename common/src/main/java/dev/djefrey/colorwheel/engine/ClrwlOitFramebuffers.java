@@ -19,7 +19,9 @@ import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
+import net.irisshaders.iris.shadows.ShadowMatrices;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.targets.RenderTargets;
 import net.minecraft.client.Minecraft;
@@ -45,6 +47,8 @@ public class ClrwlOitFramebuffers
     private final IrisRenderingPipeline irisPipeline;
     private final ClrwlShaderProperties properties;
 
+    private final float passZFar;
+
     private final int vao;
 
     public int mainFbo = -1;
@@ -57,7 +61,7 @@ public class ClrwlOitFramebuffers
     private int lastWidth = -1;
     private int lastHeight = -1;
 
-    public ClrwlOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, ClrwlShaderProperties properties, ProgramDirectives directives)
+    public ClrwlOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, ClrwlShaderProperties properties, PackDirectives packDirectives, ProgramDirectives directives)
     {
         this.programGroup = programGroup;
         this.programs = programs;
@@ -72,6 +76,33 @@ public class ClrwlOitFramebuffers
         else
         {
             vao = GL32.glGenVertexArrays();
+        }
+
+        switch (programGroup)
+        {
+            case GBUFFERS ->
+            {
+                passZFar = Minecraft.getInstance().gameRenderer.getDepthFar();
+            }
+
+            case SHADOW ->
+            {
+                var shadowDirectives = packDirectives.getShadowDirectives();
+
+                if (shadowDirectives.getFov() != null)
+                {
+                    passZFar = ShadowMatrices.FAR;
+                }
+                else
+                {
+                    passZFar = shadowDirectives.getFarPlane();
+                }
+            }
+
+            default ->
+            {
+                passZFar = 4242.0f;
+            }
         }
     }
 
@@ -177,17 +208,15 @@ public class ClrwlOitFramebuffers
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE);
         RenderSystem.blendEquation(GL32.GL_MAX);
 
-        var far =  Minecraft.getInstance().gameRenderer.getDepthFar();
-
         if (GlCompat.SUPPORTS_DSA)
         {
             GL46.glNamedFramebufferDrawBuffers(mainFbo, DEPTH_RANGE_DRAW_BUFFERS);
-            GL46.glClearNamedFramebufferfv(mainFbo, GL46.GL_COLOR, 0, new float[]{-far, -far, 0, 0});
+            GL46.glClearNamedFramebufferfv(mainFbo, GL46.GL_COLOR, 0, new float[]{-passZFar, -passZFar, 0, 0});
         }
         else
         {
             GL32.glDrawBuffers(DEPTH_RANGE_DRAW_BUFFERS);
-            RenderSystem.clearColor(-far, -far, 0, 0);
+            RenderSystem.clearColor(-passZFar, -passZFar, 0, 0);
             RenderSystem.clear(GL32.GL_COLOR_BUFFER_BIT, false);
         }
     }
@@ -296,7 +325,7 @@ public class ClrwlOitFramebuffers
     /**
      * Composite the accumulated luminance onto the main framebuffer.
      */
-    public void composite(GlFramebuffer target, @Nullable ClrwlBlendModeOverride blendModeOverride, List<BufferBlendInformation> bufferBlendOverrides)
+    public void composite(GlFramebuffer target, @Nullable ClrwlBlendModeOverride blendModeOverride, List<BufferBlendInformation> bufferBlendOverrides, boolean isShadow)
     {
         target.bind();
 
@@ -365,7 +394,7 @@ public class ClrwlOitFramebuffers
         var ranks = properties.getOitCoeffRanks(programGroup);
         var overrides = properties.getOitAccumulateOverrides(programGroup);
 
-        programs.getOitCompositeProgram(programDrawBuffers, ranks, overrides)
+        programs.getOitCompositeProgram(programDrawBuffers, ranks, overrides, isShadow)
                 .bind();
 
         drawFullscreenQuad();

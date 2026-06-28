@@ -4,6 +4,6 @@ import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 
 import java.util.List;
 
-public record ClrwlOitCompositeShaderKey(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides)
+public record ClrwlOitCompositeShaderKey(int[] drawBuffers, int[] ranks, List<ClrwlOitAccumulateOverride> overrides, boolean isShadow)
 {
 }

@@ -231,7 +231,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 				var directives = maybeSrc.get().getDirectives();
 
 				var framebuffer = framebuffers.getFramebuffer(program);
-				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), properties, directives);
+				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), properties,  programSet.getPackDirectives(), directives);
 				var blendOverride = framebuffers.getBlendModeOverride(program).orElse(null);
 				var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program);
 
@@ -266,7 +266,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 				setPhase(ClrwlRenderingPhase.OIT_COMPOSITE, isShadow);
 
-				oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides);
+				oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides, isShadow);
 			}
 			else
 			{
