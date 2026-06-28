@@ -154,7 +154,8 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		glDispatchCompute(GlCompat.getComputeGroupCount(indirectDraws.size()), 1, 1);
 	}
 
-	public boolean hasOitDraws() {
+	public boolean hasOitDraws()
+	{
 		return !oitDraws.isEmpty();
 	}
 
@@ -294,65 +295,154 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	public void submitTranslucent(PipelineCompiler.OitMode oit)
+	private void drawTranslucent(List<MultiDraw> draws, ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
-//		if (translucentDraws.isEmpty())
-//		{
-//			return;
-//		}
-//
-//		buffers.bindForDraw();
-//
-//		drawBarrier();
-//
-//		GlProgram lastProgram = null;
-//
-//		for (var multiDraw : translucentDraws)
-//		{
-//			var drawProgram = programs.getIndirectProgram(instanceType, multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT, multiDraw.material, PipelineCompiler.OitMode.OFF);
-//			if (drawProgram != lastProgram) {
-//				lastProgram = drawProgram;
-//
-//				// Don't need to do this unless the program changes.
-//				drawProgram.bind();
-//			}
-//
-//			MaterialRenderState.setup(multiDraw.material);
-//
-//			multiDraw.submit(drawProgram);
-//		}
+		if (draws.isEmpty())
+		{
+			return;
+		}
+
+		var programId = !isShadow
+				? ClrwlProgramId.GBUFFERS_TRANSLUCENT
+				: ClrwlProgramId.SHADOW_TRANSLUCENT;
+
+		var framebuffer = framebuffers.getFramebuffer(programId);
+		var blendOverride = framebuffers.getBlendModeOverride(programId).orElse(null);
+		var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(programId);
+
+		if (framebuffer == null)
+		{
+			return;
+		}
+
+		buffers.bindForDraw(isShadow);
+
+		drawBarrier();
+
+		ClrwlProgram prevProgram = null;
+		GlFramebuffer prevFramebuffer = null;
+
+		for (var multiDraw : draws)
+		{
+			var key = ClrwlShaderKey.fromMaterial(instanceType,
+												  multiDraw.material,
+												  multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT,
+												  isShadow,
+												  ClrwlPipelineCompiler.OitMode.OFF);
+
+			if (brokenShaders.contains(key))
+			{
+				continue;
+			}
+
+			ClrwlProgram program;
+
+			try
+			{
+				program = programs.get(key, irisPipeline);
+			}
+			catch (Exception e)
+			{
+				handleBrokenShader(key, programId, e);
+				continue;
+			}
+
+			if (prevProgram != program)
+			{
+				if (prevProgram != null)
+				{
+					prevProgram.unbind();
+				}
+
+				program.bind();
+			}
+
+			program.setClrwlCommonUniforms(multiDraw.material, blendOverride, ClrwlRenderingPhase.TRANSLUCENT);
+			ClrwlMaterialRenderState.setup(multiDraw.material, blendOverride, bufferBlendOverrides);
+
+			if (prevFramebuffer != framebuffer)
+			{
+				prevFramebuffer = framebuffer;
+				framebuffer.bind();
+			}
+
+			multiDraw.submit(program);
+
+			prevProgram = program;
+		}
 	}
 
-	public void submitOit(PipelineCompiler.OitMode oit)
+	public void submitTranslucent(ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
-//		if (oitDraws.isEmpty())
-//		{
-//			return;
-//		}
-//
-//		buffers.bindForDraw();
-//
-//		drawBarrier();
-//
-//		GlProgram lastProgram = null;
-//
-//		for (var multiDraw : oitDraws)
-//		{
-//			var drawProgram = programs.getIndirectProgram(instanceType, multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT, multiDraw.material, oit);
-//			if (drawProgram != lastProgram)
-//			{
-//				lastProgram = drawProgram;
-//
-//				// Don't need to do this unless the program changes.
-//				drawProgram.bind();
-//
-//				drawProgram.setFloat("_flw_blueNoiseFactor", 0.07f);
-//			}
-//
-//			MaterialRenderState.setupOit(multiDraw.material);
-//
-//			multiDraw.submit(drawProgram);
-//		}
+		drawTranslucent(translucentDraws, programs, framebuffers, irisPipeline, isShadow);
+	}
+
+	public void submitOitAsTranslucent(ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	{
+		drawTranslucent(oitDraws, programs, framebuffers, irisPipeline, isShadow);
+	}
+
+	public void submitOit(ClrwlPipelineCompiler.OitMode oit, ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow, ClrwlRenderingPhase renderingPhase)
+	{
+		if (oitDraws.isEmpty())
+		{
+			return;
+		}
+
+		var programId = !isShadow
+				? ClrwlProgramId.GBUFFERS_TRANSLUCENT
+				: ClrwlProgramId.SHADOW_TRANSLUCENT;
+
+		var blendOverride = framebuffers.getBlendModeOverride(programId).orElse(null);
+
+		buffers.bindForDraw(isShadow);
+
+		drawBarrier();
+
+		ClrwlProgram prevProgram = null;
+
+		for (var multiDraw : oitDraws)
+		{
+			var key = ClrwlShaderKey.fromMaterial(instanceType,
+												  multiDraw.material,
+												  multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT,
+												  isShadow,
+												  oit);
+
+			if (brokenShaders.contains(key))
+			{
+				continue;
+			}
+
+			ClrwlProgram program;
+
+			try
+			{
+				program = programs.get(key, irisPipeline);
+			}
+			catch (Exception e)
+			{
+				handleBrokenShader(key, programId, e);
+				continue;
+			}
+
+			if (prevProgram != program)
+			{
+				if (prevProgram != null)
+				{
+					prevProgram.unbind();
+				}
+
+				program.bind();
+			}
+
+			program.setClrwlCommonUniforms(multiDraw.material, blendOverride, renderingPhase);
+			ClrwlMaterialRenderState.setupOit(multiDraw.material);
+
+			multiDraw.submit(program);
+
+			prevProgram = program;
+		}
 	}
 
 	public void bindForCrumbling(Material material)

@@ -210,7 +210,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 			submitDraws(translucentDraws, pipelineData, irisPipeline, isShadow);
 		}
 
-		if (!oitDraws.isEmpty())
+top:	if (!oitDraws.isEmpty())
 		{
 			var program = !isShadow
 					? ClrwlProgramId.GBUFFERS_TRANSLUCENT
@@ -224,7 +224,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 				if (maybeSrc.isEmpty())
 				{
-					return;
+					break top;
 				}
 
 				var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
@@ -237,7 +237,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 				if (framebuffer == null || oitFramebuffer == null)
 				{
-					return;
+					break top;
 				}
 
 				setPhase(ClrwlRenderingPhase.OIT_DEPTH_RANGE, isShadow);

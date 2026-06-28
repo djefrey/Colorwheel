@@ -146,10 +146,11 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		lightBuffers.flush(stagingBuffer, lightStorage);
 		matrixBuffer.flush(stagingBuffer, environmentStorage);
 
-		setPhase(ClrwlRenderingPhase.STAGING_BUFFER_FLUSH, false);
-		stagingBuffer.flush();
-
 		// Done in preparePass
+
+		// setPhase(ClrwlRenderingPhase.STAGING_BUFFER_FLUSH, false);
+		// stagingBuffer.flush();
+
 		// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
@@ -217,15 +218,9 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-		if (cullingGroups.isEmpty())
-		{
-			return;
-		}
-
 		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
 
 		TextureBinder.bindLightAndOverlay();
-
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
 		lightBuffers.bind();
@@ -242,107 +237,111 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 	public void renderTranslucent(IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
-		//Mvar pipelineData = getPipelineData(irisPipeline);
-//		if (cullingGroups.isEmpty())
-//		{
-//			return;
-//		}
+		if (cullingGroups.isEmpty())
+		{
+			return;
+		}
+
+		var pipelineData = getPipelineData(irisPipeline);
+		var pipelinePrograms = pipelineData.programs();
+		var framebuffers = pipelineData.framebuffers();
+		var program = !isShadow
+				? ClrwlProgramId.GBUFFERS_TRANSLUCENT
+				: ClrwlProgramId.SHADOW_TRANSLUCENT;
+
+		setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
+
+		TextureBinder.bindLightAndOverlay();
+		ClrwlUniforms.bind(isShadow);
+		vao.bindForDraw();
+		lightBuffers.bind();
+		matrixBuffer.bind();
+
+		boolean hasOit = false;
+		for (var group : cullingGroups.values())
+		{
+			group.submitTranslucent(pipelinePrograms, framebuffers, irisPipeline, isShadow);
+
+			if (group.hasOitDraws())
+			{
+				hasOit = true;
+			}
+		}
+
+top: 	if (hasOit)
+		{
+			var isOitEnabled = GlCompat.SUPPORTS_OIT && ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled(program.group());
+
+			if (isOitEnabled)
+			{
+				var maybeSrc = ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(program);
+
+				if (maybeSrc.isEmpty())
+				{
+					break top;
+				}
+
+				var framebuffer = framebuffers.getFramebuffer(program);
+				var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+
+				var directives = maybeSrc.get().getDirectives();
+				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), properties, programSet.getPackDirectives(), directives);
+				var blendOverride = framebuffers.getBlendModeOverride(program).orElse(null);
+				var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program);
+
+				if (framebuffer == null || oitFramebuffer == null)
+				{
+					break top;
+				}
+
+				setPhase(ClrwlRenderingPhase.OIT_DEPTH_RANGE, isShadow);
+
+				oitFramebuffer.prepare();
+
+				oitFramebuffer.prepareDepthRange();
+				for (var group : cullingGroups.values())
+				{
+					group.submitOit(ClrwlPipelineCompiler.OitMode.DEPTH_RANGE, pipelinePrograms, framebuffers, irisPipeline, isShadow, currentRenderPhase);
+				}
+
+				if (oitFramebuffer.prepareRenderTransmittance())
+				{
+					setPhase(ClrwlRenderingPhase.OIT_COEFFICIENTS, isShadow);
+
+					for (var group : cullingGroups.values())
+					{
+						group.submitOit(ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS, pipelinePrograms, framebuffers, irisPipeline, isShadow, currentRenderPhase);
+					}
+				}
+
+//				oitFramebuffer.renderDepthFromTransmittance();
 //
-//		var pipelinePrograms = pipelineData.programs();
-//		var framebuffers = pipelineData.framebuffers();
-//		var depthPyramid = !isShadow
-//				? pipelineData.gbuffersDepthPyramid()
-//				: pipelineData.shadowDepthPyramid();
-//
-//		if (depthPyramid == null)
-//		{
-//			// Should never happen
-//			return;
-//		}
-//
-//		// TODO: regenerate depth pyramid as depth buffer may have changed. Safe to reuse as it's only used to cull instances.
-//
-//		boolean useOit = false;
-//		for (var group : cullingGroups.values())
-//		{
-//			if (group.hasOitDraws())
-//			{
-//				useOit = true;
-//				break;
-//			}
-//		}
-//
-//		if (useOit)
-//		{
-//			var program = !isShadow
-//					? ClrwlProgramId.GBUFFERS_TRANSLUCENT
-//					: ClrwlProgramId.SHADOW_TRANSLUCENT;
-//
-//			var isOitEnabled = GlCompat.SUPPORTS_OIT && ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled(program.group());
-//
-//			if (isOitEnabled)
-//			{
-//				var maybeSrc = ((ProgramSetAccessor) programSet).colorwheel$getClrwlProgramSource(program);
-//
-//				if (maybeSrc.isEmpty())
-//				{
-//					return;
-//				}
-//
-//				var framebuffer = framebuffers.getFramebuffer(program);
-//				var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-//
-//				var directives = maybeSrc.get().getDirectives();
-//				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), properties, directives);
-//				var blendOverride = framebuffers.getBlendModeOverride(program).orElse(null);
-//				var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program);
-//
-//				if (framebuffer == null || oitFramebuffer == null)
-//				{
-//					return;
-//				}
-//
-//				setPhase(ClrwlRenderingPhase.OIT_DEPTH_RANGE, isShadow);
-//
-//				oitFramebuffer.prepare();
-//
-//				oitFramebuffer.prepareDepthRange();
-//				for (var group : cullingGroups.values())
-//				{
-//					group.submitTransparent(ClrwlPipelineCompiler.OitMode.DEPTH_RANGE);
-//				}
-//
-//				if (oitFramebuffer.prepareRenderTransmittance())
-//				{
-//					setPhase(ClrwlRenderingPhase.OIT_COEFFICIENTS, isShadow);
-//
-//					for (var group : cullingGroups.values())
-//					{
-//						group.submitTransparent(ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
-//					}
-//				}
-//
-////				oitFramebuffer.renderDepthFromTransmittance();
-////
-////				// Need to bind this again because we just drew a full screen quad for OIT.
-////				vao.bindForDraw();
-//
-//				setPhase(ClrwlRenderingPhase.OIT_ACCUMULATE, isShadow);
-//
-//				oitFramebuffer.prepareAccumulate();
-//				for (var group : cullingGroups.values())
-//				{
-//					group.submitTransparent(ClrwlPipelineCompiler.OitMode.EVALUATE);
-//				}
-//
-//				setPhase(ClrwlRenderingPhase.OIT_COMPOSITE, isShadow);
-//
-//				oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides);
-//			}
-//		}
-//
-//		ClrwlMaterialRenderState.reset();
-//		TextureBinder.resetLightAndOverlay();
+//				// Need to bind this again because we just drew a full screen quad for OIT.
+//				vao.bindForDraw();
+
+				setPhase(ClrwlRenderingPhase.OIT_ACCUMULATE, isShadow);
+
+				oitFramebuffer.prepareAccumulate();
+				for (var group : cullingGroups.values())
+				{
+					group.submitOit(ClrwlPipelineCompiler.OitMode.EVALUATE, pipelinePrograms, framebuffers, irisPipeline, isShadow, currentRenderPhase);
+				}
+
+				setPhase(ClrwlRenderingPhase.OIT_COMPOSITE, isShadow);
+
+				oitFramebuffer.composite(framebuffer, blendOverride, bufferBlendOverrides, isShadow);
+			}
+			else
+			{
+				for (var group : cullingGroups.values())
+				{
+					group.submitOitAsTranslucent(pipelinePrograms, framebuffers, irisPipeline, isShadow);
+				}
+			}
+		}
+
+		ClrwlMaterialRenderState.reset();
+		TextureBinder.resetLightAndOverlay();
 	}
 
 	public void renderCrumbling(IrisRenderingPipeline irisPipeline, List<Engine.CrumblingBlock> crumblingBlocks)
