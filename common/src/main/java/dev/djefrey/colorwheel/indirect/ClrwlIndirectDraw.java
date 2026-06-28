@@ -1,11 +1,9 @@
 package dev.djefrey.colorwheel.indirect;
 
 import dev.djefrey.colorwheel.engine.ClrwlMeshPool;
+import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.backend.engine.MaterialEncoder;
-import dev.engine_room.flywheel.backend.engine.MeshPool;
-import dev.engine_room.flywheel.backend.engine.embed.EmbeddedEnvironment;
-import dev.engine_room.flywheel.backend.engine.indirect.IndirectInstancer;
 import org.lwjgl.system.MemoryUtil;
 
 public class ClrwlIndirectDraw

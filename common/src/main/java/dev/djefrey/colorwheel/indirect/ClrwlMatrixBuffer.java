@@ -28,9 +28,9 @@ public class ClrwlMatrixBuffer
 
 		matrices.ensureCapacity(capacity);
 
-		stagingBuffer.enqueueCopy(arena.byteCapacity(), matrices.handle(), 0, ptr ->
+		stagingBuffer.enqueueCopy(matrices.byteCapacity(), matrices.handle(), 0, ptr ->
 		{
-			MemoryUtil.memCopy(arena.indexToPointer(0), ptr, arena.byteCapacity());
+			MemoryUtil.memCopy(arena.indexToPointer(0), ptr, matrices.byteCapacity());
 		});
 	}
 
