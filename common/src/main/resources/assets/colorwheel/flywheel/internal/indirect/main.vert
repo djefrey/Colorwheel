@@ -42,7 +42,11 @@ void main()
     _clrwl_packedMaterial = packedMaterialProperties;
 
     #ifdef FLW_EMBEDDED
-    _flw_unpackMatrices(_flw_matrices[draw.matrixIndex], _flw_modelMatrix, _flw_normalMatrix);
+        #ifdef _CLRWL_HAS_SABLE
+            _flw_unpackMatrices(_flw_matrices[draw.matrixIndex], _flw_modelMatrix, _flw_normalMatrix, _flw_lightingSceneId, _flw_lightingSkyLightScale, _flw_lightingSceneMatrix);
+        #else
+            _flw_unpackMatrices(_flw_matrices[draw.matrixIndex], _flw_modelMatrix, _flw_normalMatrix);
+        #endif
     #endif
 
     #ifdef _FLW_CRUMBLING

@@ -107,11 +107,6 @@ public class ClrwlPipelineCompiler
 			compile.enableExtension(ext);
 		}
 
-		for (var define : Colorwheel.getModCompat().getShaderDefines())
-		{
-			compile.define(define);
-		}
-
 		for (var defines : stage.defines())
 		{
 			compile.define(defines);

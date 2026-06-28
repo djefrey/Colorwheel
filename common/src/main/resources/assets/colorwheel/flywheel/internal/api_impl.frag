@@ -14,7 +14,7 @@ in ClrwlVertexData
     vec4 clrwl_vertexTangent;
 
 #ifdef FLW_EMBEDDED
-    #ifdef HAS_SABLE
+    #ifdef _CLRWL_HAS_SABLE
         flat uint flw_vertexLightingSceneId;
         flat float flw_skyLightScale;
         vec4 flw_vertexLightingPos;

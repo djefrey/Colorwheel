@@ -87,6 +87,7 @@ public class ClrwlPipelines
                             c.define("_CLRWL_IS_GBUFFERS_PASS");
                         }
                     })
+                    .onCompile(($, c) -> setModCompatDefines(c))
                     .withResource(FULLSCREEN)
                     .build()
             )
@@ -102,6 +103,7 @@ public class ClrwlPipelines
                             c.define("_CLRWL_IS_GBUFFERS_PASS");
                         }
                     })
+                    .onCompile(($, c) -> setModCompatDefines(c))
                     .onCompile(($, c) ->
                     {
                         if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !c.extensions.contains("GL_ARB_gpu_shader5"))
@@ -175,7 +177,8 @@ public class ClrwlPipelines
             var stage = ClrwlPipeline.vertexStage()
                 .define("IS_COLORWHEEL")
                 .define("CLRWL_IS_" + id.toUpperCase())
-                .onCompile(ClrwlPipelines::setClrwlPassDefine);
+                .onCompile(ClrwlPipelines::setClrwlPassDefine)
+                .onCompile(($, c) -> setModCompatDefines(c));
 
             if (fallback)
             {
@@ -243,7 +246,8 @@ public class ClrwlPipelines
             var stage = ClrwlPipeline.geometryStage()
                     .define("IS_COLORWHEEL")
                     .define("CLRWL_IS_" + id.toUpperCase())
-                    .onCompile(ClrwlPipelines::setClrwlPassDefine);
+                    .onCompile(ClrwlPipelines::setClrwlPassDefine)
+                    .onCompile(($, c) -> setModCompatDefines(c));
 
             if (fallback)
             {
@@ -282,7 +286,8 @@ public class ClrwlPipelines
             var stage = ClrwlPipeline.fragmentStage()
                 .define("IS_COLORWHEEL")
                 .define("CLRWL_IS_" + id.toUpperCase())
-                .onCompile(ClrwlPipelines::setClrwlPassDefine);
+                .onCompile(ClrwlPipelines::setClrwlPassDefine)
+                .onCompile(($, c) -> setModCompatDefines(c));
 
             if (fallback)
             {
@@ -394,6 +399,14 @@ public class ClrwlPipelines
         else
         {
             c.define("_CLRWL_IS_GBUFFERS_PASS");
+        }
+    }
+
+    private static void setModCompatDefines(ClrwlCompilation c)
+    {
+        for (var define : Colorwheel.getModCompat().getShaderDefines())
+        {
+            c.define(define);
         }
     }
 

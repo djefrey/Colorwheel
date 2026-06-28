@@ -9,7 +9,7 @@ uniform int _flw_baseInstance = 0;
     uniform mat4 _flw_modelMatrixUniform;
     uniform mat3 _flw_normalMatrixUniform;
 
-    #ifdef HAS_SABLE
+    #ifdef _CLRWL_HAS_SABLE
         uniform uint _flw_lightingSceneUniform;
         uniform float _flw_lightingSkyLightScaleUniform;
         uniform mat4 _flw_lightingSceneMatrixUniform;
@@ -30,7 +30,7 @@ void main()
         _flw_modelMatrix = _flw_modelMatrixUniform;
         _flw_normalMatrix = _flw_normalMatrixUniform;
 
-        #ifdef HAS_SABLE
+        #ifdef _CLRWL_HAS_SABLE
             _flw_lightingSceneId = _flw_lightingSceneUniform;
             _flw_lightingSkyLightScale = _flw_lightingSkyLightScaleUniform;
             _flw_lightingSceneMatrix = _flw_lightingSceneMatrixUniform;

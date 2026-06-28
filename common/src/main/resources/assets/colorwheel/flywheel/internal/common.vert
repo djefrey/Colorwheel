@@ -101,7 +101,7 @@ float _clrwl_diffuseFactor()
     mat4 _flw_modelMatrix;
     mat3 _flw_normalMatrix;
 
-    #ifdef HAS_SABLE
+    #ifdef _CLRWL_HAS_SABLE
         uint _flw_lightingSceneId;
         float _flw_lightingSkyLightScale;
         mat4 _flw_lightingSceneMatrix;
@@ -157,7 +157,7 @@ void _clrwl_main(FlwInstance instance, uint stableInstanceID, uint baseVertex)
     #endif
 
     #ifdef FLW_EMBEDDED
-        #ifdef HAS_SABLE
+        #ifdef _CLRWL_HAS_SABLE
             flw_vertexLightingPos = _flw_lightingSceneMatrix * flw_vertexPos;
         #endif
 
@@ -166,7 +166,7 @@ void _clrwl_main(FlwInstance instance, uint stableInstanceID, uint baseVertex)
         flw_vertexNormal = _flw_normalMatrix * flw_vertexNormal;
         clrwl_vertexTangent.xyz = _flw_normalMatrix * clrwl_vertexTangent.xyz;
 
-        #ifdef HAS_SABLE
+        #ifdef _CLRWL_HAS_SABLE
             flw_vertexLightingSceneId = _flw_lightingSceneId;
             flw_skyLightScale = _flw_lightingSkyLightScale;
         #endif
@@ -178,7 +178,7 @@ void _clrwl_main(FlwInstance instance, uint stableInstanceID, uint baseVertex)
     flw_vertexNormal = normalize(flw_vertexNormal);
 
 #ifdef _CLRWL_IS_FALLBACK
-    #ifndef HAS_SABLE
+    #ifndef _CLRWL_HAS_SABLE
         FlwLightAo light;
         if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
         {

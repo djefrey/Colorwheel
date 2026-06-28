@@ -10,6 +10,7 @@ import dev.engine_room.flywheel.backend.compile.OitPrograms;
 import dev.engine_room.flywheel.backend.compile.PipelineCompiler;
 import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponent;
 import dev.engine_room.flywheel.backend.compile.component.SsboInstanceComponent;
+import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.compile.core.CompilationHarness;
 import dev.engine_room.flywheel.backend.compile.core.Compile;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
@@ -138,6 +139,7 @@ public class ClrwlIndirectPrograms
 						.requireExtensions(COMPUTE_EXTENSIONS)
 						.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
 						.define("_CLRWL_IS_GBUFFERS_PASS", 1)
+						.onCompile(($, c) -> setModCompatDefines(c))
 						.withResource(CULL_SHADER_API_IMPL)
 						.withComponent(InstanceStructComponent::new)
 						.withResource(InstanceType::cullShader)
@@ -155,6 +157,7 @@ public class ClrwlIndirectPrograms
 						.requireExtensions(COMPUTE_EXTENSIONS)
 						.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
 						.define("_CLRWL_IS_SHADOW_PASS", 1)
+						.onCompile(($, c) -> setModCompatDefines(c))
 						.withResource(CULL_SHADER_API_IMPL)
 						.withComponent(InstanceStructComponent::new)
 						.withResource(InstanceType::cullShader)
@@ -174,10 +177,18 @@ public class ClrwlIndirectPrograms
 						.nameMapper(resourceLocation -> "utilities/" + ResourceUtil.toDebugFileNameNoExtension(resourceLocation))
 						.requireExtensions(COMPUTE_EXTENSIONS)
 						.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
+						.onCompile(($, c) -> setModCompatDefines(c))
 						.withResource(s -> s))
 				.harness("utilities", sources);
 	}
 
+	private static void setModCompatDefines(Compilation c)
+	{
+		for (var define : Colorwheel.getModCompat().getShaderDefines())
+		{
+			c.define(define.key(), define.value());
+		}
+	}
 
 	public PipelineProgramCache createPipelineProgramsCache()
 	{

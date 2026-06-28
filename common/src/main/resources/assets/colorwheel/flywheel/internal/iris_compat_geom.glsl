@@ -9,7 +9,7 @@ void clrwl_setVertexOut(int i)
     clrwl_out.clrwl_vertexTangent = clrwl_in[i].clrwl_vertexTangent;
 
 #ifdef FLW_EMBEDDED
-    #ifdef HAS_SABLE
+    #ifdef _CLRWL_HAS_SABLE
         clrwl_out.flw_vertexLightingSceneId = clrwl_in[i].flw_vertexLightingSceneId;
         clrwl_out.flw_skyLightScale = clrwl_in[i].flw_skyLightScale;
         clrwl_out.flw_vertexLightingPos = clrwl_in[i].flw_vertexLightingPos;
