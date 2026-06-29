@@ -29,13 +29,13 @@ layout(std430, binding = _FLW_MATRIX_BUFFER_BINDING) restrict readonly buffer Ma
 
 bool _clrwl_testSphereOnPlanes(vec3 center, float radius, _ClrwlShadowFrustumPlanesGroup planes)
 {
-    return greaterThanEqual(fma(planes.X, center.xxxx, fma(planes.Y, center.yyyy, fma(planes.Z, center.zzzz, planes.W))), -radius.xxxx).x;
+    return all(greaterThanEqual(fma(planes.X, center.xxxx, fma(planes.Y, center.yyyy, fma(planes.Z, center.zzzz, planes.W))), -radius.xxxx));
 }
 
 bool _clrwl_testSphere(vec3 center, float radius)
 {
     return _clrwl_testSphereOnPlanes(center, radius, clrwl_shadowFrustumPlanes.groups[0])
-        && _clrwl_testSphereOnPlanes(center, radius, clrwl_shadowFrustumPlanes.groups[0])
+        && _clrwl_testSphereOnPlanes(center, radius, clrwl_shadowFrustumPlanes.groups[1])
         && _clrwl_testSphereOnPlanes(center, radius, clrwl_shadowFrustumPlanes.groups[2]);
 }
 
