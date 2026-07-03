@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
+import dev.djefrey.colorwheel.engine.ShadowCulling;
 import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.djefrey.colorwheel.indirect.ClrwlDepthPyramid;
 import dev.engine_room.flywheel.api.backend.RenderContext;
@@ -11,8 +12,10 @@ import dev.engine_room.flywheel.lib.instance.PosedInstance;
 import dev.engine_room.flywheel.lib.instance.TransformedInstance;
 import dev.engine_room.flywheel.lib.util.ExtraMemoryOps;
 import net.irisshaders.iris.shaderpack.ShaderPack;
+import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.properties.PackShadowDirectives;
+import net.irisshaders.iris.shaderpack.properties.ShadowCullState;
 import net.irisshaders.iris.shadows.ShadowMatrices;
 import net.irisshaders.iris.shadows.frustum.advanced.BaseClippingPlanes;
 import net.irisshaders.iris.shadows.frustum.advanced.NeighboringPlaneSet;
@@ -78,9 +81,10 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 		capturedPlayerProjView = null;
 	}
 
-	public static void update(ShadowRenderContext context, ShaderPack pack, NamespacedId dimension)
+	public static void update(ShadowRenderContext context, ShaderPack pack, NamespacedId dimension, ShadowCulling culling)
 	{
-		var directives = pack.getProgramSet(dimension).getPackDirectives();
+		var programSet = pack.getProgramSet(dimension);
+		var directives = programSet.getPackDirectives();
 		var shadowDirectives = directives.getShadowDirectives();
 
 		long ptr = BUFFER.ptr();
@@ -126,10 +130,6 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 		var playerViewProj = context.playerViewProjection()
 				.translate(-camX, -camY, -camZ, new Matrix4f());
 
-		var sunPathRotation = directives.getSunPathRotation();
-		Vector4f shadowLightPosition = new CelestialUniforms(sunPathRotation).getShadowLightPositionInWorldSpace();
-		Vector3f shadowLightVectorFromOrigin = new Vector3f(shadowLightPosition.x(), shadowLightPosition.y(), shadowLightPosition.z());
-
 		if (firstWrite)
 		{
 			setPrev();
@@ -141,7 +141,7 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 			frustumCapture = false;
 		}
 
-		writePackedFrustumPlanes(ptr, shadowLightVectorFromOrigin, !frustumPaused ? playerViewProj : capturedPlayerProjView);
+		writeShadowCullData(ptr, culling, !frustumPaused ? playerViewProj : capturedPlayerProjView);
 		ptr += 12 * 16;
 
 		ptr = writeCullData(ptr, resolution, zNear, zFar);
@@ -341,12 +341,12 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 
 	// Derived from Iris' Advanced Shadow Culling Frustum
 	// https://github.com/IrisShaders/Iris/blob/37c020371845f1426a65d4e8615a078024cc4b02/common/src/main/java/net/irisshaders/iris/shadows/frustum/advanced/AdvancedShadowCullingFrustum.java
-	private static void writePackedFrustumPlanes(long ptr, Vector3f shadowLightVectorFromOrigin, Matrix4fc playerViewProj)
+	private static void writeShadowCullData(long ptr, ShadowCulling culling, Matrix4fc playerViewProj)
 	{
 		Vector4f[] frustumPlanes = new Vector4f[11];
-		int frustumPlaneCount = computeFrustumPlanes(shadowLightVectorFromOrigin, playerViewProj, frustumPlanes);
+		int frustumPlaneCount = computeFrustumPlanes(culling.getShadowLightVectorFromOrigin(), playerViewProj, frustumPlanes);
 
-		for (int i = 0; i < 12; i++)
+		for (int i = 0; i < 11; i++)
 		{
 			var plane = i < frustumPlaneCount ? frustumPlanes[i] : ZERO_V4F;
 			var idx = i / 4;
@@ -357,5 +357,10 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 			MemoryUtil.memPutFloat(ptr + idx * 64L + subidx * 4L + 32L, plane.z());
 			MemoryUtil.memPutFloat(ptr + idx * 64L + subidx * 4L + 48L, plane.w());
 		}
+
+		MemoryUtil.memPutFloat(ptr + 2 * 64L + 3 * 4L +  0L, culling.getReversedCullDist());
+		MemoryUtil.memPutFloat(ptr + 2 * 64L + 3 * 4L + 16L, culling.getCullDist());
+		MemoryUtil.memPutFloat(ptr + 2 * 64L + 3 * 4L + 32L, 0.0f);
+		MemoryUtil.memPutFloat(ptr + 2 * 64L + 3 * 4L + 48L, 0.0f);
 	}
 }

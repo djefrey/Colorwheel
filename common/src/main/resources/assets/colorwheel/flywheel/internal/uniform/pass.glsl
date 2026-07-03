@@ -34,6 +34,12 @@ struct _ClrwlShadowFrustumPlanesGroup
 
 struct _ClrwlShadowFrustumPlanes
 {
+    // Up to 11 planes can be sent, but we're declaring enough floats for 12 planes.
+    // To keep data compact and packed for efficient computation, group[2] D plane is assigned to metadata:
+    //  * groups[2].X.w = reversed cull distance
+    //  * groups[2].Y.w = cull distance
+    //  * groups[2].Z.w = -
+    //  * groups[2].W.w = -
     _ClrwlShadowFrustumPlanesGroup[3] groups;
 };
 
