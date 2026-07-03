@@ -1,11 +1,8 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
-import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
-import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 
 public class ClrwlUniforms
 {
@@ -29,18 +26,6 @@ public class ClrwlUniforms
         ClrwlLevelUniforms.update(context);
         ClrwlPlayerUniforms.update(context);
         ClrwlFogUniforms.update();
-    }
-
-    public static void updatePass(RenderContext context, ShaderPack pack, NamespacedId dimension)
-    {
-        if (context instanceof ShadowRenderContext shadowContext)
-        {
-            ClrwlShadowPassUniforms.update(shadowContext, pack, dimension);
-        }
-        else
-        {
-            ClrwlGbuffersPassUniforms.update(context, pack, dimension);
-        }
     }
 
     public static void bind(boolean isShadow)

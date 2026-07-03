@@ -6,6 +6,8 @@ import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlGbuffersPassUniforms;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowPassUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.engine_room.flywheel.api.backend.Engine;
@@ -63,6 +65,8 @@ public class ClrwlEngine implements ExtendedEngine
 	private final NamespacedId dimension;
 	private final ShaderPack pack;
 
+	private final ShadowCulling shadowCulling;
+
 	public ClrwlEngine(LevelAccessor level, int maxOriginDistance, DrawManagerFactory drawManagerFactory)
 	{
 		ClientLevel clientLevel = (ClientLevel) level;
@@ -79,6 +83,8 @@ public class ClrwlEngine implements ExtendedEngine
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = Colorwheel.getModCompat().makeLightStorage(level);
+
+		this.shadowCulling = new ShadowCulling(programSet);
 
 		ENGINES.add(this);
 	}
@@ -147,16 +153,23 @@ public class ClrwlEngine implements ExtendedEngine
 
 			environmentStorage.flush();
 			drawManager.prepareFrame(lightStorage, environmentStorage);
+			shadowCulling.refresh();
 			ClrwlUniforms.updateFrame(context);
 		}
 	}
 
-	private void preparePass(RenderContext context, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	private void preparePass(RenderContext context, IrisRenderingPipeline irisPipeline)
 	{
-		// TODO: frame uniforms per pipeline ??
-
-		drawManager.preparePass(irisPipeline, isShadow);
-		ClrwlUniforms.updatePass(context, pack, dimension);
+		if (context instanceof ShadowRenderContext shadowContext)
+		{
+			drawManager.preparePass(irisPipeline, true);
+			ClrwlShadowPassUniforms.update(shadowContext, pack, dimension, shadowCulling);
+		}
+		else
+		{
+			drawManager.preparePass(irisPipeline, false);
+			ClrwlGbuffersPassUniforms.update(context, pack, dimension);
+		}
 	}
 
 	@Override
@@ -172,14 +185,17 @@ public class ClrwlEngine implements ExtendedEngine
 			{
 				if (context instanceof ShadowRenderContext shadowContext)
 				{
-					if (shadowContext.phase() == ShadowRenderingPhase.SOLID)
+					if (shadowCulling.shouldRenderShadow())
 					{
-						preparePass(context, irisPipeline, true);
-						drawManager.renderSolid(irisPipeline, true);
-					}
-					else
-					{
-						drawManager.renderTranslucent(irisPipeline, true);
+						if (shadowContext.phase() == ShadowRenderingPhase.SOLID)
+						{
+							preparePass(context, irisPipeline);
+							drawManager.renderSolid(irisPipeline, true);
+						}
+						else
+						{
+							drawManager.renderTranslucent(irisPipeline, true);
+						}
 					}
 				}
 				else if (context instanceof TranslucentRenderContext)
@@ -188,7 +204,7 @@ public class ClrwlEngine implements ExtendedEngine
 				}
 				else
 				{
-					preparePass(context, irisPipeline, false);
+					preparePass(context, irisPipeline);
 					drawManager.renderSolid(irisPipeline, false);
 				}
 			}

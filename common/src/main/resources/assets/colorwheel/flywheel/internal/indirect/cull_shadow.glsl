@@ -27,16 +27,41 @@ layout(std430, binding = _FLW_MATRIX_BUFFER_BINDING) restrict readonly buffer Ma
     FlwMatrices _flw_matrices[];
 };
 
-bool _clrwl_testSphereOnPlanes(vec3 center, float radius, _ClrwlShadowFrustumPlanesGroup planes)
+bool _clrwl_isSphereInCube(vec3 center, float radius, vec3 origin, float halfLength)
+{
+    vec3 v = abs(center - origin);
+    float maxD = max(v.x, max(v.y, v.z));
+    return maxD <= halfLength - radius;
+}
+
+bool _clrwl_testSphereOn4Planes(vec3 center, float radius, _ClrwlShadowFrustumPlanesGroup planes)
 {
     return all(greaterThanEqual(fma(planes.X, center.xxxx, fma(planes.Y, center.yyyy, fma(planes.Z, center.zzzz, planes.W))), -radius.xxxx));
 }
 
+bool _clrwl_testSphereOn3Planes(vec3 center, float radius, _ClrwlShadowFrustumPlanesGroup planes)
+{
+    return all(greaterThanEqual(fma(planes.X.xyz, center.xxx, fma(planes.Y.xyz, center.yyy, fma(planes.Z.xyz, center.zzz, planes.W.xyz))), -radius.xxx));
+}
+
 bool _clrwl_testSphere(vec3 center, float radius)
 {
-    return _clrwl_testSphereOnPlanes(center, radius, clrwl_shadowFrustumPlanes.groups[0])
-        && _clrwl_testSphereOnPlanes(center, radius, clrwl_shadowFrustumPlanes.groups[1])
-        && _clrwl_testSphereOnPlanes(center, radius, clrwl_shadowFrustumPlanes.groups[2]);
+    float reversedCullDist = clrwl_shadowFrustumPlanes.groups[2].X.w;
+    float cullDist = clrwl_shadowFrustumPlanes.groups[2].Y.w;
+
+    if (_clrwl_isSphereInCube(center, radius, flw_cameraPos, reversedCullDist))
+    {
+        return true;
+    }
+
+    if (!_clrwl_isSphereInCube(center, radius, flw_cameraPos, cullDist))
+    {
+        return false;
+    }
+
+    return _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[0])
+        && _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[1])
+        && _clrwl_testSphereOn3Planes(center, radius, clrwl_shadowFrustumPlanes.groups[2]);
 }
 
 bool _clrwl_isVisible(uint instanceIndex, uint modelIndex)
