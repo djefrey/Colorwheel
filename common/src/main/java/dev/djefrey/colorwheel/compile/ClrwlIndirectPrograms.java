@@ -119,8 +119,12 @@ public class ClrwlIndirectPrograms
 				? ClrwlPipelines.INDIRECT_FALLBACK
 				: ClrwlPipelines.INDIRECT;
 
+		var directives = programSet.getPackDirectives();
+		var occlusionCulling = directives.shouldUseOcclusionCulling();
+		var frustumCulling = directives.shouldUseFrustumCulling();
+
 		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, programSet);
-		var gbuffersCulling = createGbuffersCullingCompiler(sources);
+		var gbuffersCulling = createGbuffersCullingCompiler(sources, occlusionCulling, frustumCulling);
 		var shadowCulling = createShadowCullingCompiler(sources);
 		var util = createUtilCompiler(sources);
 		var oitPrograms = new ClrwlOitPrograms(sources);
@@ -131,40 +135,56 @@ public class ClrwlIndirectPrograms
 	/**
 	 * A compiler for cull shaders, parameterized by the instance type.
 	 */
-	private static CompilationHarness<InstanceType<?>> createGbuffersCullingCompiler(ShaderSources sources)
+	private static CompilationHarness<InstanceType<?>> createGbuffersCullingCompiler(ShaderSources sources, boolean occlusion, boolean frustum)
 	{
+		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
+				.nameMapper(instanceType -> "culling_gbuffers/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
+				.requireExtensions(COMPUTE_EXTENSIONS)
+				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
+				.define("_CLRWL_IS_GBUFFERS_PASS", 1);
+
+		if (occlusion)
+		{
+			shader = shader.define("_CLRWL_OCCLUSION_CULLING", 1);
+		}
+
+		if (frustum)
+		{
+			shader = shader.define("_CLRWL_FRUSTUM_CULLING", 1);
+		}
+
+		shader = shader
+				.onCompile(($, c) -> setModCompatDefines(c))
+				.withResource(CULL_SHADER_API_IMPL)
+				.withComponent(InstanceStructComponent::new)
+				.withResource(InstanceType::cullShader)
+				.withComponent(SsboInstanceComponent::new)
+				.withResource(GBUFFERS_CULL_SHADER_MAIN);
+
 		return CULL.program()
-				.link(CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-						.nameMapper(instanceType -> "culling/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
-						.requireExtensions(COMPUTE_EXTENSIONS)
-						.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-						.define("_CLRWL_IS_GBUFFERS_PASS", 1)
-						.onCompile(($, c) -> setModCompatDefines(c))
-						.withResource(CULL_SHADER_API_IMPL)
-						.withComponent(InstanceStructComponent::new)
-						.withResource(InstanceType::cullShader)
-						.withComponent(SsboInstanceComponent::new)
-						.withResource(GBUFFERS_CULL_SHADER_MAIN))
+				.link(shader)
 				.postLink((key, program) -> ClrwlUniforms.setUniformsBlockBindings(program))
-				.harness("culling", sources);
+				.harness("culling_gbuffers", sources);
 	}
 
 	private static CompilationHarness<InstanceType<?>> createShadowCullingCompiler(ShaderSources sources)
 	{
+		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
+				.nameMapper(instanceType -> "culling_shadow/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
+				.requireExtensions(COMPUTE_EXTENSIONS)
+				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
+				.define("_CLRWL_IS_SHADOW_PASS", 1)
+				.onCompile(($, c) -> setModCompatDefines(c))
+				.withResource(CULL_SHADER_API_IMPL)
+				.withComponent(InstanceStructComponent::new)
+				.withResource(InstanceType::cullShader)
+				.withComponent(SsboInstanceComponent::new)
+				.withResource(SHADOW_CULL_SHADER_MAIN);
+
 		return CULL.program()
-				.link(CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-						.nameMapper(instanceType -> "culling/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
-						.requireExtensions(COMPUTE_EXTENSIONS)
-						.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-						.define("_CLRWL_IS_SHADOW_PASS", 1)
-						.onCompile(($, c) -> setModCompatDefines(c))
-						.withResource(CULL_SHADER_API_IMPL)
-						.withComponent(InstanceStructComponent::new)
-						.withResource(InstanceType::cullShader)
-						.withComponent(SsboInstanceComponent::new)
-						.withResource(SHADOW_CULL_SHADER_MAIN))
+				.link(shader)
 				.postLink((key, program) -> ClrwlUniforms.setUniformsBlockBindings(program))
-				.harness("culling", sources);
+				.harness("culling_shadow", sources);
 	}
 
 	/**

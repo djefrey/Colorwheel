@@ -86,8 +86,13 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
         transformBoundingSphere(_flw_matrices[matrixIndex].pose, center, radius);
     }
 
-    bool isVisible = _flw_testSphere(center, radius);
+    bool isVisible = true;
 
+#ifdef _CLRWL_FRUSTUM_CULLING
+    isVisible = _flw_testSphere(center, radius);
+#endif
+
+#ifdef _CLRWL_OCCLUSION_CULLING
     if (isVisible)
     {
         transformBoundingSphere(flw_view, center, radius);
@@ -122,6 +127,7 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
             isVisible = isVisible && depthSphere <= depth;
         }
     }
+#endif
 
     return isVisible;
 }
