@@ -26,7 +26,6 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 	private static final int SIZE = 96 	        		// Frustum
 								  + 32 	        		// Cull
 								  + 64 * 9      		// View + Projection
-								  + 64 * 4      		// Shadow View + Projection
 								  + 48 		    		// Normal
 								  + 6 * 8;     			// Remaining
 
@@ -41,11 +40,6 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 	private static final Matrix4f VIEW_PROJECTION = new Matrix4f();
 	private static final Matrix4f VIEW_PROJECTION_INVERSE = new Matrix4f();
 	private static final Matrix4f VIEW_PROJECTION_PREV = new Matrix4f();
-
-	private static final Matrix4f SHADOW_VIEW = new Matrix4f();
-	private static final Matrix4f SHADOW_VIEW_INVERSE = new Matrix4f();
-	private static final Matrix4f SHADOW_PROJECTION = new Matrix4f();
-	private static final Matrix4f SHADOW_PROJECTION_INVERSE = new Matrix4f();
 
 	private static final Matrix3f NORMAL = new Matrix3f();
 
@@ -96,19 +90,6 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 		PROJECTION.set(context.projection());
 		VIEW_PROJECTION.set(context.viewProjection());
 		VIEW_PROJECTION.translate(-camX, -camY, -camZ);
-
-		if (ShadowRenderer.MODELVIEW != null && ShadowRenderer.PROJECTION != null)
-		{
-			SHADOW_VIEW.set(ShadowRenderer.MODELVIEW);
-			SHADOW_VIEW.translate(-camX, -camY, -camZ);
-			SHADOW_PROJECTION.set(ShadowRenderer.PROJECTION);
-		}
-		else
-		{
-			SHADOW_VIEW.identity();
-			SHADOW_VIEW.translate(-camX, -camY, -camZ);
-			SHADOW_PROJECTION.identity();
-		}
 
 		Matrix4f normal = new Matrix4f(context.modelView())
 				.translate(-camX, -camY, -camZ)
@@ -172,10 +153,6 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 		ptr = writeMat4(ptr, VIEW_PROJECTION);
 		ptr = writeMat4(ptr, VIEW_PROJECTION.invert(VIEW_PROJECTION_INVERSE));
 		ptr = writeMat4(ptr, VIEW_PROJECTION_PREV);
-		ptr = writeMat4(ptr, SHADOW_VIEW);
-		ptr = writeMat4(ptr, SHADOW_VIEW.invert(SHADOW_VIEW_INVERSE));
-		ptr = writeMat4(ptr, SHADOW_PROJECTION);
-		ptr = writeMat4(ptr, SHADOW_PROJECTION.invert(SHADOW_PROJECTION_INVERSE));
 		ptr = writeMat3(ptr, NORMAL);
 		return ptr;
 	}
