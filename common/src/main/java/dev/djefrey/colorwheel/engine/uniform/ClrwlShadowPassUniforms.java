@@ -40,7 +40,6 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 	private static final int SIZE = 12 * 16				// Frustum
 								  + 32 	        		// Cull
 								  + 64 * 9      		// View + Projection
-								  + 64 * 4      		// Shadow View + Projection
 								  + 48 		    		// Normal
 								  + 6 * 8;     			// Remaining
 
@@ -179,10 +178,6 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 		ptr = writeMat4(ptr, VIEW_PROJECTION);
 		ptr = writeMat4(ptr, VIEW_PROJECTION_INVERSE);
 		ptr = writeMat4(ptr, VIEW_PROJECTION_PREV);
-		ptr = writeMat4(ptr, VIEW); // Shadow Matrices
-		ptr = writeMat4(ptr, VIEW_INVERSE);
-		ptr = writeMat4(ptr, PROJECTION);
-		ptr = writeMat4(ptr, PROJECTION_INVERSE);
 		ptr = writeMat3(ptr, NORMAL);
 		return ptr;
 	}

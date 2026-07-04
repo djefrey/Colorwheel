@@ -63,11 +63,6 @@ layout(std140) uniform _ClrwlPassUniforms
     mat4 flw_viewProjectionInverse;
     mat4 flw_viewProjectionPrev;
 
-    mat4 clrwl_shadowView;
-    mat4 clrwl_shadowViewInverse;
-    mat4 clrwl_shadowProjection;
-    mat4 clrwl_shadowProjectionInverse;
-
     mat3 clrwl_normal;
 
     vec2 flw_viewportSize;
