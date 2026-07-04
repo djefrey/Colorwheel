@@ -278,6 +278,14 @@ public class ClrwlPipelines
                             c.enableExtension(ext);
                         }
                     })
+                    .onCompile(($, c) ->
+                    {
+                        if (GlCompat.MAX_GLSL_VERSION.compareTo(GlslVersion.V400) < 0 && !c.extensions.contains("GL_ARB_gpu_shader5"))
+                        {
+                            c.define("fma(a, b, c)", "((a) * (b) + (c))");
+                        }
+                    })
+                    .onCompile((k, c) -> setContextDefine(k.context(), c))
                     .withResource(API_IMPL_GEOM)
                     .withResource(IRIS_COMPAT_GEOM)
                     .with(ClrwlPipelines::getIrisShaderGeometrySource)
