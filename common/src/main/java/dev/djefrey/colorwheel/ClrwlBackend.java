@@ -18,6 +18,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
+import org.apache.commons.lang3.stream.Streams;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -138,13 +139,13 @@ public class ClrwlBackend
         }
 
         int clrwlBuffers = ClrwlBufferBindings.TOTAL_BINDING_COUNT;
-        int irisBuffers = pack.get().getBufferObjects().size();
+        int maxIrisBinding = Streams.of(pack.get().getBufferObjects().keySet()).max(Integer::compareTo).orElse(0);
         int maxUnits = SamplerLimits.get().getMaxShaderStorageUnits();
-        boolean hasEnoughUnits = clrwlBuffers + irisBuffers <= maxUnits;
+        boolean hasEnoughUnits = clrwlBuffers + maxIrisBinding <= maxUnits;
 
         if (!hasEnoughUnits)
         {
-            Colorwheel.LOGGER.error("Graphics card doesn't have enough storage units: {} + {} > {}", clrwlBuffers, irisBuffers, maxUnits);
+            Colorwheel.LOGGER.error("Graphics card doesn't have enough storage units: {} + {} > {}", clrwlBuffers, maxIrisBinding, maxUnits);
         }
 
         return hasEnoughUnits;
