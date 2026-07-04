@@ -29,6 +29,8 @@
     "iris.RenderTargetMixin",
     "iris.ShaderPackMixin",
     "iris.ShaderPackSourceNamesMixin",
+    "iris.ShaderStorageBufferHolderMixin",
+    "iris.ShaderStorageBufferMixin",
     "iris.ShadowRendererMixin",
     "iris.ShadowRenderTargetsMixin",
     "iris.StandardMacrosMixin",

@@ -4,6 +4,7 @@ import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.compile.oit.*;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.djefrey.colorwheel.engine.ClrwlVertex;
+import dev.djefrey.colorwheel.indirect.ClrwlBufferBindings;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.util.Utils;
@@ -62,6 +63,7 @@ public class ClrwlPipelines
             .id("indirect")
             .extensions(ClrwlIndirectPrograms.EXTENSIONS)
             .assembler(SsboInstanceComponent::new)
+            .ssboOffset(ClrwlBufferBindings.TOTAL_BINDING_COUNT)
             .vertex(INDIRECT_MAIN_VERT)
             .geometry(INDIRECT_MAIN_GEOM)
             .fragment(INDIRECT_MAIN_FRAG);
@@ -124,6 +126,7 @@ public class ClrwlPipelines
 
         private String id;
         private List<String> extensions;
+        private int ssboOffset = 0;
         private InstanceAssembler assembler;
         private ResourceLocation vertexMain;
         private ResourceLocation geometryMain;
@@ -151,6 +154,12 @@ public class ClrwlPipelines
         public SimpleClrwlPipelineBuilder assembler(InstanceAssembler assembler)
         {
             this.assembler = assembler;
+            return this;
+        }
+
+        public SimpleClrwlPipelineBuilder ssboOffset(int ssboOffset)
+        {
+            this.ssboOffset = ssboOffset;
             return this;
         }
 
@@ -383,6 +392,7 @@ public class ClrwlPipelines
                             b.requireExtension(ext);
                         }
                     })
+                    .ssboOffset(ssboOffset)
                     .vertex(buildVertexStage(fallback))
                     .geometry(buildGeometryStage(fallback))
                     .fragment(buildFragmentStage(fallback))
