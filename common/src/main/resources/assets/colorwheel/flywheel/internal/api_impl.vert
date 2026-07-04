@@ -56,8 +56,8 @@ vec4 clrwl_vertexTangent;
 
 #ifdef FLW_EMBEDDED
     #ifdef _CLRWL_HAS_SABLE
-        flat uint flw_vertexLightingSceneId;
-        flat float flw_skyLightScale;
+        uint flw_vertexLightingSceneId;
+        float flw_skyLightScale;
         vec4 flw_vertexLightingPos;
     #endif
 #endif
@@ -65,7 +65,7 @@ vec4 clrwl_vertexTangent;
 vec2 clrwl_vertexEntity;
 vec2 clrwl_vertexMidTexCoord;
 vec4 clrwl_vertexMidMesh;
-flat uvec2 clrwl_debugIds;
+uvec2 clrwl_debugIds;
 
 out ClrwlFallbackVertexData
 {
