@@ -215,7 +215,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		for (var group : cullingGroups.values())
 		{
-			group.dispatchApply(isShadow);
+			group.dispatchApply();
 		}
 
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
