@@ -1,8 +1,10 @@
 <div align="center">
 <img src=".github/logo.png" alt="Original logo by jnix, edited by djefrey" width="250">
 <h1>Colorwheel</h1>
+<a href="https://discord.gg/J6vfuzZeU2"><img src="https://img.shields.io/discord/841464837406195712?color=5865f2&label=Discord&style=flat" alt="Discord"></a>
+<a href="https://www.curseforge.com/minecraft/mc-mods/colorwheel"><img src="https://cf.way2muchnoise.eu/1254143.svg" alt="Curseforge Downloads"></a>
+<a href="https://modrinth.com/mod/flywhcolorwheeleel"><img src="https://img.shields.io/modrinth/dt/colorwheel?logo=modrinth&label=&suffix=%20&style=flat&color=242629&labelColor=5ca424&logoColor=1c1c1c" alt="Modrinth"></a>
 </div>
-<br>
 
 ### About
 
