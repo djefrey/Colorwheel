@@ -1,7 +1,7 @@
 package dev.djefrey.colorwheel.indirect;
 
-import static org.lwjgl.opengl.GL30.glBindBufferRange;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
+import static org.lwjgl.opengl.GL44.nglBindBuffersRange;
 
 import dev.engine_room.flywheel.backend.engine.indirect.ObjectStorage;
 import dev.engine_room.flywheel.backend.engine.indirect.ResizableStorageArray;
@@ -69,50 +69,31 @@ public class ClrwlIndirectBuffers
     public final ObjectStorage objectStorage;
     public final ResizableStorageArray drawInstanceIndex;
     public final ResizableStorageArray model;
-    @Nullable
-    public final ResizableStorageArray shadowDraw;
-    public final ResizableStorageArray gbuffersDraw;
+    public final ResizableStorageArray draw;
 
-    public ClrwlIndirectBuffers(long instanceStride, boolean withShadowPass)
+    public ClrwlIndirectBuffers(long instanceStride)
     {
         this.multiBindBlock = MemoryBlock.calloc(BUFFERS_SIZE_BYTES, 1);
 
         objectStorage = new ObjectStorage(instanceStride);
         drawInstanceIndex = new ResizableStorageArray(INT_SIZE, INSTANCE_GROWTH_FACTOR);
         model = new ResizableStorageArray(MODEL_STRIDE, MODEL_GROWTH_FACTOR);
-        shadowDraw = withShadowPass ? new ResizableStorageArray(DRAW_COMMAND_STRIDE, DRAW_GROWTH_FACTOR) : null;
-        gbuffersDraw = new ResizableStorageArray(DRAW_COMMAND_STRIDE, DRAW_GROWTH_FACTOR);
+        draw = new ResizableStorageArray(DRAW_COMMAND_STRIDE, DRAW_GROWTH_FACTOR);
     }
-
-    int __instanceCount;
-    int __modelCount;
-    int __drawCount;
 
     public void updateCounts(int instanceCount, int modelCount, int drawCount)
     {
-        __instanceCount = instanceCount;
-        __modelCount = modelCount;
-        __drawCount = drawCount;
+        final long ptr = multiBindBlock.ptr();
 
         drawInstanceIndex.ensureCapacity(instanceCount);
         model.ensureCapacity(modelCount);
-
-        if (shadowDraw != null)
-        {
-            shadowDraw.ensureCapacity(drawCount);
-        }
-
-        gbuffersDraw.ensureCapacity(drawCount);
-
-        final long ptr = multiBindBlock.ptr();
-
-        // Colorwheel.LOGGER.warn("@@@ " + objectStorage.frameDescriptorBuffer.handle() + "," + objectStorage.objectBuffer.handle() + "," + drawInstanceIndex.handle() + "," + model.handle() + "," + draw.handle());
+        draw.ensureCapacity(drawCount);
 
         MemoryUtil.memPutInt(ptr + PAGE_FRAME_DESCRIPTOR_HANDLE_OFFSET, objectStorage.frameDescriptorBuffer.handle());
         MemoryUtil.memPutInt(ptr + INSTANCE_HANDLE_OFFSET, objectStorage.objectBuffer.handle());
         MemoryUtil.memPutInt(ptr + DRAW_INSTANCE_INDEX_HANDLE_OFFSET, drawInstanceIndex.handle());
         MemoryUtil.memPutInt(ptr + MODEL_HANDLE_OFFSET, model.handle());
-        MemoryUtil.memPutInt(ptr + DRAW_HANDLE_OFFSET, gbuffersDraw.handle());
+        MemoryUtil.memPutInt(ptr + DRAW_HANDLE_OFFSET, draw.handle());
 
         MemoryUtil.memPutAddress(ptr + PAGE_FRAME_DESCRIPTOR_SIZE_OFFSET, objectStorage.frameDescriptorBuffer.capacity());
         MemoryUtil.memPutAddress(ptr + INSTANCE_SIZE_OFFSET, objectStorage.objectBuffer.capacity());
@@ -121,55 +102,32 @@ public class ClrwlIndirectBuffers
         MemoryUtil.memPutAddress(ptr + DRAW_SIZE_OFFSET, DRAW_COMMAND_STRIDE * drawCount);
     }
 
-    public void bindForCull(boolean isShadow)
+    public void bindForCull()
     {
-        multiBind(0, 4, isShadow);
+        multiBind(0, 4);
     }
 
-    public void bindForApply(boolean isShadow)
+    public void bindForApply()
     {
-        multiBind(3, 2, isShadow);
+        multiBind(3, 2);
     }
 
-    public void bindForDraw(boolean isShadow)
+    public void bindForDraw()
     {
-        multiBind(1, 4, isShadow);
-
-        if (isShadow)
-        {
-            GlBufferType.DRAW_INDIRECT_BUFFER.bind(shadowDraw.handle());
-        }
-        else
-        {
-            GlBufferType.DRAW_INDIRECT_BUFFER.bind(gbuffersDraw.handle());
-        }
+        multiBind(1, 4);
+        GlBufferType.DRAW_INDIRECT_BUFFER.bind(draw.handle());
     }
 
     public void bindForCrumbling()
     {
         // All we need is the instance buffer. Crumbling uses its own draw buffer.
-        multiBind(ClrwlBufferBindings.INSTANCE, 1, false);
+        multiBind(ClrwlBufferBindings.INSTANCE, 1);
     }
 
-    private void multiBind(int base, int count, boolean isShadow)
+    private void multiBind(int base, int count)
     {
         final long ptr = multiBindBlock.ptr();
-
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, objectStorage.frameDescriptorBuffer.handle(), 0, objectStorage.frameDescriptorBuffer.capacity());
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, objectStorage.objectBuffer.handle(), 0, objectStorage.objectBuffer.capacity());
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 2, drawInstanceIndex.handle(), 0, INT_SIZE * __instanceCount);
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, model.handle(), 0, MODEL_STRIDE * __modelCount);
-
-        if (isShadow)
-        {
-            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 4, shadowDraw.handle(), 0, DRAW_COMMAND_STRIDE * __drawCount);
-        }
-        else
-        {
-            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 4, gbuffersDraw.handle(), 0, DRAW_COMMAND_STRIDE * __drawCount);
-        }
-
-        //nglBindBuffersRange(GL_SHADER_STORAGE_BUFFER, base, count, ptr + base * INT_SIZE, ptr + OFFSET_OFFSET + base * PTR_SIZE, ptr + SIZE_OFFSET + base * PTR_SIZE);
+        nglBindBuffersRange(GL_SHADER_STORAGE_BUFFER, base, count, ptr + base * INT_SIZE, ptr + OFFSET_OFFSET + base * PTR_SIZE, ptr + SIZE_OFFSET + base * PTR_SIZE);
     }
 
     public void delete()
@@ -179,12 +137,6 @@ public class ClrwlIndirectBuffers
         objectStorage.delete();
         drawInstanceIndex.delete();
         model.delete();
-
-        if (shadowDraw != null)
-        {
-            shadowDraw.delete();
-        }
-
-        gbuffersDraw.delete();
+        draw.delete();
     }
 }

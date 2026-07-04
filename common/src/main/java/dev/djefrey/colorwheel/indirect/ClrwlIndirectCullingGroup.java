@@ -64,7 +64,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	{
 		this.instanceType = instanceType;
 		instanceStride = MoreMath.align4(instanceType.layout().byteSize());
-		buffers = new ClrwlIndirectBuffers(instanceStride, programSet.getPackDirectives().getShadowDirectives().isShadowEnabled().orElse(true));
+		buffers = new ClrwlIndirectBuffers(instanceStride);
 
 		this.programSet = programSet;
 		gbuffersCullProgram = programs.getGbuffersCullingProgram(instanceType);
@@ -144,13 +144,13 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 			gbuffersCullProgram.bind();
 		}
 
-		buffers.bindForCull(isShadow);
+		buffers.bindForCull();
 		glDispatchCompute(buffers.objectStorage.capacity(), 1, 1);
 	}
 
-	public void dispatchApply(boolean isShadow)
+	public void dispatchApply()
 	{
-		buffers.bindForApply(isShadow);
+		buffers.bindForApply();
 		glDispatchCompute(GlCompat.getComputeGroupCount(indirectDraws.size()), 1, 1);
 	}
 
@@ -227,7 +227,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 			return;
 		}
 
-		buffers.bindForDraw(isShadow);
+		buffers.bindForDraw();
 
 		drawBarrier();
 
@@ -315,7 +315,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 			return;
 		}
 
-		buffers.bindForDraw(isShadow);
+		buffers.bindForDraw();
 
 		drawBarrier();
 
@@ -395,7 +395,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 
 		var blendOverride = framebuffers.getBlendModeOverride(programId).orElse(null);
 
-		buffers.bindForDraw(isShadow);
+		buffers.bindForDraw();
 
 		drawBarrier();
 
@@ -488,13 +488,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	private void uploadDraws(StagingBuffer stagingBuffer)
 	{
 		var totalSize = indirectDraws.size() * ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE;
-
-		if (buffers.shadowDraw != null)
-		{
-			stagingBuffer.enqueueCopy(totalSize, buffers.shadowDraw.handle(), 0, this::writeCommands);
-		}
-
-		stagingBuffer.enqueueCopy(totalSize, buffers.gbuffersDraw.handle(), 0, this::writeCommands);
+		stagingBuffer.enqueueCopy(totalSize, buffers.draw.handle(), 0, this::writeCommands);
 	}
 
 	private void writeModels(long writePtr)
