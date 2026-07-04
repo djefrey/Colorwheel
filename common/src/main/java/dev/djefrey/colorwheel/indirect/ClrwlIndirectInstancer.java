@@ -367,8 +367,8 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 		MemoryUtil.memPutFloat(ptr + 20, boundingSphere.z());
 		MemoryUtil.memPutFloat(ptr + 24, boundingSphere.w());
 
-		MemoryUtil.memPutShort(ptr + 28, (short) visual.getEntity());
-		MemoryUtil.memPutShort(ptr + 30, (short) visual.getBlockEntity());
+		int ids = ((visual.getEntity() & 0x0000FFFF) << 16) | (visual.getBlockEntity() & 0x0000FFFF);
+		MemoryUtil.memPutInt(ptr + 28, ids);
 		MemoryUtil.memPutInt(ptr + 32, visual.lightEmission());
 	}
 

@@ -10,6 +10,8 @@ void clrwl_setVertexOut(int i)
 
 #ifdef CLRWL_IS_INDIRECT
     clrwl_out._clrwl_packedMaterial = clrwl_in[i]._clrwl_packedMaterial;
+    clrwl_out._clrwl_entityId = clrwl_in[i]._clrwl_entityId;
+    clrwl_out._clrwl_blockEntityId = clrwl_in[i]._clrwl_blockEntityId;
 #endif
 
 #ifdef _FLW_DEBUG

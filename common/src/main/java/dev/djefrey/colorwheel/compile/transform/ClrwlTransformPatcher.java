@@ -138,8 +138,8 @@ public class ClrwlTransformPatcher
 				root.rename("renderStage", "_clrwl_renderPhase");
 				root.rename("blendFunc", "_clrwl_blendFunc");
 				root.rename("atlasSize", "_clrwl_atlasSize");
-				root.rename("blockEntityId", "_clrwl_blockEntityId");
-				root.rename("entityId", "_clrwl_entityId");
+				root.replaceReferenceExpressions(transformer, "blockEntityId", "_clrwl_blockEntityId");
+				root.replaceReferenceExpressions(transformer, "entityId", "_clrwl_entityId");
 				root.replaceReferenceExpressions(transformer, "entityColor", "clrwl_overlayColor");
 
 				root.replaceReferenceExpressions(transformer, "gl_ModelViewMatrix", "flw_view");

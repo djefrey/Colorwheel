@@ -181,11 +181,11 @@ public class ClrwlProgram
 		this.baseVertexUniform = tryGetUniformLocation2("_flw_baseVertex");
 		this.baseInstanceUniform = tryGetUniformLocation2("_flw_baseInstance");
 		this.baseDrawUniform = tryGetUniformLocation2("_flw_baseDraw");
-		this.packedMaterialUniform = tryGetUniformLocation2("_clrwl_packedMaterial");
+		this.packedMaterialUniform = tryGetUniformLocation2("_clrwl_packedMaterialUniform");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
-		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityId");
-		this.entityUniform = tryGetUniformLocation2("_clrwl_entityId");
+		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityIdUniform");
+		this.entityUniform = tryGetUniformLocation2("_clrwl_entityIdUniform");
 		this.meshCenterUniform = tryGetUniformLocation2("_clrwl_meshCenterUniform");
 		this.renderPhaseUniform = tryGetUniformLocation2("_clrwl_renderPhase");
 		this.blendFuncUniform = tryGetUniformLocation2("_clrwl_blendFunc");
