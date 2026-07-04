@@ -23,6 +23,8 @@ in ClrwlVertexData
 
 #ifdef CLRWL_IS_INDIRECT
     flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
 #endif
 
 #ifdef _FLW_DEBUG
@@ -51,8 +53,15 @@ in ClrwlFallbackVertexData
 
 #ifdef CLRWL_IS_INDIRECT
     flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
 #endif
 };
+#endif
+
+#ifndef CLRWL_IS_INDIRECT
+int _clrwl_entityId;
+int _clrwl_blockEntityId;
 #endif
 
 FlwMaterial flw_material;

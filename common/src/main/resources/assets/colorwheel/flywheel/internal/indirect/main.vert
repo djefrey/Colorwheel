@@ -1,6 +1,7 @@
 #include "colorwheel:internal/common.vert"
 #include "colorwheel:internal/packed_material.glsl"
 #include "colorwheel:internal/indirect/buffer_bindings.glsl"
+#include "colorwheel:internal/indirect/model_descriptor.glsl"
 #include "colorwheel:internal/indirect/draw_command.glsl"
 #include "colorwheel:internal/indirect/light.glsl"
 #include "colorwheel:internal/indirect/matrices.glsl"
@@ -8,6 +9,11 @@
 layout(std430, binding = _FLW_DRAW_INSTANCE_INDEX_BUFFER_BINDING) restrict readonly buffer TargetBuffer
 {
     uint _flw_instanceIndices[];
+};
+
+layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer
+{
+    FlwModelDescriptor _flw_models[];
 };
 
 layout(std430, binding = _FLW_DRAW_BUFFER_BINDING) restrict readonly buffer DrawBuffer
@@ -36,6 +42,7 @@ void main()
 {
     uint drawIndex = flw_drawId + _flw_baseDraw;
     FlwMeshDrawCommand draw = _flw_drawCommands[drawIndex];
+    FlwModelDescriptor model = _flw_models[draw.modelIndex];
 
     uint packedMaterialProperties = draw.packedMaterialProperties;
     _flw_unpackMaterialProperties(packedMaterialProperties, flw_material);
@@ -48,6 +55,10 @@ void main()
             _flw_unpackMatrices(_flw_matrices[draw.matrixIndex], _flw_modelMatrix, _flw_normalMatrix);
         #endif
     #endif
+
+    int lightEmission;
+    _clrwl_unpackData(model, _clrwl_entityId, _clrwl_blockEntityId, lightEmission);
+    _clrwl_meshCenter = vec4(draw.meshCenter.x, draw.meshCenter.y, draw.meshCenter.z, float(lightEmission));
 
     #ifdef _FLW_CRUMBLING
     uint instanceIndex = flw_baseInstance;

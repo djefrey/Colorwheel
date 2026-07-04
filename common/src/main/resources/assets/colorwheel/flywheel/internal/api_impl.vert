@@ -23,6 +23,8 @@ out ClrwlVertexData
 
 #ifdef CLRWL_IS_INDIRECT
     flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
 #endif
 
 #ifdef _FLW_DEBUG
@@ -32,6 +34,13 @@ out ClrwlVertexData
     flat uvec2 clrwl_debugIds;
 #endif
 };
+
+#ifndef _FLW_DEBUG
+vec2 clrwl_vertexEntity;
+vec2 clrwl_vertexMidTexCoord;
+vec4 clrwl_vertexMidMesh;
+uvec2 clrwl_debugIds;
+#endif
 
 vec4 clrwl_overlayColor = vec4(0.0);
 
@@ -53,12 +62,10 @@ vec4 clrwl_vertexTangent;
     #endif
 #endif
 
-#ifdef _FLW_DEBUG
-    vec2 clrwl_vertexEntity;
-    vec2 clrwl_vertexMidTexCoord;
-    vec4 clrwl_vertexMidMesh;
-    flat uvec2 clrwl_debugIds;
-#endif
+vec2 clrwl_vertexEntity;
+vec2 clrwl_vertexMidTexCoord;
+vec4 clrwl_vertexMidMesh;
+flat uvec2 clrwl_debugIds;
 
 out ClrwlFallbackVertexData
 {
@@ -66,15 +73,15 @@ out ClrwlFallbackVertexData
 
 #ifdef CLRWL_IS_INDIRECT
     flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
 #endif
 };
 #endif
 
-#ifndef _FLW_DEBUG
-vec2 clrwl_vertexEntity;
-vec2 clrwl_vertexMidTexCoord;
-vec4 clrwl_vertexMidMesh;
-uvec2 clrwl_debugIds;
+#ifndef CLRWL_IS_INDIRECT
+int _clrwl_entityId;
+int _clrwl_blockEntityId;
 #endif
 
 FlwMaterial flw_material;
