@@ -445,17 +445,36 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	public void bindForCrumbling(Material material)
+	public boolean bindForCrumbling(Material material, ClrwlIndirectPrograms.PipelineProgramCache programs, IrisRenderingPipeline irisPipeline, ClrwlBlendModeOverride blendModeOverride)
 	{
-//		var program = programs.getIndirectProgram(instanceType, ContextShader.CRUMBLING, material, PipelineCompiler.OitMode.OFF);
-//
-//		program.bind();
-//
-//		buffers.bindForCrumbling();
-//
-//		drawBarrier();
-//
-//		program.setUInt("_flw_baseDraw", 0);
+		var key = ClrwlShaderKey.fromMaterial(instanceType, material, ContextShader.CRUMBLING, false, ClrwlPipelineCompiler.OitMode.OFF);
+
+		if (brokenShaders.contains(key))
+		{
+			return false;
+		}
+
+		ClrwlProgram program;
+
+		try
+		{
+			program = programs.get(key, irisPipeline);
+		}
+		catch (Exception e)
+		{
+			handleBrokenShader(key, ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, e);
+			return false;
+		}
+
+		program.bind();
+		buffers.bindForCrumbling();
+
+		drawBarrier();
+
+		program.setClrwlCommonUniforms(material, blendModeOverride, ClrwlRenderingPhase.CRUMBLING);
+		program.setBaseDrawUniform(0);
+
+		return true;
 	}
 
 	private void drawBarrier()

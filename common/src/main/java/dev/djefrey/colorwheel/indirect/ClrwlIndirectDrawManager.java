@@ -19,15 +19,17 @@ import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import dev.engine_room.flywheel.backend.engine.LightStorage;
-import dev.engine_room.flywheel.backend.engine.TextureBinder;
-import dev.engine_room.flywheel.backend.engine.indirect.LightBuffers;
-import dev.engine_room.flywheel.backend.engine.indirect.MatrixBuffer;
-import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
+import dev.engine_room.flywheel.backend.Samplers;
+import dev.engine_room.flywheel.backend.engine.*;
+import dev.engine_room.flywheel.backend.engine.indirect.*;
+import dev.engine_room.flywheel.backend.engine.uniform.Uniforms;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.backend.gl.buffer.GlBuffer;
+import dev.engine_room.flywheel.backend.gl.buffer.GlBufferType;
 import dev.engine_room.flywheel.backend.gl.buffer.GlBufferUsage;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
+import dev.engine_room.flywheel.lib.material.SimpleMaterial;
+import dev.engine_room.flywheel.lib.memory.MemoryBlock;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
@@ -386,7 +388,103 @@ top: 		if (hasOit)
 
 	public void renderCrumbling(IrisRenderingPipeline irisPipeline, List<Engine.CrumblingBlock> crumblingBlocks)
 	{
-		// TODO
+		var byType = doCrumblingSort(crumblingBlocks, ClrwlIndirectInstancer::fromState);
+
+		if (byType.isEmpty())
+		{
+			return;
+		}
+
+		var pipelineData = getPipelineData(irisPipeline);
+		var programs = pipelineData.programs();
+		var framebuffers = pipelineData.framebuffers();
+
+		var framebuffer = framebuffers.getFramebuffer(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK);
+
+		if (framebuffer == null)
+		{
+			return;
+		}
+
+		setPhase(ClrwlRenderingPhase.CRUMBLING, false);
+
+		framebuffer.bind();
+
+		TextureBinder.bindLightAndOverlay();
+		ClrwlUniforms.bind(false);
+		vao.bindForDraw();
+
+		var blendOverride = framebuffers.getBlendModeOverride(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK).orElse(null);
+		var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK);
+
+		var irisSSBO = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getSSBOHolder();
+
+		if (irisSSBO != null)
+		{
+			((ShaderStorageBufferHolderAccessor) irisSSBO).colorwheel$setupBuffersWithIndexOffset(ClrwlBufferBindings.TOTAL_BINDING_COUNT);
+		}
+
+		var crumblingMaterial = SimpleMaterial.builder();
+
+		// Scratch memory for writing draw commands.
+		var block = MemoryBlock.malloc(IndirectBuffers.DRAW_COMMAND_STRIDE);
+
+		// Set up the crumbling program buffers. Nothing changes here between draws.
+		GlBufferType.DRAW_INDIRECT_BUFFER.bind(crumblingDrawBuffer.handle());
+		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, ClrwlBufferBindings.DRAW, crumblingDrawBuffer.handle(), 0, ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE);
+
+		for (var groupEntry : byType.entrySet())
+		{
+			var byProgress = groupEntry.getValue();
+
+			GroupKey<?> groupKey = groupEntry.getKey();
+			ClrwlIndirectCullingGroup<?> cullingGroup = cullingGroups.get(groupKey.instanceType());
+
+			if (cullingGroup == null)
+			{
+				continue;
+			}
+
+			for (var progressEntry : byProgress.int2ObjectEntrySet())
+			{
+				Samplers.CRUMBLING.makeActive();
+				TextureBinder.bind(ModelBakery.BREAKING_LOCATIONS.get(progressEntry.getIntKey()));
+
+				for (var instanceHandlePair : progressEntry.getValue())
+				{
+					ClrwlIndirectInstancer<?> instancer = instanceHandlePair.getFirst();
+					int instanceIndex = instanceHandlePair.getSecond().index;
+
+					for (ClrwlIndirectDraw draw : instancer.draws())
+					{
+						// Transform the material to be suited for crumbling.
+						CommonCrumbling.applyCrumblingProperties(crumblingMaterial, draw.material());
+
+						if (cullingGroup.bindForCrumbling(crumblingMaterial, programs, irisPipeline, blendOverride))
+						{
+							ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
+
+							// Upload the draw command.
+							draw.writeWithOverrides(block.ptr(), instanceIndex, crumblingMaterial);
+							crumblingDrawBuffer.upload(block);
+
+							// Submit! Everything is already bound by here.
+							glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0);
+						}
+					}
+				}
+			}
+		}
+
+		if (irisSSBO != null)
+		{
+			irisSSBO.setupBuffers();
+		}
+
+		ClrwlMaterialRenderState.reset();
+		TextureBinder.resetLightAndOverlay();
+
+		block.free();
 	}
 
 	private PipelineData getPipelineData(IrisRenderingPipeline pipeline)

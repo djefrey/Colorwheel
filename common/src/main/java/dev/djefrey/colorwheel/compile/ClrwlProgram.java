@@ -56,6 +56,7 @@ public class ClrwlProgram
 
 	public final int baseVertexUniform;
 	public final int baseInstanceUniform;
+	public final int baseDrawUniform;
 	public final int packedMaterialUniform;
 	public final int modelMatrixUniform;
 	public final int normalMatrixUniform;
@@ -179,6 +180,7 @@ public class ClrwlProgram
 
 		this.baseVertexUniform = tryGetUniformLocation2("_flw_baseVertex");
 		this.baseInstanceUniform = tryGetUniformLocation2("_flw_baseInstance");
+		this.baseDrawUniform = tryGetUniformLocation2("_flw_baseDraw");
 		this.packedMaterialUniform = tryGetUniformLocation2("_clrwl_packedMaterial");
 		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
 		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
@@ -265,6 +267,11 @@ public class ClrwlProgram
 		setUniformS(blockEntityUniform, visual.getBlockEntity());
 		setUniformS(entityUniform, visual.getEntity());
 		setUniform(meshCenterUniform, meshCenter.x(), meshCenter.y(), meshCenter.z(), (float) visual.lightEmission());
+	}
+
+	public void setBaseDrawUniform(int baseDraw)
+	{
+		setUniformU(baseDrawUniform, baseDraw);
 	}
 
 	public void setEmbeddedMatrices(Matrix4f model,  Matrix3f normal)
