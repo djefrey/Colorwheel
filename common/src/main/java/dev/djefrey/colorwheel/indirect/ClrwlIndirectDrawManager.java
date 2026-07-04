@@ -229,7 +229,11 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		matrixBuffer.bind();
 
 		var irisSSBO = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getSSBOHolder();
-		((ShaderStorageBufferHolderAccessor) irisSSBO).colorwheel$setupBuffersWithIndexOffset(ClrwlBufferBindings.TOTAL_BINDING_COUNT);
+
+		if (irisSSBO != null)
+		{
+			((ShaderStorageBufferHolderAccessor) irisSSBO).colorwheel$setupBuffersWithIndexOffset(ClrwlBufferBindings.TOTAL_BINDING_COUNT);
+		}
 
 		try
 		{
@@ -243,7 +247,10 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 			Colorwheel.LOGGER.error("Got error while rendering solid instances", e);
 		}
 
-		irisSSBO.setupBuffers();
+		if (irisSSBO != null)
+		{
+			irisSSBO.setupBuffers();
+		}
 
 		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
@@ -272,7 +279,11 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		matrixBuffer.bind();
 
 		var irisSSBO = ((IrisRenderingPipelineAccessor) irisPipeline).colorwheel$getSSBOHolder();
-		((ShaderStorageBufferHolderAccessor) irisSSBO).colorwheel$setupBuffersWithIndexOffset(ClrwlBufferBindings.TOTAL_BINDING_COUNT);
+
+		if (irisSSBO != null)
+		{
+			((ShaderStorageBufferHolderAccessor) irisSSBO).colorwheel$setupBuffersWithIndexOffset(ClrwlBufferBindings.TOTAL_BINDING_COUNT);
+		}
 
 		try
 		{
@@ -364,7 +375,10 @@ top: 		if (hasOit)
 			Colorwheel.LOGGER.error("Got error while rendering translucent instances", e);
 		}
 
-		irisSSBO.setupBuffers();
+		if (irisSSBO != null)
+		{
+			irisSSBO.setupBuffers();
+		}
 
 		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
