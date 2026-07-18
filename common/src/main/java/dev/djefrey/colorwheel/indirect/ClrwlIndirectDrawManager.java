@@ -261,8 +261,15 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 	public void renderSolid(IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
-		if (cullingGroups.isEmpty())
-		{
+top:	{
+			for (var group : cullingGroups.values())
+			{
+				if (group.hasSolidDraws())
+				{
+					break top;
+				}
+			}
+
 			return;
 		}
 
@@ -373,8 +380,15 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 	public void renderTranslucent(IrisRenderingPipeline irisPipeline, boolean isShadow)
 	{
-		if (cullingGroups.isEmpty())
-		{
+top:	{
+			for (var group : cullingGroups.values())
+			{
+				if (group.hasTranslucentDraws() || group.hasOitDraws())
+				{
+					break top;
+				}
+			}
+
 			return;
 		}
 
