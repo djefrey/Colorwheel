@@ -166,6 +166,16 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		glDispatchCompute(GlCompat.getComputeGroupCount(indirectDraws.size()), 1, 1);
 	}
 
+	public boolean hasSolidDraws()
+	{
+		return !solidDraws.isEmpty();
+	}
+
+	public boolean hasTranslucentDraws()
+	{
+		return !translucentDraws.isEmpty();
+	}
+
 	public boolean hasOitDraws()
 	{
 		return !oitDraws.isEmpty();
