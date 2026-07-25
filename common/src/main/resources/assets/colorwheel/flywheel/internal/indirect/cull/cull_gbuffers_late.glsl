@@ -123,7 +123,7 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
     return isVisible;
 }
 
-#if defined GL_KHR_shader_subgroup_basic && defined GL_KHR_shader_subgroup_ballot
+#if !_CLRWL_FORCE_DISABLE_SUBGROUP_BALLOT && (defined GL_KHR_shader_subgroup_basic && defined GL_KHR_shader_subgroup_ballot)
     #define _CLRWL_USE_SUBGROUP_BALLOT
 #endif
 
