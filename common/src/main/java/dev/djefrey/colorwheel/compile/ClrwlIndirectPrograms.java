@@ -251,6 +251,11 @@ public class ClrwlIndirectPrograms
 				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
 				.onCompile((k, c) -> c.define(k.passDefine()));
 
+		if (FORCE_DISABLE_SUBGROUP_BALLOT)
+		{
+			shader = shader.define("_CLRWL_FORCE_DISABLE_SUBGROUP_BALLOT", 1);
+		}
+
 		if (occlusion)
 		{
 			shader = shader.define("_CLRWL_OCCLUSION_CULLING", 1);
@@ -381,5 +386,12 @@ public class ClrwlIndirectPrograms
 
 			programCache.clear();
 		}
+	}
+
+	private static boolean FORCE_DISABLE_SUBGROUP_BALLOT = false;
+
+	public static void toggleSubgroupBallot(boolean enabled)
+	{
+		FORCE_DISABLE_SUBGROUP_BALLOT = !enabled;
 	}
 }
