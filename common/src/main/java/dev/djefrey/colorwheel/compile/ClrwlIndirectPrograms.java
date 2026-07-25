@@ -219,7 +219,7 @@ public class ClrwlIndirectPrograms
 	private static CompilationHarness<TransformKey> createTransformCompiler(ShaderSources sources)
 	{
 		var shader = TRANSFORM.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-				.nameMapper(instanceType -> "transform_bounding_spheres/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
+				.nameMapper(instanceType -> "colorwheel/transform_bounding_spheres/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
 				.requireExtensions(COMPUTE_EXTENSIONS)
 				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
 				.onCompile((k, c) -> c.define(k.passDefine()));
@@ -244,7 +244,7 @@ public class ClrwlIndirectPrograms
 	private static CompilationHarness<Culling> createCullingCompiler(ShaderSources sources, boolean occlusion, boolean frustum)
 	{
 		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-				.nameMapper(cull -> "cull_" + cull.shaderName())
+				.nameMapper(cull -> "colorwheel/cull/" + cull.shaderName())
 				.requireExtensions(COMPUTE_EXTENSIONS)
 				.enableExtension("GL_KHR_shader_subgroup_basic")
 				.enableExtension("GL_KHR_shader_subgroup_ballot")
@@ -278,7 +278,7 @@ public class ClrwlIndirectPrograms
 	{
 		return UTIL.program()
 				.link(UTIL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-						.nameMapper(resourceLocation -> "utilities/" + ResourceUtil.toDebugFileNameNoExtension(resourceLocation))
+						.nameMapper(resourceLocation -> "colorwheel/utilities/" + ResourceUtil.toDebugFileNameNoExtension(resourceLocation))
 						.requireExtensions(COMPUTE_EXTENSIONS)
 						.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
 						.onCompile(($, c) -> setModCompatDefines(c))
