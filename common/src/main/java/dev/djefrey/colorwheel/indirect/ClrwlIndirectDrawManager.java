@@ -49,8 +49,7 @@ import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
 import static org.lwjgl.opengl.GL30.glBindBufferRange;
 import static org.lwjgl.opengl.GL40.glDrawElementsIndirect;
-import static org.lwjgl.opengl.GL42.GL_PIXEL_BUFFER_BARRIER_BIT;
-import static org.lwjgl.opengl.GL42.glMemoryBarrier;
+import static org.lwjgl.opengl.GL42.*;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BARRIER_BIT;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
@@ -58,13 +57,26 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 {
 	public record PipelineData(ClrwlIndirectPrograms.PipelineProgramCache programs,
 							   ClrwlFramebuffers framebuffers,
-							   ClrwlDepthPyramid depthPyramid)
+							   ClrwlDepthPyramid depthPyramid,
+							   Map<ClrwlIndirectCullingGroup<?>, ClrwlIndirectBuffers.PipelineBuffers> buffers)
 	{
+		public ClrwlIndirectBuffers.PipelineBuffers getBuffers(ClrwlIndirectCullingGroup<?> group)
+		{
+			return buffers.computeIfAbsent(group, ClrwlIndirectCullingGroup::makePipelineBuffers);
+		}
+
 		public void delete()
 		{
 			programs.delete();
 			framebuffers.delete();
 			depthPyramid.delete();
+
+			for (var buffer : buffers.values())
+			{
+				buffer.delete();
+			}
+
+			buffers.clear();
 		}
 	}
 
@@ -165,17 +177,86 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 			return;
 		}
 
+		var pipelineData = getPipelineData(pipeline);
+
 		stagingBuffer.reclaim();
 
 		for (var group : cullingGroups.values())
 		{
 			group.upload(stagingBuffer);
+			pipelineData.getBuffers(group).updateCounts();
 		}
 
 		setPhase(ClrwlRenderingPhase.STAGING_BUFFER_FLUSH, false);
 		stagingBuffer.flush();
 
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_TRANSFORM, isShadow);
+
+		for (var group : cullingGroups.values())
+		{
+			group.dispatchTransform(isShadow);
+		}
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		if (isShadow)
+		{
+			dispatchCull(ClrwlIndirectPrograms.Culling.SHADOW, pipelineData);
+
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+			dispatchApply(isShadow);
+
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		}
+	}
+
+	private void dispatchCull(ClrwlIndirectPrograms.Culling culling, PipelineData pipelineData)
+	{
+		setPhase(ClrwlRenderingPhase.INDIRECT_CULL, culling.isShadow());
+
+		programs.getCullingProgram(culling)
+				.bind();
+
+		for (var group : cullingGroups.values())
+		{
+			pipelineData.getBuffers(group).bindForCull();
+			group.dispatchCull();
+		}
+	}
+
+	private void dispatchApply(boolean isShadow)
+	{
+		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_APPLY, isShadow);
+
+		programs.getApplyProgram()
+				.bind();
+
+		for (var group : cullingGroups.values())
+		{
+			group.dispatchApply();
+		}
+	}
+
+	private void dispatchModelReset(boolean isShadow)
+	{
+		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_RESET, isShadow);
+
+		programs.getZeroModelsProgram()
+				.bind();
+
+		for (var group : cullingGroups.values())
+		{
+			group.dispatchModelReset();
+		}
+	}
+
+	private void generateDepthPyramid(ClrwlDepthPyramid depthPyramid)
+	{
+		setPhase(ClrwlRenderingPhase.INDIRECT_DEPTH_PYRAMID, false);
+		depthPyramid.generate();
 	}
 
 	public void renderSolid(IrisRenderingPipeline irisPipeline, boolean isShadow)
@@ -186,43 +267,6 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		}
 
 		var pipelineData = getPipelineData(irisPipeline);
-		var pipelinePrograms = pipelineData.programs();
-		var framebuffers = pipelineData.framebuffers();
-
-		if (!isShadow) // hiz cull
-		{
-			var depthPyramid = pipelineData.depthPyramid();
-
-			setPhase(ClrwlRenderingPhase.INDIRECT_DEPTH_PYRAMID, isShadow);
-
-			depthPyramid.generate();
-
-			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-			depthPyramid.bindForCull();
-		}
-
-		setPhase(ClrwlRenderingPhase.INDIRECT_CULL, isShadow);
-
-		for (var group : cullingGroups.values())
-		{
-			group.dispatchCull(isShadow);
-		}
-
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_APPLY, isShadow);
-
-		programs.getApplyProgram()
-				.bind();
-
-		for (var group : cullingGroups.values())
-		{
-			group.dispatchApply();
-		}
-
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
 
 		TextureBinder.bindLightAndOverlay();
 		ClrwlUniforms.bind(isShadow);
@@ -239,9 +283,65 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		try
 		{
-			for (var group : cullingGroups.values())
+			if (!isShadow)
 			{
-				group.submitSolid(pipelinePrograms, framebuffers, irisPipeline, isShadow);
+				var depthPyramid = pipelineData.depthPyramid();
+				var directives = programSet.getPackDirectives();
+				var shouldUseTwoPass = TWO_PASS_CULL_ENABLED && directives.shouldUseOcclusionCulling() && directives.shouldUseFrustumCulling();
+
+				if (shouldUseTwoPass)
+				{
+					dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_EARLY, pipelineData);
+
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+					dispatchApply(isShadow);
+
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+					dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
+
+					if (LATE_CULL_ENABLED)
+					{
+						generateDepthPyramid(depthPyramid);
+
+						dispatchModelReset(isShadow);
+
+						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+						depthPyramid.bindForCull();
+						dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_LATE, pipelineData);
+
+						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+						dispatchApply(isShadow);
+
+						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+						dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
+					}
+				}
+				else
+				{
+					generateDepthPyramid(depthPyramid);
+
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+					depthPyramid.bindForCull();
+					dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_FULL, pipelineData);
+
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+					dispatchApply(isShadow);
+
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+					dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
+				}
+			}
+			else
+			{
+				dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 			}
 		}
 		catch (Exception e)
@@ -256,6 +356,19 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
+	}
+
+	private void dispatchSolidDraws(IrisRenderingPipeline irisPipeline, boolean isShadow, PipelineData pipelineData)
+	{
+		var pipelinePrograms = pipelineData.programs();
+		var framebuffers = pipelineData.framebuffers();
+
+		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
+
+		for (var group : cullingGroups.values())
+		{
+			group.submitSolid(pipelinePrograms, framebuffers, irisPipeline, isShadow);
+		}
 	}
 
 	public void renderTranslucent(IrisRenderingPipeline irisPipeline, boolean isShadow)
@@ -289,6 +402,24 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		try
 		{
+			if (!isShadow)
+			{
+				var depthPyramid = pipelineData.depthPyramid();
+
+				generateDepthPyramid(depthPyramid);
+
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+				depthPyramid.bindForCull();
+				dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_FULL, pipelineData);
+
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+				dispatchApply(isShadow);
+
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+			}
+
 			boolean hasOit = false;
 			for (var group : cullingGroups.values())
 			{
@@ -500,7 +631,7 @@ top: 		if (hasOit)
 
 		Colorwheel.LOGGER.info("Created pipeline data for {}", irisPipeline);
 
-		return new PipelineData(pipelinePrograms, framebuffers, depthPyramid);
+		return new PipelineData(pipelinePrograms, framebuffers, depthPyramid, new HashMap<>());
 	}
 
 	public void onIrisPipelineDestroy(IrisRenderingPipeline irisPipeline)
@@ -551,5 +682,18 @@ top: 		if (hasOit)
 	public void triggerFallback()
 	{
 		Minecraft.getInstance().levelRenderer.allChanged();
+	}
+
+	private static boolean TWO_PASS_CULL_ENABLED = true;
+	private static boolean LATE_CULL_ENABLED = true;
+
+	public static void toggleTwoPassCull(boolean enabled)
+	{
+		TWO_PASS_CULL_ENABLED = enabled;
+	}
+
+	public static void toggleLateCull(boolean enabled)
+	{
+		LATE_CULL_ENABLED = enabled;
 	}
 }

@@ -12,7 +12,9 @@ public enum ClrwlRenderingPhase
     STAGING_BUFFER_FLUSH,
     INDIRECT_DEPTH_PYRAMID,
     INDIRECT_CULL,
-    INDIRECT_CULL_APPLY;
+    INDIRECT_CULL_APPLY,
+    INDIRECT_CULL_RESET,
+    INDIRECT_CULL_TRANSFORM;
 
     public int getValue()
     {

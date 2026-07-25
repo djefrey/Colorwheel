@@ -8,6 +8,7 @@ import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceType;
@@ -53,8 +54,8 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	private final List<MultiDraw> oitDraws = new ArrayList<>();
 
 	private final ProgramSet programSet;
-	private final GlProgram gbuffersCullProgram;
-	private final GlProgram shadowCullProgram;
+	private final GlProgram gbuffersTransformSphereProgram;
+	private final GlProgram shadowTransformSphereProgram;
 
 	private boolean needsDrawBarrier;
 	private boolean needsDrawSort;
@@ -67,8 +68,8 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		buffers = new ClrwlIndirectBuffers(instanceStride);
 
 		this.programSet = programSet;
-		gbuffersCullProgram = programs.getGbuffersCullingProgram(instanceType);
-		shadowCullProgram = programs.getShadowCullingProgram(instanceType);
+		gbuffersTransformSphereProgram = programs.getTransformProgram(instanceType, ClrwlProgramGroup.GBUFFERS);
+		shadowTransformSphereProgram = programs.getTransformProgram(instanceType, ClrwlProgramGroup.SHADOW);
 	}
 
 	public boolean flushInstancers()
@@ -131,19 +132,24 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		needsDrawBarrier = true;
 	}
 
-	public void dispatchCull(boolean isShadow)
+	public void dispatchTransform(boolean isShadow)
 	{
-		ClrwlUniforms.bind(isShadow);
-
 		if (isShadow)
 		{
-			shadowCullProgram.bind();
+			shadowTransformSphereProgram.bind();
 		}
 		else
 		{
-			gbuffersCullProgram.bind();
+			gbuffersTransformSphereProgram.bind();
 		}
 
+		ClrwlUniforms.bind(isShadow);
+		buffers.bindForTransform();
+		glDispatchCompute(buffers.objectStorage.capacity(), 1, 1);
+	}
+
+	public void dispatchCull()
+	{
 		buffers.bindForCull();
 		glDispatchCompute(buffers.objectStorage.capacity(), 1, 1);
 	}
@@ -151,6 +157,12 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	public void dispatchApply()
 	{
 		buffers.bindForApply();
+		glDispatchCompute(GlCompat.getComputeGroupCount(indirectDraws.size()), 1, 1);
+	}
+
+	public void dispatchModelReset()
+	{
+		buffers.bindForModelReset();
 		glDispatchCompute(GlCompat.getComputeGroupCount(indirectDraws.size()), 1, 1);
 	}
 
@@ -526,6 +538,11 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 			draw.write(writePtr);
 			writePtr += ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE;
 		}
+	}
+
+	public ClrwlIndirectBuffers.PipelineBuffers makePipelineBuffers()
+	{
+		return buffers.makePipelineBuffers();
 	}
 
 	public void delete()

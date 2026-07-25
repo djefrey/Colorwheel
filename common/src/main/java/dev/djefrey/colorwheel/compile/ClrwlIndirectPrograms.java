@@ -4,12 +4,12 @@ import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.backend.compile.IndirectPrograms;
 import dev.engine_room.flywheel.backend.compile.OitPrograms;
 import dev.engine_room.flywheel.backend.compile.PipelineCompiler;
 import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponent;
-import dev.engine_room.flywheel.backend.compile.component.SsboInstanceComponent;
 import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.compile.core.CompilationHarness;
 import dev.engine_room.flywheel.backend.compile.core.Compile;
@@ -31,32 +31,116 @@ import java.util.Map;
 
 public class ClrwlIndirectPrograms
 {
-	private static final ResourceLocation CULL_SHADER_API_IMPL = Colorwheel.rl("internal/indirect/cull_api_impl.glsl");
-	private static final ResourceLocation GBUFFERS_CULL_SHADER_MAIN = Colorwheel.rl("internal/indirect/cull_gbuffers.glsl");
-	private static final ResourceLocation SHADOW_CULL_SHADER_MAIN = Colorwheel.rl("internal/indirect/cull_shadow.glsl");
+	public enum Culling
+	{
+		GBUFFERS_FULL("gbuffers_full", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS),
+		GBUFFERS_EARLY("gbuffers_early", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_early.glsl"), ClrwlProgramGroup.GBUFFERS),
+		GBUFFERS_LATE("gbuffers_late", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_late.glsl"), ClrwlProgramGroup.GBUFFERS),
+		SHADOW("shadow", Colorwheel.rl("internal/indirect/cull/cull_shadow.glsl"), ClrwlProgramGroup.SHADOW);
 
+		private final String name;
+		private final ResourceLocation shader;
+		private final ClrwlProgramGroup group;
+
+		Culling(String name, ResourceLocation shader, ClrwlProgramGroup group)
+		{
+			this.name = name;
+			this.shader = shader;
+			this.group = group;
+		}
+
+		public String shaderName()
+		{
+			return this.name;
+		}
+
+		public ResourceLocation shader()
+		{
+			return this.shader;
+		}
+
+		public String passDefine()
+		{
+			switch (group)
+			{
+                case GBUFFERS ->
+				{
+					return "_CLRWL_IS_GBUFFERS_PASS";
+                }
+
+                case SHADOW ->
+				{
+					return "_CLRWL_IS_SHADOW_PASS";
+                }
+
+				default ->
+				{
+					return "";
+				}
+            }
+		}
+
+		public boolean isShadow()
+		{
+			return group == ClrwlProgramGroup.SHADOW;
+		}
+	}
+
+	public record TransformKey(InstanceType<?> instanceType, ClrwlProgramGroup group)
+	{
+		public ResourceLocation cullShader()
+		{
+			return instanceType.cullShader();
+		}
+
+		public String passDefine()
+		{
+			switch (group)
+			{
+				case GBUFFERS ->
+				{
+					return "_CLRWL_IS_GBUFFERS_PASS";
+				}
+
+				case SHADOW ->
+				{
+					return "_CLRWL_IS_SHADOW_PASS";
+				}
+
+				default ->
+				{
+					return "";
+				}
+			}
+		}
+	}
+
+	private static final ResourceLocation CULL_SHADER_API_IMPL = Colorwheel.rl("internal/indirect/cull/cull_api_impl.glsl");
+	private static final ResourceLocation TRANSFORM_SHADER_MAIN = Colorwheel.rl("internal/indirect/transform.glsl");
 	private static final ResourceLocation APPLY_SHADER_MAIN = Colorwheel.rl("internal/indirect/apply.glsl");
+	private static final ResourceLocation ZERO_SHADER_MAIN = Colorwheel.rl("internal/indirect/zero_models.glsl");
 
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 	private static final List<String> COMPUTE_EXTENSIONS = getComputeExtensions(GlCompat.MAX_GLSL_VERSION);
 
-	private static final Compile<InstanceType<?>> CULL = new Compile<>();
+	private static final Compile<TransformKey> TRANSFORM = new Compile<>();
+	private static final Compile<Culling> CULL = new Compile<>();
 	private static final Compile<ResourceLocation> UTIL = new Compile<>();
 
 	private final ClrwlPipelineCompiler compiler;
-	private final CompilationHarness<InstanceType<?>> gbuffersCulling;
-	private final CompilationHarness<InstanceType<?>> shadowCulling;
+	private final CompilationHarness<TransformKey> transform;
+	private final CompilationHarness<Culling> culling;
 	private final CompilationHarness<ResourceLocation> utils;
 	private final ClrwlOitPrograms oitPrograms;
 
 	// WARNING: this can ONLY be used for utils ! (otherwise, kaboom)
 	private final IndirectPrograms flwPrograms;
 
-	private ClrwlIndirectPrograms(ClrwlPipelineCompiler compiler, CompilationHarness<InstanceType<?>> gbuffersCulling, CompilationHarness<InstanceType<?>> shadowCulling, CompilationHarness<ResourceLocation> utils, ClrwlOitPrograms oitPrograms)
+	private ClrwlIndirectPrograms(ClrwlPipelineCompiler compiler, CompilationHarness<TransformKey> transform, CompilationHarness<Culling> culling, CompilationHarness<ResourceLocation> utils, ClrwlOitPrograms oitPrograms)
 	{
 		this.compiler = compiler;
-		this.gbuffersCulling = gbuffersCulling;
-		this.shadowCulling = shadowCulling;
+		this.transform = transform;
+		this.culling = culling;
 		this.utils = utils;
 		this.oitPrograms = oitPrograms;
 
@@ -124,24 +208,48 @@ public class ClrwlIndirectPrograms
 		var frustumCulling = directives.shouldUseFrustumCulling();
 
 		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, programSet);
-		var gbuffersCulling = createGbuffersCullingCompiler(sources, occlusionCulling, frustumCulling);
-		var shadowCulling = createShadowCullingCompiler(sources);
+		var transform = createTransformCompiler(sources);
+		var culling = createCullingCompiler(sources, occlusionCulling, frustumCulling);
 		var util = createUtilCompiler(sources);
 		var oitPrograms = new ClrwlOitPrograms(sources);
 
-        return new ClrwlIndirectPrograms(compiler, gbuffersCulling, shadowCulling, util, oitPrograms);
+        return new ClrwlIndirectPrograms(compiler, transform, culling, util, oitPrograms);
+	}
+
+	private static CompilationHarness<TransformKey> createTransformCompiler(ShaderSources sources)
+	{
+		var shader = TRANSFORM.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
+				.nameMapper(instanceType -> "transform_bounding_spheres/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
+				.requireExtensions(COMPUTE_EXTENSIONS)
+				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
+				.onCompile((k, c) -> c.define(k.passDefine()));
+
+		shader = shader
+				.onCompile(($, c) -> setModCompatDefines(c))
+				.withResource(CULL_SHADER_API_IMPL)
+				.withComponent(k -> new InstanceStructComponent(k.instanceType()))
+				.withResource(TransformKey::cullShader)
+				.withComponent(k -> new SsboInstanceComponent(k.instanceType()))
+				.withResource(TRANSFORM_SHADER_MAIN);
+
+		return TRANSFORM.program()
+				.link(shader)
+				.postLink((key, program) -> ClrwlUniforms.setUniformsBlockBindings(program))
+				.harness("transform_bounding_spheres", sources);
 	}
 
 	/**
 	 * A compiler for cull shaders, parameterized by the instance type.
 	 */
-	private static CompilationHarness<InstanceType<?>> createGbuffersCullingCompiler(ShaderSources sources, boolean occlusion, boolean frustum)
+	private static CompilationHarness<Culling> createCullingCompiler(ShaderSources sources, boolean occlusion, boolean frustum)
 	{
 		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-				.nameMapper(instanceType -> "culling_gbuffers/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
+				.nameMapper(cull -> "cull_" + cull.shaderName())
 				.requireExtensions(COMPUTE_EXTENSIONS)
+				.enableExtension("GL_KHR_shader_subgroup_basic")
+				.enableExtension("GL_KHR_shader_subgroup_ballot")
 				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-				.define("_CLRWL_IS_GBUFFERS_PASS", 1);
+				.onCompile((k, c) -> c.define(k.passDefine()));
 
 		if (occlusion)
 		{
@@ -155,36 +263,12 @@ public class ClrwlIndirectPrograms
 
 		shader = shader
 				.onCompile(($, c) -> setModCompatDefines(c))
-				.withResource(CULL_SHADER_API_IMPL)
-				.withComponent(InstanceStructComponent::new)
-				.withResource(InstanceType::cullShader)
-				.withComponent(SsboInstanceComponent::new)
-				.withResource(GBUFFERS_CULL_SHADER_MAIN);
+				.withResource(Culling::shader);
 
 		return CULL.program()
 				.link(shader)
 				.postLink((key, program) -> ClrwlUniforms.setUniformsBlockBindings(program))
-				.harness("culling_gbuffers", sources);
-	}
-
-	private static CompilationHarness<InstanceType<?>> createShadowCullingCompiler(ShaderSources sources)
-	{
-		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-				.nameMapper(instanceType -> "culling_shadow/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
-				.requireExtensions(COMPUTE_EXTENSIONS)
-				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-				.define("_CLRWL_IS_SHADOW_PASS", 1)
-				.onCompile(($, c) -> setModCompatDefines(c))
-				.withResource(CULL_SHADER_API_IMPL)
-				.withComponent(InstanceStructComponent::new)
-				.withResource(InstanceType::cullShader)
-				.withComponent(SsboInstanceComponent::new)
-				.withResource(SHADOW_CULL_SHADER_MAIN);
-
-		return CULL.program()
-				.link(shader)
-				.postLink((key, program) -> ClrwlUniforms.setUniformsBlockBindings(program))
-				.harness("culling_shadow", sources);
+				.harness("culling", sources);
 	}
 
 	/**
@@ -215,19 +299,24 @@ public class ClrwlIndirectPrograms
 		return new PipelineProgramCache();
 	}
 
-	public GlProgram getGbuffersCullingProgram(InstanceType<?> instanceType)
+	public GlProgram getTransformProgram(InstanceType<?> instanceType, ClrwlProgramGroup group)
 	{
-		return gbuffersCulling.get(instanceType);
+		return this.transform.get(new TransformKey(instanceType, group));
 	}
 
-	public GlProgram getShadowCullingProgram(InstanceType<?> instanceType)
+	public GlProgram getCullingProgram(Culling culling)
 	{
-		return shadowCulling.get(instanceType);
+		return this.culling.get(culling);
 	}
 
 	public GlProgram getApplyProgram()
 	{
 		return utils.get(APPLY_SHADER_MAIN);
+	}
+
+	public GlProgram getZeroModelsProgram()
+	{
+		return utils.get(ZERO_SHADER_MAIN);
 	}
 
 	public GlProgram getScatterProgram()
@@ -258,8 +347,8 @@ public class ClrwlIndirectPrograms
 
 	public void delete()
 	{
-		gbuffersCulling.delete();
-		shadowCulling.delete();
+		transform.delete();
+		culling.delete();
 		utils.delete();
 		oitPrograms.delete();
 
