@@ -22,10 +22,6 @@ layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer 
     FlwModelDescriptor _flw_models[];
 };
 
-layout(std430, binding = _FLW_MATRIX_BUFFER_BINDING) restrict readonly buffer MatrixBuffer {
-    FlwMatrices _flw_matrices[];
-};
-
 layout(binding = 0) uniform sampler2D _flw_depthPyramid;
 
 // Disgustingly vectorized sphere frustum intersection taking advantage of ahead of time packing.

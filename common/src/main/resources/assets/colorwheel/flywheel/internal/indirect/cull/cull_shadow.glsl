@@ -10,11 +10,6 @@ layout(std430, binding = _FLW_DRAW_INSTANCE_INDEX_BUFFER_BINDING) restrict write
     uint _flw_instanceIndices[];
 };
 
-// High 6 bits for the number of instances in the page.
-const uint _FLW_PAGE_COUNT_OFFSET = 26u;
-// Bottom 26 bits for the model index.
-const uint _FLW_MODEL_INDEX_MASK = 0x3FFFFFF;
-
 layout(std430, binding = _FLW_PAGE_FRAME_DESCRIPTOR_BUFFER_BINDING) restrict readonly buffer PageFrameDescriptorBuffer {
     uint _flw_pageFrameDescriptors[];
 };
@@ -25,10 +20,6 @@ layout(std430, binding = _FLW_BOUNDING_SPHERE_BUFFER_BINDING) restrict readonly 
 
 layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer {
     FlwModelDescriptor _flw_models[];
-};
-
-layout(std430, binding = _FLW_MATRIX_BUFFER_BINDING) restrict readonly buffer MatrixBuffer {
-    FlwMatrices _flw_matrices[];
 };
 
 bool _clrwl_isSphereInCube(vec3 center, float radius, vec3 origin, float halfLength)
