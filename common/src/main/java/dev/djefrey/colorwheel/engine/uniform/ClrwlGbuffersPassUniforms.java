@@ -43,13 +43,6 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 
 	private static final Matrix3f NORMAL = new Matrix3f();
 
-	private static final Vector3f CAMERA_POS = new Vector3f();
-	private static final Vector3f CAMERA_POS_PREV = new Vector3f();
-	private static final Vector3f CAMERA_LOOK = new Vector3f();
-	private static final Vector3f CAMERA_LOOK_PREV = new Vector3f();
-	private static final Vector2f CAMERA_ROT = new Vector2f();
-	private static final Vector2f CAMERA_ROT_PREV = new Vector2f();
-
 	private static boolean firstWrite = true;
 
 	private static boolean frustumPaused = false;
@@ -96,10 +89,6 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 				.transpose();
 		normal.get3x3(NORMAL);
 
-		CAMERA_POS.set(camX, camY, camZ);
-		CAMERA_LOOK.set(camera.getLookVector());
-		CAMERA_ROT.set(camera.getXRot(), camera.getYRot());
-
 		if (firstWrite)
 		{
 			setPrev();
@@ -136,9 +125,6 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 		VIEW_PREV.set(VIEW);
 		PROJECTION_PREV.set(PROJECTION);
 		VIEW_PROJECTION_PREV.set(VIEW_PROJECTION);
-		CAMERA_POS_PREV.set(CAMERA_POS);
-		CAMERA_LOOK_PREV.set(CAMERA_LOOK);
-		CAMERA_ROT_PREV.set(CAMERA_ROT);
 	}
 
 	private static long writeMatrices(long ptr)
