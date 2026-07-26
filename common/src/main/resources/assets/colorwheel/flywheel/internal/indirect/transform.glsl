@@ -10,11 +10,11 @@ layout(std430, binding = _FLW_PAGE_FRAME_DESCRIPTOR_BUFFER_BINDING) restrict rea
     uint _flw_pageFrameDescriptors[];
 };
 
-layout(std430, binding = _FLW_BOUNDING_SPHERE_BUFFER_BINDING) restrict buffer BoundingSphereBuffer {
+layout(std430, binding = _FLW_BOUNDING_SPHERE_BUFFER_BINDING) restrict writeonly buffer BoundingSphereBuffer {
     FlwBoundingSphere _flw_boundingSpheres[];
 };
 
-layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer {
+layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict readonly buffer ModelBuffer {
     FlwModelDescriptor _flw_models[];
 };
 
