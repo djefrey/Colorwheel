@@ -443,6 +443,8 @@ top:	{
 
 				generateDepthPyramid(depthPyramid);
 
+				dispatchModelReset(isShadow);
+
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 				depthPyramid.bindForCull();
