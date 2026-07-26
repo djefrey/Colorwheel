@@ -67,6 +67,13 @@ void main()
     }
 
     uint modelIndex = _flw_pageFrameDescriptors[pageIndex];
+    uint materialBitset = _clrwl_unpackMaterialBitset(_flw_models[modelIndex]);
+
+    if ((materialBitset & uint(_CLRWL_MATERIAL_MASK)) == 0)
+    {
+        return;
+    }
+
     uint pageValidity = _flw_pageFrameDescriptors[pageIndex + 1];
     uint localInvocationMask = 1u << gl_LocalInvocationID.x;
 
