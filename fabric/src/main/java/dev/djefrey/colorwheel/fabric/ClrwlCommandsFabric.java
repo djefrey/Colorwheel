@@ -3,10 +3,12 @@ package dev.djefrey.colorwheel.fabric;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.djefrey.colorwheel.compile.ClrwlIndirectPrograms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlGbuffersPassUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowPassUniforms;
 import dev.djefrey.colorwheel.engine.uniform.DebugMode;
+import dev.djefrey.colorwheel.indirect.ClrwlIndirectDrawManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
@@ -55,6 +57,47 @@ public class ClrwlCommandsFabric
                                 .executes(ctx ->
                                 {
                                     ClrwlShadowPassUniforms.unpauseFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                }))));
+        
+        debug.then(ClientCommandManager.literal("cull")
+                .then(ClientCommandManager.literal("two_pass")
+                        .then(ClientCommandManager.literal("on")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleTwoPassCull(true);
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(ClientCommandManager.literal("off")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleTwoPassCull(false);
+                                    return Command.SINGLE_SUCCESS;
+                                })))
+                .then(ClientCommandManager.literal("late")
+                        .then(ClientCommandManager.literal("on")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleLateCull(true);
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(ClientCommandManager.literal("off")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleLateCull(false);
+                                    return Command.SINGLE_SUCCESS;
+                                })))
+                .then(ClientCommandManager.literal("subgroup_ballot")
+                        .then(ClientCommandManager.literal("on")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectPrograms.toggleSubgroupBallot(true);
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(ClientCommandManager.literal("off")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectPrograms.toggleSubgroupBallot(false);
                                     return Command.SINGLE_SUCCESS;
                                 }))));
 
