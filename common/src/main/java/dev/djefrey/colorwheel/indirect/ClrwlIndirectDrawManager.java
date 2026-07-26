@@ -222,6 +222,27 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		for (var group : cullingGroups.values())
 		{
+			switch (culling)
+			{
+                case GBUFFERS_FULL, GBUFFERS_EARLY, GBUFFERS_LATE ->
+				{
+					if (!group.hasSolidDraws())
+					{
+						continue;
+					}
+                }
+
+                case GBUFFERS_TRANSLUCENT_FULL ->
+				{
+					if (!(group.hasTranslucentDraws() || group.hasOitDraws()))
+					{
+						continue;
+					}
+                }
+
+                case SHADOW -> {}
+            }
+
 			pipelineData.getBuffers(group).bindForCull();
 			group.dispatchCull();
 		}
@@ -425,7 +446,7 @@ top:	{
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 				depthPyramid.bindForCull();
-				dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_FULL, pipelineData);
+				dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_TRANSLUCENT_FULL, pipelineData);
 
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 

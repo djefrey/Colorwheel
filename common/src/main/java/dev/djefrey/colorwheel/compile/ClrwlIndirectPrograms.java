@@ -36,6 +36,7 @@ public class ClrwlIndirectPrograms
 		GBUFFERS_FULL("gbuffers_full", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS),
 		GBUFFERS_EARLY("gbuffers_early", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_early.glsl"), ClrwlProgramGroup.GBUFFERS),
 		GBUFFERS_LATE("gbuffers_late", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_late.glsl"), ClrwlProgramGroup.GBUFFERS),
+		GBUFFERS_TRANSLUCENT_FULL("gbuffers_translucent_full", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS),
 		SHADOW("shadow", Colorwheel.rl("internal/indirect/cull/cull_shadow.glsl"), ClrwlProgramGroup.SHADOW);
 
 		private final String name;
@@ -59,24 +60,20 @@ public class ClrwlIndirectPrograms
 			return this.shader;
 		}
 
-		public String passDefine()
+		public void setDefines(Compilation c)
 		{
 			switch (group)
 			{
-                case GBUFFERS ->
-				{
-					return "_CLRWL_IS_GBUFFERS_PASS";
-                }
+                case GBUFFERS -> c.define("_CLRWL_IS_GBUFFERS_PASS");
+                case SHADOW -> c.define("_CLRWL_IS_SHADOW_PASS");
+				default -> {}
+            }
 
-                case SHADOW ->
-				{
-					return "_CLRWL_IS_SHADOW_PASS";
-                }
-
-				default ->
-				{
-					return "";
-				}
+			switch (this)
+			{
+                case GBUFFERS_FULL, GBUFFERS_EARLY, GBUFFERS_LATE -> c.define("_CLRWL_MATERIAL_MASK", "1");
+                case GBUFFERS_TRANSLUCENT_FULL -> c.define("_CLRWL_MATERIAL_MASK", "2");
+                case SHADOW -> {}
             }
 		}
 
@@ -249,7 +246,7 @@ public class ClrwlIndirectPrograms
 				.enableExtension("GL_KHR_shader_subgroup_basic")
 				.enableExtension("GL_KHR_shader_subgroup_ballot")
 				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-				.onCompile((k, c) -> c.define(k.passDefine()));
+				.onCompile((k, c) -> k.setDefines(c));
 
 		if (FORCE_DISABLE_SUBGROUP_BALLOT)
 		{

@@ -61,6 +61,9 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 	private int modelIndex = -1;
 	private int baseInstance = -1;
 
+	private int packedIds;
+	private int packedClrwlData;
+
 	public ClrwlIndirectInstancer(ClrwlInstancerKey<I> key, Recreate<I> recreate)
 	{
 		super(key, recreate);
@@ -68,6 +71,32 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 				.byteSize());
 		writer = this.type.writer();
 		boundingSphere = key.model().boundingSphere();
+
+		boolean hasSolidMesh = false;
+		boolean hasTranslucentMesh = false;
+
+		for (var mesh : key.model().meshes())
+		{
+			switch (mesh.material().transparency())
+			{
+                case OPAQUE, ADDITIVE, LIGHTNING, GLINT -> hasSolidMesh = true;
+                case TRANSLUCENT, ORDER_INDEPENDENT -> hasTranslucentMesh = true;
+				case CRUMBLING -> {}
+            }
+		}
+
+		packedIds = ((visual.getEntity() & 0x0000FFFF) << 16) | (visual.getBlockEntity() & 0x0000FFFF);
+		packedClrwlData = visual.lightEmission() & 0xF;
+
+		if (hasSolidMesh)
+		{
+			packedClrwlData |= (1 << 4);
+		}
+
+		if (hasTranslucentMesh)
+		{
+			packedClrwlData |= (1 << 5);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -367,9 +396,8 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 		MemoryUtil.memPutFloat(ptr + 20, boundingSphere.z());
 		MemoryUtil.memPutFloat(ptr + 24, boundingSphere.w());
 
-		int ids = ((visual.getEntity() & 0x0000FFFF) << 16) | (visual.getBlockEntity() & 0x0000FFFF);
-		MemoryUtil.memPutInt(ptr + 28, ids);
-		MemoryUtil.memPutInt(ptr + 32, visual.lightEmission());
+		MemoryUtil.memPutInt(ptr + 28, packedIds);
+		MemoryUtil.memPutInt(ptr + 32, packedClrwlData);
 	}
 
 	public void uploadInstances(StagingBuffer stagingBuffer, int instanceVbo)
