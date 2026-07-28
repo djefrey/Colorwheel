@@ -56,7 +56,6 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	private final ProgramSet programSet;
 	private final GlProgram transformSphereProgram;
 
-	private boolean needsDrawBarrier;
 	private boolean needsDrawSort;
 	private int instanceCountThisFrame;
 
@@ -126,8 +125,6 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 
 		uploadDraws(stagingBuffer);
-
-		needsDrawBarrier = true;
 	}
 
 	public void dispatchTransform()
@@ -241,8 +238,6 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 
 		buffers.bindForDraw();
 
-		drawBarrier();
-
 		ClrwlProgram prevProgram = null;
 		GlFramebuffer prevFramebuffer = null;
 
@@ -329,8 +324,6 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 
 		buffers.bindForDraw();
 
-		drawBarrier();
-
 		ClrwlProgram prevProgram = null;
 		GlFramebuffer prevFramebuffer = null;
 
@@ -409,8 +402,6 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 
 		buffers.bindForDraw();
 
-		drawBarrier();
-
 		ClrwlProgram prevProgram = null;
 
 		for (var multiDraw : oitDraws)
@@ -481,23 +472,10 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		program.bind();
 		buffers.bindForCrumbling();
 
-		drawBarrier();
-
 		program.setClrwlCommonUniforms(material, blendModeOverride, ClrwlRenderingPhase.CRUMBLING);
 		program.setBaseDrawUniform(0);
 
 		return true;
-	}
-
-	private void drawBarrier()
-	{
-		if (needsDrawBarrier)
-		{
-			// In theory all command buffer writes will be protected by
-			// the shader storage barrier bit, but better safe than sorry.
-			glMemoryBarrier(GL_COMMAND_BARRIER_BIT);
-			needsDrawBarrier = false;
-		}
 	}
 
 	private void uploadInstances(StagingBuffer stagingBuffer)
