@@ -215,7 +215,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 			dispatchApply(isShadow);
 
-			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
 		}
 	}
 
@@ -331,7 +331,7 @@ top:	{
 
 					dispatchApply(isShadow);
 
-					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
 
 					dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 
@@ -350,7 +350,7 @@ top:	{
 
 						dispatchApply(isShadow);
 
-						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
 
 						dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 					}
@@ -368,7 +368,7 @@ top:	{
 
 					dispatchApply(isShadow);
 
-					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
 
 					dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 				}
@@ -460,7 +460,7 @@ top:	{
 
 				dispatchApply(isShadow);
 
-				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
 			}
 
 			boolean hasOit = false;
