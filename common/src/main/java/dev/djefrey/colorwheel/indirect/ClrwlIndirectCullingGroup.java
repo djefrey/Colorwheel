@@ -54,8 +54,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	private final List<MultiDraw> oitDraws = new ArrayList<>();
 
 	private final ProgramSet programSet;
-	private final GlProgram gbuffersTransformSphereProgram;
-	private final GlProgram shadowTransformSphereProgram;
+	private final GlProgram transformSphereProgram;
 
 	private boolean needsDrawBarrier;
 	private boolean needsDrawSort;
@@ -68,8 +67,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		buffers = new ClrwlIndirectBuffers(instanceStride);
 
 		this.programSet = programSet;
-		gbuffersTransformSphereProgram = programs.getTransformProgram(instanceType, ClrwlProgramGroup.GBUFFERS);
-		shadowTransformSphereProgram = programs.getTransformProgram(instanceType, ClrwlProgramGroup.SHADOW);
+		transformSphereProgram = programs.getTransformProgram(instanceType);
 	}
 
 	public boolean flushInstancers()
@@ -132,18 +130,10 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		needsDrawBarrier = true;
 	}
 
-	public void dispatchTransform(boolean isShadow)
+	public void dispatchTransform()
 	{
-		if (isShadow)
-		{
-			shadowTransformSphereProgram.bind();
-		}
-		else
-		{
-			gbuffersTransformSphereProgram.bind();
-		}
+		transformSphereProgram.bind();
 
-		ClrwlUniforms.bind(isShadow);
 		buffers.bindForTransform();
 		glDispatchCompute(buffers.objectStorage.capacity(), 1, 1);
 	}
@@ -529,7 +519,9 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	private void uploadDraws(StagingBuffer stagingBuffer)
 	{
 		var totalSize = indirectDraws.size() * ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE;
-		stagingBuffer.enqueueCopy(totalSize, buffers.draw.handle(), 0, this::writeCommands);
+		var handle = buffers.draw.handle();
+
+		stagingBuffer.enqueueCopy(totalSize, handle, 0, this::writeCommands);
 	}
 
 	private void writeModels(long writePtr)

@@ -150,6 +150,10 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		meshPool.flush();
 
+		setPhase(ClrwlRenderingPhase.STAGING_BUFFER_FLUSH, false);
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
 		stagingBuffer.reclaim();
 
 		// Genuinely nothing to do, we can just early out.
@@ -162,12 +166,25 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		lightBuffers.flush(stagingBuffer, lightStorage);
 		matrixBuffer.flush(stagingBuffer, environmentStorage);
 
-		// Done in preparePass
+		for (var group : cullingGroups.values())
+		{
+			group.upload(stagingBuffer);
+		}
 
-		// setPhase(ClrwlRenderingPhase.STAGING_BUFFER_FLUSH, false);
-		// stagingBuffer.flush();
+		stagingBuffer.flush();
 
-		// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_TRANSFORM, false);
+
+		// Bounding spheres can be computed here because they are in world space
+
+		ClrwlUniforms.bind(false);
+
+		for (var group : cullingGroups.values())
+		{
+			group.dispatchTransform();
+		}
 	}
 
 	public void preparePass(IrisRenderingPipeline pipeline, boolean isShadow)
@@ -179,30 +196,19 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		var pipelineData = getPipelineData(pipeline);
 
-		stagingBuffer.reclaim();
+		dispatchModelReset(isShadow);
 
 		for (var group : cullingGroups.values())
 		{
-			group.upload(stagingBuffer);
 			pipelineData.getBuffers(group).updateCounts();
-		}
-
-		setPhase(ClrwlRenderingPhase.STAGING_BUFFER_FLUSH, false);
-		stagingBuffer.flush();
-
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_TRANSFORM, isShadow);
-
-		for (var group : cullingGroups.values())
-		{
-			group.dispatchTransform(isShadow);
 		}
 
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		if (isShadow)
 		{
+			ClrwlUniforms.bind(isShadow);
+
 			dispatchCull(ClrwlIndirectPrograms.Culling.SHADOW, pipelineData);
 
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
