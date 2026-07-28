@@ -83,35 +83,6 @@ public class ClrwlIndirectPrograms
 		}
 	}
 
-	public record TransformKey(InstanceType<?> instanceType, ClrwlProgramGroup group)
-	{
-		public ResourceLocation cullShader()
-		{
-			return instanceType.cullShader();
-		}
-
-		public String passDefine()
-		{
-			switch (group)
-			{
-				case GBUFFERS ->
-				{
-					return "_CLRWL_IS_GBUFFERS_PASS";
-				}
-
-				case SHADOW ->
-				{
-					return "_CLRWL_IS_SHADOW_PASS";
-				}
-
-				default ->
-				{
-					return "";
-				}
-			}
-		}
-	}
-
 	private static final ResourceLocation CULL_SHADER_API_IMPL = Colorwheel.rl("internal/indirect/cull/cull_api_impl.glsl");
 	private static final ResourceLocation TRANSFORM_SHADER_MAIN = Colorwheel.rl("internal/indirect/transform.glsl");
 	private static final ResourceLocation APPLY_SHADER_MAIN = Colorwheel.rl("internal/indirect/apply.glsl");
@@ -120,12 +91,12 @@ public class ClrwlIndirectPrograms
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 	private static final List<String> COMPUTE_EXTENSIONS = getComputeExtensions(GlCompat.MAX_GLSL_VERSION);
 
-	private static final Compile<TransformKey> TRANSFORM = new Compile<>();
+	private static final Compile<InstanceType<?>> TRANSFORM = new Compile<>();
 	private static final Compile<Culling> CULL = new Compile<>();
 	private static final Compile<ResourceLocation> UTIL = new Compile<>();
 
 	private final ClrwlPipelineCompiler compiler;
-	private final CompilationHarness<TransformKey> transform;
+	private final CompilationHarness<InstanceType<?>> transform;
 	private final CompilationHarness<Culling> culling;
 	private final CompilationHarness<ResourceLocation> utils;
 	private final ClrwlOitPrograms oitPrograms;
@@ -133,7 +104,7 @@ public class ClrwlIndirectPrograms
 	// WARNING: this can ONLY be used for utils ! (otherwise, kaboom)
 	private final IndirectPrograms flwPrograms;
 
-	private ClrwlIndirectPrograms(ClrwlPipelineCompiler compiler, CompilationHarness<TransformKey> transform, CompilationHarness<Culling> culling, CompilationHarness<ResourceLocation> utils, ClrwlOitPrograms oitPrograms)
+	private ClrwlIndirectPrograms(ClrwlPipelineCompiler compiler, CompilationHarness<InstanceType<?>> transform, CompilationHarness<Culling> culling, CompilationHarness<ResourceLocation> utils, ClrwlOitPrograms oitPrograms)
 	{
 		this.compiler = compiler;
 		this.transform = transform;
@@ -213,20 +184,20 @@ public class ClrwlIndirectPrograms
         return new ClrwlIndirectPrograms(compiler, transform, culling, util, oitPrograms);
 	}
 
-	private static CompilationHarness<TransformKey> createTransformCompiler(ShaderSources sources)
+	private static CompilationHarness<InstanceType<?>> createTransformCompiler(ShaderSources sources)
 	{
 		var shader = TRANSFORM.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
 				.nameMapper(instanceType -> "colorwheel/transform_bounding_spheres/" + ResourceUtil.toDebugFileNameNoExtension(instanceType.cullShader()))
 				.requireExtensions(COMPUTE_EXTENSIONS)
 				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-				.onCompile((k, c) -> c.define(k.passDefine()));
+				.define("_CLRWL_IS_GBUFFERS_PASS", 1);
 
 		shader = shader
 				.onCompile(($, c) -> setModCompatDefines(c))
 				.withResource(CULL_SHADER_API_IMPL)
-				.withComponent(k -> new InstanceStructComponent(k.instanceType()))
-				.withResource(TransformKey::cullShader)
-				.withComponent(k -> new SsboInstanceComponent(k.instanceType()))
+				.withComponent(InstanceStructComponent::new)
+				.withResource(InstanceType::cullShader)
+				.withComponent(SsboInstanceComponent::new)
 				.withResource(TRANSFORM_SHADER_MAIN);
 
 		return TRANSFORM.program()
@@ -301,9 +272,9 @@ public class ClrwlIndirectPrograms
 		return new PipelineProgramCache();
 	}
 
-	public GlProgram getTransformProgram(InstanceType<?> instanceType, ClrwlProgramGroup group)
+	public GlProgram getTransformProgram(InstanceType<?> instanceType)
 	{
-		return this.transform.get(new TransformKey(instanceType, group));
+		return this.transform.get(instanceType);
 	}
 
 	public GlProgram getCullingProgram(Culling culling)

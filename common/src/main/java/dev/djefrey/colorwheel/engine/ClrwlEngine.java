@@ -152,9 +152,10 @@ public class ClrwlEngine implements ExtendedEngine
 			shouldPrepareFrame = false;
 
 			environmentStorage.flush();
-			drawManager.prepareFrame(lightStorage, environmentStorage);
 			shadowCulling.refresh();
 			ClrwlUniforms.updateFrame(context);
+
+			drawManager.prepareFrame(lightStorage, environmentStorage);
 		}
 	}
 
