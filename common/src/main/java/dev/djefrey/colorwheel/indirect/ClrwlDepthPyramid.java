@@ -34,12 +34,12 @@ public class ClrwlDepthPyramid
 	{
 		var depthInfo = ((IrisRenderingPipelineAccessor) irisPipeline).getProgramGroupDepthInfo(programGroup);
 		int depthBufferId = depthInfo.textureId();
-		int width = depthInfo.width();
-		int height = depthInfo.height();
+		int width = mip0Size(depthInfo.width());
+		int height = mip0Size(depthInfo.height());
 
 		int mipLevels = getImageMipLevels(width, height);
 
-		createPyramidMips(mipLevels, depthInfo.width(), depthInfo.height());
+		createPyramidMips(mipLevels, width, height);
 
 		GL46.glMemoryBarrier(GL46.GL_FRAMEBUFFER_BARRIER_BIT);
 

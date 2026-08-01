@@ -26,8 +26,6 @@ layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer 
     FlwModelDescriptor _flw_models[];
 };
 
-layout(binding = 0) uniform sampler2D _flw_depthPyramid;
-
 // Disgustingly vectorized sphere frustum intersection taking advantage of ahead of time packing.
 // Only uses 6 fmas and some boolean ops.
 // See also:
