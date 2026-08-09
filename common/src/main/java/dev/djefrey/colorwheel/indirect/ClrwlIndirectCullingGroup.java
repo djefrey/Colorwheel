@@ -542,6 +542,11 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		return buffers.makePipelineBuffers();
 	}
 
+	public ClrwlIndirectBuffers.DrawSnapshot makeDrawSnapshot()
+	{
+		return buffers.makeDrawSnapshot();
+	}
+
 	public void delete()
 	{
 		buffers.delete();

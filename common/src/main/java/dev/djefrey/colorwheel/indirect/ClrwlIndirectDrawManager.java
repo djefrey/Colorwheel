@@ -32,9 +32,7 @@ import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
@@ -86,6 +84,8 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	private final ClrwlMatrixBuffer matrixBuffer;
 
 	private final Map<IrisRenderingPipeline, PipelineData> pipelineData = new HashMap<>();
+	private final List<ClrwlIndirectBuffers.DrawSnapshot> shadowSolidDraws = new ArrayList<>();
+	private final List<ClrwlIndirectBuffers.DrawSnapshot> shadowTranslucentDraws = new ArrayList<>();
 
 	private final ShaderPack pack;
 	private final ProgramSet programSet;
@@ -138,6 +138,26 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	public void prepareFrame(LightStorage lightStorage, EnvironmentStorage environmentStorage)
 	{
 		super.prepareFrame(lightStorage, environmentStorage);
+
+		if (!shadowSolidDraws.isEmpty())
+		{
+			for (var snapshot : shadowSolidDraws)
+			{
+				snapshot.destroy();
+			}
+
+			shadowSolidDraws.clear();
+		}
+
+		if (!shadowTranslucentDraws.isEmpty())
+		{
+			for (var snapshot : shadowTranslucentDraws)
+			{
+				snapshot.destroy();
+			}
+
+			shadowTranslucentDraws.clear();
+		}
 
 		// Flush instance counts, page mappings, and prune empty groups.
 		cullingGroups.values()
@@ -268,6 +288,30 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		depthPyramid.generate();
 	}
 
+	private void saveShadowDraws(List<ClrwlIndirectBuffers.DrawSnapshot> snapshots)
+	{
+		snapshots.clear();
+
+		for (var group : cullingGroups.values())
+		{
+			snapshots.add(group.makeDrawSnapshot());
+		}
+	}
+
+	private void loadShadowDraws(List<ClrwlIndirectBuffers.DrawSnapshot> snapshots)
+	{
+		stagingBuffer.reclaim();
+
+		for (var snapshot : snapshots)
+		{
+			snapshot.applyAndConsume(stagingBuffer);
+		}
+
+		stagingBuffer.flush();
+
+		snapshots.clear();
+	}
+
 	private void computeEarlyCull(boolean isShadow, PipelineData pipelineData)
 	{
 		ClrwlIndirectPrograms.Culling cullProgram = isShadow
@@ -388,24 +432,29 @@ top:	{
 
 		try
 		{
-			if (useTwoPassCulling(isShadow))
+			if (SHADOW_CULL_DEBUG && !isShadow)
+			{
+				loadShadowDraws(shadowSolidDraws);
+			}
+			else if (useTwoPassCulling(isShadow))
 			{
 				computeEarlyCull(isShadow, pipelineData);
-				dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
-
-				if (LATE_CULL_ENABLED)
-				{
-					computeLateCull(isShadow, pipelineData);
-					dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
-				}
 			}
 			else if (useOcclusionCulling(isShadow))
 			{
 				computeFullCull(isShadow, ClrwlIndirectPrograms.Culling.MaterialFilter.SOLID, true, pipelineData);
-				dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 			}
-			else
+
+			dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
+
+			if (SHADOW_CULL_DEBUG && isShadow)
 			{
+				saveShadowDraws(shadowSolidDraws);
+			}
+
+			if (useTwoPassCulling(isShadow) && LATE_CULL_ENABLED && !(SHADOW_CULL_DEBUG && !isShadow))
+			{
+				computeLateCull(isShadow, pipelineData);
 				dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 			}
 		}
@@ -474,9 +523,18 @@ top:	{
 
 		try
 		{
-			if (useOcclusionCulling(isShadow))
+			if (SHADOW_CULL_DEBUG && !isShadow)
+			{
+				loadShadowDraws(shadowTranslucentDraws);
+			}
+			else if (useOcclusionCulling(isShadow))
 			{
 				computeFullCull(isShadow, ClrwlIndirectPrograms.Culling.MaterialFilter.TRANSLUCENT, true, pipelineData);
+			}
+
+			if (SHADOW_CULL_DEBUG && isShadow)
+			{
+				saveShadowDraws(shadowTranslucentDraws);
 			}
 
 			setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
@@ -776,6 +834,7 @@ top: 		if (hasOit)
 
 	private static boolean TWO_PASS_CULL_ENABLED = true;
 	private static boolean LATE_CULL_ENABLED = true;
+	private static boolean SHADOW_CULL_DEBUG = false;
 
 	public static void toggleTwoPassCull(boolean enabled)
 	{
@@ -785,5 +844,10 @@ top: 		if (hasOit)
 	public static void toggleLateCull(boolean enabled)
 	{
 		LATE_CULL_ENABLED = enabled;
+	}
+
+	public static void toggleShadowCullDebug(boolean enabled)
+	{
+		SHADOW_CULL_DEBUG = enabled;
 	}
 }

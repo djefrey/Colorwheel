@@ -6,7 +6,9 @@ import static org.lwjgl.opengl.GL44.nglBindBuffersRange;
 
 import dev.engine_room.flywheel.backend.engine.indirect.ObjectStorage;
 import dev.engine_room.flywheel.backend.engine.indirect.ResizableStorageArray;
+import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.GL46;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Pointer;
 
@@ -175,6 +177,11 @@ public class ClrwlIndirectBuffers
         return new PipelineBuffers();
     }
 
+    public DrawSnapshot makeDrawSnapshot()
+    {
+        return new DrawSnapshot();
+    }
+
     public class PipelineBuffers
     {
         public final ResizableStorageArray lastFrameVisibility;
@@ -197,6 +204,87 @@ public class ClrwlIndirectBuffers
         public void delete()
         {
             lastFrameVisibility.delete();
+        }
+    }
+
+    public class DrawSnapshot
+    {
+        private long drawInstanceIndexCpy;
+        private final long drawInstanceIndexSize;
+
+        private long modelCpy;
+        private final long modelSize;
+
+        private long drawCpy;
+        private final long drawSize;
+
+        private DrawSnapshot()
+        {
+            this.drawInstanceIndexSize = drawInstanceIndex.byteCapacity();
+            this.modelSize = model.byteCapacity();
+            this.drawSize = draw.byteCapacity();
+
+            this.drawInstanceIndexCpy = saveBuffer(drawInstanceIndex, this.drawInstanceIndexSize);
+            this.modelCpy = saveBuffer(model, this.modelSize);
+            this.drawCpy = saveBuffer(draw, this.drawSize);
+        }
+
+        private static long saveBuffer(ResizableStorageArray buffer, long size)
+        {
+            if (size == 0)
+            {
+                return 0;
+            }
+
+            long ptr = MemoryUtil.nmemAlloc(size);
+            GL46.nglGetNamedBufferSubData(buffer.handle(), 0, size, ptr);
+
+            return ptr;
+        }
+
+        public void applyAndConsume(StagingBuffer buffer)
+        {
+            if (drawInstanceIndexCpy > 0)
+            {
+                buffer.enqueueCopy(drawInstanceIndexCpy, drawInstanceIndexSize, drawInstanceIndex.handle(), 0);
+                MemoryUtil.nmemFree(drawInstanceIndexCpy);
+                drawInstanceIndexCpy = 0;
+            }
+
+            if (modelCpy > 0)
+            {
+                buffer.enqueueCopy(modelCpy, modelSize, model.handle(), 0);
+                MemoryUtil.nmemFree(modelCpy);
+                modelCpy = 0;
+            }
+
+            if (drawCpy > 0)
+            {
+                buffer.enqueueCopy(drawCpy, drawSize, draw.handle(), 0);
+                MemoryUtil.nmemFree(drawCpy);
+                drawCpy = 0;
+            }
+        }
+
+        public void destroy()
+        {
+            if (drawInstanceIndexCpy > 0)
+            {
+                MemoryUtil.nmemFree(drawInstanceIndexCpy);
+                drawInstanceIndexCpy = 0;
+            }
+
+            if (modelCpy > 0)
+            {
+                MemoryUtil.nmemFree(modelCpy);
+                modelCpy = 0;
+            }
+
+            if (drawCpy > 0)
+            {
+                MemoryUtil.nmemFree(drawCpy);
+                drawCpy = 0;
+            }
         }
     }
 }

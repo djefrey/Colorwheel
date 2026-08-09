@@ -37,32 +37,20 @@ public class ClrwlCommandsForge
                     })));
 
         debug.then(Commands.literal("frustum")
-                    .then(Commands.literal("gbuffers")
-                        .then(Commands.literal("capture")
-                            .executes(ctx ->
-                            {
-                                ClrwlGbuffersPassUniforms.captureFrustum();
-                                return Command.SINGLE_SUCCESS;
-                            }))
-                        .then(Commands.literal("unpause")
-                            .executes(ctx ->
-                            {
-                                ClrwlGbuffersPassUniforms.unpauseFrustum();
-                                return Command.SINGLE_SUCCESS;
-                            })))
-                    .then(Commands.literal("shadow")
-                        .then(Commands.literal("capture")
-                                .executes(ctx ->
-                                {
-                                    ClrwlShadowPassUniforms.captureFrustum();
-                                    return Command.SINGLE_SUCCESS;
-                                }))
-                        .then(Commands.literal("unpause")
-                                .executes(ctx ->
-                                {
-                                    ClrwlShadowPassUniforms.unpauseFrustum();
-                                    return Command.SINGLE_SUCCESS;
-                                }))));
+                .then(Commands.literal("capture")
+                    .executes(ctx ->
+                    {
+                        ClrwlGbuffersPassUniforms.captureFrustum();
+                        ClrwlShadowPassUniforms.captureFrustum();
+                        return Command.SINGLE_SUCCESS;
+                    }))
+                .then(Commands.literal("unpause")
+                    .executes(ctx ->
+                    {
+                        ClrwlGbuffersPassUniforms.unpauseFrustum();
+                        ClrwlShadowPassUniforms.unpauseFrustum();
+                        return Command.SINGLE_SUCCESS;
+                    })));
 
         debug.then(Commands.literal("cull")
                 .then(Commands.literal("two_pass")
@@ -89,6 +77,19 @@ public class ClrwlCommandsForge
                                 .executes(ctx ->
                                 {
                                     ClrwlIndirectDrawManager.toggleLateCull(false);
+                                    return Command.SINGLE_SUCCESS;
+                                })))
+                .then(Commands.literal("shadow_debug")
+                        .then(Commands.literal("on")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleShadowCullDebug(true);
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(Commands.literal("off")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleShadowCullDebug(false);
                                     return Command.SINGLE_SUCCESS;
                                 })))
                 .then(Commands.literal("subgroup_ballot")
