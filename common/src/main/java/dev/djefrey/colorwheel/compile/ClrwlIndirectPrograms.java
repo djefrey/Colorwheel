@@ -36,7 +36,6 @@ public class ClrwlIndirectPrograms
 		GBUFFERS_FULL("gbuffers_full", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS),
 		GBUFFERS_EARLY("gbuffers_early", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_early.glsl"), ClrwlProgramGroup.GBUFFERS),
 		GBUFFERS_LATE("gbuffers_late", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_late.glsl"), ClrwlProgramGroup.GBUFFERS),
-		GBUFFERS_TRANSLUCENT_FULL("gbuffers_translucent_full", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS),
 		SHADOW("shadow", Colorwheel.rl("internal/indirect/cull/cull_shadow.glsl"), ClrwlProgramGroup.SHADOW);
 
 		private final String name;
@@ -68,18 +67,19 @@ public class ClrwlIndirectPrograms
                 case SHADOW -> c.define("_CLRWL_IS_SHADOW_PASS");
 				default -> {}
             }
-
-			switch (this)
-			{
-                case GBUFFERS_FULL, GBUFFERS_EARLY, GBUFFERS_LATE -> c.define("_CLRWL_MATERIAL_MASK", "1");
-                case GBUFFERS_TRANSLUCENT_FULL -> c.define("_CLRWL_MATERIAL_MASK", "2");
-                case SHADOW -> {}
-            }
 		}
 
 		public boolean isShadow()
 		{
 			return group == ClrwlProgramGroup.SHADOW;
+		}
+
+		public static class MaterialFilter
+		{
+			public static final int SOLID = 0b01;
+			public static final int TRANSLUCENT = 0b10;
+
+			public static final int ALL = SOLID | TRANSLUCENT;
 		}
 	}
 

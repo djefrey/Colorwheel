@@ -168,6 +168,23 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		return !oitDraws.isEmpty();
 	}
 
+	public int materialFilter()
+	{
+		int res = 0;
+
+		if (!solidDraws.isEmpty())
+		{
+			res |= ClrwlIndirectPrograms.Culling.MaterialFilter.SOLID;
+		}
+
+		if (!translucentDraws.isEmpty() || !oitDraws.isEmpty())
+		{
+			res |= ClrwlIndirectPrograms.Culling.MaterialFilter.TRANSLUCENT;
+		}
+
+		return res;
+	}
+
 	private void sortDraws()
 	{
 		solidDraws.clear();

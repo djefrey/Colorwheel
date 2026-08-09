@@ -46,14 +46,12 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
     float radius;
     _flw_unpackBoundingSphere(_flw_boundingSpheres[instanceIndex], center, radius);
 
-    bool isVisible = true;
-
-#ifdef _CLRWL_FRUSTUM_CULLING
-    isVisible = _flw_testSphere(center, radius);
-#endif
+    bool isVisible = _flw_testSphere(center, radius);
 
     return isVisible;
 }
+
+uniform uint clrwl_materialFilter;
 
 void main()
 {
@@ -67,7 +65,7 @@ void main()
     uint modelIndex = _flw_pageFrameDescriptors[pageIndex];
     uint materialBitset = _clrwl_unpackMaterialBitset(_flw_models[modelIndex]);
 
-    if ((materialBitset & uint(_CLRWL_MATERIAL_MASK)) == 0)
+    if ((materialBitset & clrwl_materialFilter) == 0)
     {
         return;
     }

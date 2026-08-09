@@ -7,22 +7,18 @@ import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderStorageBufferHolderAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlIndirectPrograms;
 import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
-import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
-import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.util.GlCompat;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceType;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.Samplers;
 import dev.engine_room.flywheel.backend.engine.*;
 import dev.engine_room.flywheel.backend.engine.indirect.*;
-import dev.engine_room.flywheel.backend.engine.uniform.Uniforms;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.backend.gl.buffer.GlBuffer;
 import dev.engine_room.flywheel.backend.gl.buffer.GlBufferType;
@@ -30,16 +26,11 @@ import dev.engine_room.flywheel.backend.gl.buffer.GlBufferUsage;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import dev.engine_room.flywheel.lib.memory.MemoryBlock;
-import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
-import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +54,11 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		public ClrwlIndirectBuffers.PipelineBuffers getBuffers(ClrwlIndirectCullingGroup<?> group)
 		{
 			return buffers.computeIfAbsent(group, ClrwlIndirectCullingGroup::makePipelineBuffers);
+		}
+
+		public ClrwlDepthPyramid depthPyramid(boolean isShadow)
+		{
+			return depthPyramid;
 		}
 
 		public void delete()
@@ -93,6 +89,9 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 	private final ShaderPack pack;
 	private final ProgramSet programSet;
+
+	private boolean areModelInstanceCountsDirty = false;
+	private boolean hasInflightApply = false;
 
 	public ClrwlIndirectDrawManager(ShaderPack pack, ProgramSet programSet, ClrwlIndirectPrograms programs)
 	{
@@ -173,6 +172,8 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		stagingBuffer.flush();
 
+		areModelInstanceCountsDirty = false;
+
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_TRANSFORM, false);
@@ -196,62 +197,41 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		var pipelineData = getPipelineData(pipeline);
 
-		dispatchModelReset(isShadow);
-
 		for (var group : cullingGroups.values())
 		{
 			pipelineData.getBuffers(group).updateCounts();
 		}
 
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		resetModelCountIfDirty(true);
 
-		if (isShadow)
+		if (!useOcclusionCulling(isShadow))
 		{
 			ClrwlUniforms.bind(isShadow);
-
-			dispatchCull(ClrwlIndirectPrograms.Culling.SHADOW, pipelineData);
-
-			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-			dispatchApply(isShadow);
-
-			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
+			computeFullCull(isShadow, ClrwlIndirectPrograms.Culling.MaterialFilter.ALL, false, pipelineData);
 		}
 	}
 
-	private void dispatchCull(ClrwlIndirectPrograms.Culling culling, PipelineData pipelineData)
+	private void dispatchCull(ClrwlIndirectPrograms.Culling culling, int materialFilter, PipelineData pipelineData)
 	{
 		setPhase(ClrwlRenderingPhase.INDIRECT_CULL, culling.isShadow());
 
-		programs.getCullingProgram(culling)
-				.bind();
+		var program = programs.getCullingProgram(culling);
+
+		program.bind();
+		program.setUInt("clrwl_materialFilter", materialFilter);
 
 		for (var group : cullingGroups.values())
 		{
-			switch (culling)
+			if ((group.materialFilter() & materialFilter) == 0)
 			{
-                case GBUFFERS_FULL, GBUFFERS_EARLY, GBUFFERS_LATE ->
-				{
-					if (!group.hasSolidDraws())
-					{
-						continue;
-					}
-                }
-
-                case GBUFFERS_TRANSLUCENT_FULL ->
-				{
-					if (!(group.hasTranslucentDraws() || group.hasOitDraws()))
-					{
-						continue;
-					}
-                }
-
-                case SHADOW -> {}
-            }
+				continue;
+			}
 
 			pipelineData.getBuffers(group).bindForCull();
 			group.dispatchCull();
 		}
+
+		areModelInstanceCountsDirty = true;
 	}
 
 	private void dispatchApply(boolean isShadow)
@@ -265,11 +245,13 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		{
 			group.dispatchApply();
 		}
+
+		hasInflightApply = true;
 	}
 
-	private void dispatchModelReset(boolean isShadow)
+	private void dispatchModelReset()
 	{
-		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_RESET, isShadow);
+		setPhase(ClrwlRenderingPhase.INDIRECT_CULL_RESET, false);
 
 		programs.getZeroModelsProgram()
 				.bind();
@@ -284,6 +266,95 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	{
 		setPhase(ClrwlRenderingPhase.INDIRECT_DEPTH_PYRAMID, false);
 		depthPyramid.generate();
+	}
+
+	private void computeEarlyCull(boolean isShadow, PipelineData pipelineData)
+	{
+		ClrwlIndirectPrograms.Culling cullProgram = isShadow
+				? ClrwlIndirectPrograms.Culling.SHADOW
+				: ClrwlIndirectPrograms.Culling.GBUFFERS_EARLY;
+
+		resetModelCountIfDirty(true);
+
+		dispatchCull(cullProgram, ClrwlIndirectPrograms.Culling.MaterialFilter.SOLID, pipelineData);
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		dispatchApply(isShadow);
+	}
+
+	private void computeLateCull(boolean isShadow, PipelineData pipelineData)
+	{
+		ClrwlIndirectPrograms.Culling cullProgram = isShadow
+				? ClrwlIndirectPrograms.Culling.SHADOW
+				: ClrwlIndirectPrograms.Culling.GBUFFERS_LATE;
+
+		var depthPyramid = pipelineData.depthPyramid(isShadow);
+
+		resetModelCountIfDirty(false);
+		generateDepthPyramid(depthPyramid);
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		depthPyramid.bindForCull();
+		dispatchCull(cullProgram, ClrwlIndirectPrograms.Culling.MaterialFilter.SOLID, pipelineData);
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		dispatchApply(isShadow);
+	}
+
+	private void computeFullCull(boolean isShadow, int matFilter, boolean useOcclusion, PipelineData pipelineData)
+	{
+		ClrwlIndirectPrograms.Culling cullProgram = isShadow
+					? ClrwlIndirectPrograms.Culling.SHADOW
+					: ClrwlIndirectPrograms.Culling.GBUFFERS_FULL;
+
+		var depthPyramid = pipelineData.depthPyramid(isShadow);
+
+		resetModelCountIfDirty(false);
+
+		if (useOcclusion)
+		{
+			generateDepthPyramid(depthPyramid);
+		}
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		if (useOcclusion)
+		{
+			depthPyramid.bindForCull();
+		}
+
+		dispatchCull(cullProgram, matFilter, pipelineData);
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		dispatchApply(isShadow);
+	}
+
+	private void resetModelCountIfDirty(boolean needsBarrier)
+	{
+		if (areModelInstanceCountsDirty)
+		{
+			dispatchModelReset();
+
+			if (needsBarrier)
+			{
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+			}
+
+			areModelInstanceCountsDirty = false;
+		}
+	}
+
+	private void drawBarrierIfNeeded()
+	{
+		if (hasInflightApply)
+		{
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
+			hasInflightApply = false;
+		}
 	}
 
 	public void renderSolid(IrisRenderingPipeline irisPipeline, boolean isShadow)
@@ -317,61 +388,21 @@ top:	{
 
 		try
 		{
-			if (!isShadow)
+			if (useTwoPassCulling(isShadow))
 			{
-				var depthPyramid = pipelineData.depthPyramid();
-				var directives = programSet.getPackDirectives();
-				var shouldUseTwoPass = TWO_PASS_CULL_ENABLED && directives.shouldUseOcclusionCulling() && directives.shouldUseFrustumCulling();
+				computeEarlyCull(isShadow, pipelineData);
+				dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 
-				if (shouldUseTwoPass)
+				if (LATE_CULL_ENABLED)
 				{
-					dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_EARLY, pipelineData);
-
-					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-					dispatchApply(isShadow);
-
-					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
-
-					dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
-
-					if (LATE_CULL_ENABLED)
-					{
-						generateDepthPyramid(depthPyramid);
-
-						dispatchModelReset(isShadow);
-
-						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-						depthPyramid.bindForCull();
-						dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_LATE, pipelineData);
-
-						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-						dispatchApply(isShadow);
-
-						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
-
-						dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
-					}
-				}
-				else
-				{
-					generateDepthPyramid(depthPyramid);
-
-					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-					depthPyramid.bindForCull();
-					dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_FULL, pipelineData);
-
-					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-					dispatchApply(isShadow);
-
-					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
-
+					computeLateCull(isShadow, pipelineData);
 					dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 				}
+			}
+			else if (useOcclusionCulling(isShadow))
+			{
+				computeFullCull(isShadow, ClrwlIndirectPrograms.Culling.MaterialFilter.SOLID, true, pipelineData);
+				dispatchSolidDraws(irisPipeline, isShadow, pipelineData);
 			}
 			else
 			{
@@ -398,6 +429,8 @@ top:	{
 		var framebuffers = pipelineData.framebuffers();
 
 		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
+
+		drawBarrierIfNeeded();
 
 		for (var group : cullingGroups.values())
 		{
@@ -426,8 +459,6 @@ top:	{
 				? ClrwlProgramId.GBUFFERS_TRANSLUCENT
 				: ClrwlProgramId.SHADOW_TRANSLUCENT;
 
-		setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
-
 		TextureBinder.bindLightAndOverlay();
 		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
@@ -443,25 +474,14 @@ top:	{
 
 		try
 		{
-			if (!isShadow)
+			if (useOcclusionCulling(isShadow))
 			{
-				var depthPyramid = pipelineData.depthPyramid();
-
-				generateDepthPyramid(depthPyramid);
-
-				dispatchModelReset(isShadow);
-
-				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-				depthPyramid.bindForCull();
-				dispatchCull(ClrwlIndirectPrograms.Culling.GBUFFERS_TRANSLUCENT_FULL, pipelineData);
-
-				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-				dispatchApply(isShadow);
-
-				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
+				computeFullCull(isShadow, ClrwlIndirectPrograms.Culling.MaterialFilter.TRANSLUCENT, true, pipelineData);
 			}
+
+			setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
+
+			drawBarrierIfNeeded();
 
 			boolean hasOit = false;
 			for (var group : cullingGroups.values())
@@ -659,6 +679,33 @@ top: 		if (hasOit)
 		TextureBinder.resetLightAndOverlay();
 
 		block.free();
+	}
+
+	private boolean useOcclusionCulling(boolean isShadow)
+	{
+		if (!isShadow)
+		{
+			var directives = programSet.getPackDirectives();
+			return directives.shouldUseOcclusionCulling();
+		}
+
+		return false;
+	}
+
+	private boolean useTwoPassCulling(boolean isShadow)
+	{
+		if (!TWO_PASS_CULL_ENABLED)
+		{
+			return false;
+		}
+
+		if (!isShadow)
+		{
+			var directives = programSet.getPackDirectives();
+			return directives.shouldUseOcclusionCulling() && directives.shouldUseFrustumCulling();
+		}
+
+		return false;
 	}
 
 	private PipelineData getPipelineData(IrisRenderingPipeline pipeline)

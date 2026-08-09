@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.indirect;
 
+import dev.djefrey.colorwheel.compile.ClrwlIndirectPrograms;
 import dev.djefrey.colorwheel.engine.ClrwlAbstractInstancer;
 import dev.djefrey.colorwheel.engine.ClrwlInstanceHandle;
 import dev.djefrey.colorwheel.engine.ClrwlInstancerKey;
@@ -90,12 +91,12 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 
 		if (hasSolidMesh)
 		{
-			packedClrwlData |= (1 << 4);
+			packedClrwlData |= ClrwlIndirectPrograms.Culling.MaterialFilter.SOLID << 4;
 		}
 
 		if (hasTranslucentMesh)
 		{
-			packedClrwlData |= (1 << 5);
+			packedClrwlData |= ClrwlIndirectPrograms.Culling.MaterialFilter.TRANSLUCENT << 4;
 		}
 	}
 

@@ -73,13 +73,8 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
     float radius;
     _flw_unpackBoundingSphere(_flw_boundingSpheres[instanceIndex], center, radius);
 
-    bool isVisible = true;
+    bool isVisible = _flw_testSphere(center, radius);
 
-#ifdef _CLRWL_FRUSTUM_CULLING
-    isVisible = _flw_testSphere(center, radius);
-#endif
-
-#ifdef _CLRWL_OCCLUSION_CULLING
     if (isVisible)
     {
         transformBoundingSphere(flw_view, center, radius);
@@ -114,7 +109,6 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
             isVisible = isVisible && depthSphere <= depth;
         }
     }
-#endif
 
     return isVisible;
 }
@@ -122,6 +116,8 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
 #if !_CLRWL_FORCE_DISABLE_SUBGROUP_BALLOT && (defined GL_KHR_shader_subgroup_basic && defined GL_KHR_shader_subgroup_ballot)
     #define _CLRWL_USE_SUBGROUP_BALLOT
 #endif
+
+uniform uint clrwl_materialFilter;
 
 void main()
 {
@@ -142,7 +138,7 @@ void main()
     uint modelIndex = _flw_pageFrameDescriptors[pageIndex];
     uint materialBitset = _clrwl_unpackMaterialBitset(_flw_models[modelIndex]);
 
-    if ((materialBitset & uint(_CLRWL_MATERIAL_MASK)) == 0)
+    if ((materialBitset & clrwl_materialFilter) == 0)
     {
         return;
     }
