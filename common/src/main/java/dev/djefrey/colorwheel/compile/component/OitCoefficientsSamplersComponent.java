@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.compile.oit;
+package dev.djefrey.colorwheel.compile.component;
 
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;

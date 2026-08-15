@@ -1,6 +1,6 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.ShaderType;
+import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
@@ -25,10 +25,10 @@ public class ProgramSourceMixin implements ProgramSourceAccessor
 	BlendModeOverride colorwheel$blendMode;
 
 	@Unique
-	Map<ShaderType, Integer> colorwheel$shaderVersions;
+	EnumMap<ClrwlShaderType, Integer> colorwheel$shaderVersions;
 
 	@Unique
-	Map<ShaderType, List<String>> colorwheel$shaderExtensions;
+	EnumMap<ClrwlShaderType, List<String>> colorwheel$shaderExtensions;
 
 	@Override
 	public ShaderProperties colorwheel$getShaderProperties() {
@@ -41,28 +41,28 @@ public class ProgramSourceMixin implements ProgramSourceAccessor
 	}
 
 	@Override
-	public Optional<Integer> colorwheel$getShaderVersion(ShaderType type)
+	public Optional<Integer> colorwheel$getShaderVersion(ClrwlShaderType type)
 	{
 		return Optional.ofNullable(this.colorwheel$shaderVersions.get(type));
 	}
 
 	@Override
-	public Map<ShaderType, List<String>> colorwheel$getShaderExtensions() { return colorwheel$shaderExtensions; }
+	public EnumMap<ClrwlShaderType, List<String>> colorwheel$getShaderExtensions() { return colorwheel$shaderExtensions; }
 
 	@Inject(method = "<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lnet/irisshaders/iris/shaderpack/programs/ProgramSet;Lnet/irisshaders/iris/shaderpack/properties/ShaderProperties;Lnet/irisshaders/iris/gl/blending/BlendModeOverride;)V",
 			at = @At("TAIL"))
 	private void injectInit(String name, String vertex, String geometry, String tess, String tessEval, String fragment, ProgramSet programs, ShaderProperties properties, BlendModeOverride blendModeOverride, CallbackInfo ci)
 	{
-		this.colorwheel$shaderVersions = new HashMap<>();
-		colorwheel$parseShaderVersion(vertex).ifPresent(v -> this.colorwheel$shaderVersions.put(ShaderType.VERTEX, v));
-		colorwheel$parseShaderVersion(geometry).ifPresent(v -> this.colorwheel$shaderVersions.put(ShaderType.GEOMETRY, v));
-		colorwheel$parseShaderVersion(fragment).ifPresent(v -> this.colorwheel$shaderVersions.put(ShaderType.FRAGMENT, v));
+		this.colorwheel$shaderVersions = new EnumMap<>(ClrwlShaderType.class);
+		colorwheel$parseShaderVersion(vertex).ifPresent(v -> this.colorwheel$shaderVersions.put(ClrwlShaderType.VERTEX, v));
+		colorwheel$parseShaderVersion(geometry).ifPresent(v -> this.colorwheel$shaderVersions.put(ClrwlShaderType.GEOMETRY, v));
+		colorwheel$parseShaderVersion(fragment).ifPresent(v -> this.colorwheel$shaderVersions.put(ClrwlShaderType.FRAGMENT, v));
 
-		this.colorwheel$shaderExtensions = Map.of(
-				ShaderType.VERTEX,   colorwheel$parseShaderExtensions(vertex),
-				ShaderType.GEOMETRY, colorwheel$parseShaderExtensions(geometry),
-				ShaderType.FRAGMENT, colorwheel$parseShaderExtensions(fragment)
-		);
+		this.colorwheel$shaderExtensions = new EnumMap<>(ClrwlShaderType.class);
+		this.colorwheel$shaderExtensions.put(ClrwlShaderType.VERTEX,   colorwheel$parseShaderExtensions(vertex));
+		this.colorwheel$shaderExtensions.put(ClrwlShaderType.GEOMETRY, colorwheel$parseShaderExtensions(geometry));
+		this.colorwheel$shaderExtensions.put(ClrwlShaderType.FRAGMENT, colorwheel$parseShaderExtensions(fragment));
+
 		this.colorwheel$shaderProperties = properties;
 		this.colorwheel$blendMode = blendModeOverride;
 	}

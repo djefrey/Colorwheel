@@ -1,8 +1,8 @@
-package dev.djefrey.colorwheel.compile.oit;
+package dev.djefrey.colorwheel.compile.component;
 
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.util.Utils;
-import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
+import dev.djefrey.colorwheel.compile.glsl.GlslFragmentOutput;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;

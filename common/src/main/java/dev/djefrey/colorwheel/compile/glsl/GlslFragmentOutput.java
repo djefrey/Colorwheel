@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.compile;
+package dev.djefrey.colorwheel.compile.glsl;
 
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
 

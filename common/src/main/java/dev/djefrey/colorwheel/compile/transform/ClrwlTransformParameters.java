@@ -1,7 +1,5 @@
 package dev.djefrey.colorwheel.compile.transform;
 
-import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
-import dev.engine_room.flywheel.api.material.Transparency;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.blending.AlphaTest;
 import net.irisshaders.iris.gl.texture.TextureType;
@@ -9,7 +7,6 @@ import net.irisshaders.iris.helpers.Tri;
 import net.irisshaders.iris.pipeline.transform.Patch;
 import net.irisshaders.iris.pipeline.transform.PatchShaderType;
 import net.irisshaders.iris.pipeline.transform.parameter.Parameters;
-import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
 // ColorwheelTransformParameters extends from Parameters so that CommonTransformer.transform can be used

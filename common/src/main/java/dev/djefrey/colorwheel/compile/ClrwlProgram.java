@@ -42,30 +42,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ClrwlProgram
-{
-	private final GlShader vertex;
-	@Nullable
-	private final GlShader geometry;
-	private final GlShader fragment;
-	private final int handle;
-	private final ProgramUniforms uniforms;
-	private final CustomUniforms customUniforms;
-	private final ProgramSamplers samplers;
-	private final ProgramImages images;
+import static org.lwjgl.opengl.GL20.*;
 
-	public final int baseVertexUniform;
-	public final int baseInstanceUniform;
-	public final int baseDrawUniform;
-	public final int packedMaterialUniform;
-	public final int modelMatrixUniform;
-	public final int normalMatrixUniform;
-	public final int blockEntityUniform;
-	public final int entityUniform;
-	public final int meshCenterUniform;
-	public final int renderPhaseUniform;
-	public final int blendFuncUniform;
-	public final int atlasSizeUniform;
+public class ClrwlProgram extends GlProgram
+{
+	private final String name;
+	private final ClrwlProgramId programId;
+
+	private ProgramUniforms uniforms;
+	private CustomUniforms customUniforms;
+	private ProgramSamplers samplers;
+	private ProgramImages images;
 
 	public static ImmutableSet<Integer> getReservedTextureUnits(int coeffCount)
 	{
@@ -91,58 +78,36 @@ public class ClrwlProgram
 		return ImmutableSet.copyOf(res);
 	}
 
-	private ClrwlProgram(String name, ClrwlProgramId programId, ClrwlShaderProperties properties,
-						 String vertex, Optional<String> geometry, String fragment,
-						 CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public ClrwlProgram(String name, ClrwlProgramId programId, int handle)
 	{
-		this.vertex = new GlShader(ShaderType.VERTEX, name + ".vsh", vertex);
-		this.geometry = geometry.map(sh -> new GlShader(ShaderType.GEOMETRY, name + ".gsh", sh)).orElse(null);
-		this.fragment = new GlShader(ShaderType.FRAGMENT, name + ".fsh", fragment);
+		super(handle);
+		this.name = name;
+		this.programId = programId;
+	}
 
-		this.handle = GL20.glCreateProgram();
+	public void preLink()
+	{
+		bindAttribLocation("_flw_aPos", 0);
+		bindAttribLocation("_flw_aColor", 1);
+		bindAttribLocation("_flw_aTexCoord", 2);
+		bindAttribLocation("_flw_aLight", 3);
+		bindAttribLocation("_flw_aNormal", 4);
+		bindAttribLocation("_clrwl_aEntity", 5);
+		bindAttribLocation("_clrwl_aMidTexCoord", 6);
+		bindAttribLocation("_clrwl_aTangent", 7);
+		bindAttribLocation("_clrwl_aMidBlock", 8);
+		bindAttribLocation("_flw_aOverlay", 9);
+	}
 
-		GL20.glAttachShader(this.handle, this.vertex.getHandle());
-
-		if (this.geometry != null)
-		{
-			GL20.glAttachShader(this.handle, this.geometry.getHandle());
-		}
-
-		GL20.glAttachShader(this.handle, this.fragment.getHandle());
-
-		GL20.glBindAttribLocation(this.handle, 0, "_flw_aPos");
-		GL20.glBindAttribLocation(this.handle, 1, "_flw_aColor");
-		GL20.glBindAttribLocation(this.handle, 2, "_flw_aTexCoord");
-		GL20.glBindAttribLocation(this.handle, 3, "_flw_aLight");
-		GL20.glBindAttribLocation(this.handle, 4, "_flw_aNormal");
-		GL20.glBindAttribLocation(this.handle, 5, "_clrwl_aEntity");
-		GL20.glBindAttribLocation(this.handle, 6, "_clrwl_aMidTexCoord");
-		GL20.glBindAttribLocation(this.handle, 7, "_clrwl_aTangent");
-		GL20.glBindAttribLocation(this.handle, 8, "_clrwl_aMidBlock");
-		GL20.glBindAttribLocation(this.handle, 9, "_flw_aOverlay");
-
-		GL20.glLinkProgram(this.handle);
-
-		if (GL20.glGetProgrami(this.handle, GL20.GL_LINK_STATUS) != GL20.GL_TRUE)
-		{
-			var err = new RuntimeException("Shader link error in Colorwheel program: " + GL20.glGetProgramInfoLog(this.handle));
-			GL20.glDeleteProgram(this.handle);
-
-			this.vertex.destroy();
-			if (this.geometry != null)
-			{
-				this.geometry.destroy();
-			}
-			this.fragment.destroy();
-
-			throw err;
-		}
-
+	public void postLink(IrisRenderingPipeline irisPipeline, ClrwlShaderProperties properties)
+	{
+		var handle = handle();
+		var customUniforms = irisPipeline.getCustomUniforms();
 		var oitCoeffs = properties.getOitCoeffRanks(programId.group());
 
-		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, this.handle);
-		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(this.handle, getReservedTextureUnits(oitCoeffs.length));
-		ProgramImages.Builder   imageBuilder   = ProgramImages.builder(this.handle);
+		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, handle);
+		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(handle, getReservedTextureUnits(oitCoeffs.length));
+		ProgramImages.Builder   imageBuilder   = ProgramImages.builder(handle);
 
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DIFFUSE.number, "flw_diffuseTex");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.OVERLAY.number, "flw_overlayTex");
@@ -161,14 +126,14 @@ public class ClrwlProgram
 
 		var isShadowPass = programId.group() == ClrwlProgramGroup.SHADOW;
 		Supplier<ImmutableSet<Integer>> flipped = isShadowPass
-				? pipeline::getFlippedBeforeShadow
+				? irisPipeline::getFlippedBeforeShadow
 				: programId.afterTranslucent()
-					? pipeline::getFlippedAfterTranslucent
-					: pipeline::getFlippedAfterPrepare;
+				  ? irisPipeline::getFlippedAfterTranslucent
+				  : irisPipeline::getFlippedAfterPrepare;
 
 		CommonUniforms.addDynamicUniforms(uniformBuilder, FogMode.PER_VERTEX);
 		customUniforms.assignTo(uniformBuilder);
-		pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
+		irisPipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder,
 				flipped, isShadowPass,
 				false, true, false); // Use Flywheel texture and overlay samplers
 		customUniforms.mapholderToPass(uniformBuilder, this);
@@ -178,36 +143,17 @@ public class ClrwlProgram
 		this.samplers = samplerBuilder.build();
 		this.images = imageBuilder.build();
 
-		this.baseVertexUniform = tryGetUniformLocation2("_flw_baseVertex");
-		this.baseInstanceUniform = tryGetUniformLocation2("_flw_baseInstance");
-		this.baseDrawUniform = tryGetUniformLocation2("_flw_baseDraw");
-		this.packedMaterialUniform = tryGetUniformLocation2("_clrwl_packedMaterialUniform");
-		this.modelMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.MODEL_MATRIX);
-		this.normalMatrixUniform = tryGetUniformLocation2(EmbeddingUniforms.NORMAL_MATRIX);
-		this.blockEntityUniform = tryGetUniformLocation2("_clrwl_blockEntityIdUniform");
-		this.entityUniform = tryGetUniformLocation2("_clrwl_entityIdUniform");
-		this.meshCenterUniform = tryGetUniformLocation2("_clrwl_meshCenterUniform");
-		this.renderPhaseUniform = tryGetUniformLocation2("_clrwl_renderPhase");
-		this.blendFuncUniform = tryGetUniformLocation2("_clrwl_blendFunc");
-		this.atlasSizeUniform = tryGetUniformLocation2("_clrwl_atlasSize");
-
 		ClrwlUniforms.setUniformsBlockBindings(this);
 	}
 
-	private int tryGetUniformLocation2(CharSequence name) {
-		return GL20.glGetUniformLocation(this.handle, name);
-	}
-
-	public static ClrwlProgram createProgram(String name, ClrwlProgramId programId, ClrwlProgramSource source, ClrwlShaderProperties properties, CustomUniforms customUniforms, IrisRenderingPipeline pipeline)
+	public String name()
 	{
-		return new ClrwlProgram(name, programId, properties,
-							    source.vertex(), source.geometry(), source.fragment(),
-							    customUniforms, pipeline);
+		return name;
 	}
 
 	public void bind()
 	{
-		ProgramManager.glUseProgram(this.handle);
+		super.bind();
 
 		samplers.update();
 		uniforms.update();
@@ -215,7 +161,7 @@ public class ClrwlProgram
 		images.update();
 	}
 
-	public void unbind()
+	public static void unbind()
 	{
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
@@ -251,99 +197,59 @@ public class ClrwlProgram
 			blendMode = Utils.transparencyToBlendMode(material.transparency());
 		}
 
-		setUniformI(blendFuncUniform, blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
-		setUniformI(atlasSizeUniform, atlasWidth, atlasHeight);
-		setUniformS(renderPhaseUniform, phase.getValue());
+		setIVec4("_clrwl_blendFunc", blendMode.srcRgb(), blendMode.dstRgb(), blendMode.srcAlpha(), blendMode.dstAlpha());
+		setIVec2("_clrwl_atlasSize", atlasWidth, atlasHeight);
+		setInt("_clrwl_renderPhase", phase.getValue());
 	}
 
 	public void setInstancingUniforms(int baseVertex, int baseInstance, Material material, ClrwlInstanceVisual visual, Vector3fc meshCenter)
 	{
 		int packedMaterialProperties = ClrwlMaterialEncoder.packProperties(material);
 
-		setUniformU(baseVertexUniform, baseVertex);
-		setUniformS(baseInstanceUniform, baseInstance);
-		setUniformU(packedMaterialUniform, packedMaterialProperties);
+		setUInt("_flw_baseVertex", baseVertex);
+		setInt("_flw_baseInstance", baseInstance);
+		setUInt("_clrwl_packedMaterialUniform", packedMaterialProperties);
 
-		setUniformS(blockEntityUniform, visual.getBlockEntity());
-		setUniformS(entityUniform, visual.getEntity());
-		setUniform(meshCenterUniform, meshCenter.x(), meshCenter.y(), meshCenter.z(), (float) visual.lightEmission());
+		setInt("_clrwl_blockEntityIdUniform", visual.getBlockEntity());
+		setInt("_clrwl_entityIdUniform", visual.getEntity());
+		setVec4("_clrwl_meshCenterUniform", meshCenter.x(), meshCenter.y(), meshCenter.z(), (float) visual.lightEmission());
 	}
 
 	public void setBaseDrawUniform(int baseDraw)
 	{
-		setUniformU(baseDrawUniform, baseDraw);
+		setUInt("_flw_baseDraw", baseDraw);
 	}
 
 	public void setEmbeddedMatrices(Matrix4f model,  Matrix3f normal)
 	{
-		if (modelMatrixUniform != -1)
-		{
-			setUniform(modelMatrixUniform, model);
-		}
-
-		if (normalMatrixUniform != -1)
-		{
-			setUniform(modelMatrixUniform, normal);
-		}
-	}
-
-	public void setUniformBlockBinding(String name, int binding)
-	{
-		int index = GL31.glGetUniformBlockIndex(handle, name);
-
-		if (index == GL31.GL_INVALID_INDEX)
-		{
-			Colorwheel.LOGGER.debug("No uniform block for {}", name);
-			return;
-		}
-
-		GL31.glUniformBlockBinding(handle, index, binding);
+		setMat4(EmbeddingUniforms.MODEL_MATRIX, model);
+		setMat3(EmbeddingUniforms.NORMAL_MATRIX, normal);
 	}
 
 	public void free()
 	{
-		GL31.glDeleteProgram(this.handle);
-		this.vertex.destroy();
-        this.fragment.destroy();
+		super.delete();
 	}
 
-	private void setUniformS(int index, int i) {
-		GL31.glUniform1i(index, i);
-	}
-
-	private void setUniformU(int index, int i) {
-		GL31.glUniform1ui(index, i);
-	}
-
-	private void setUniformI(int index, int x, int y) {
-		GL31.glUniform2i(index, x, y);
-	}
-
-	private void setUniformI(int index, int x, int y, int z, int w) {
-		GL31.glUniform4i(index, x, y, z, w);
-	}
-
-	private void setUniform(int index, float x, float y, float z, float w) {
-		GL31.glUniform4f(index, x, y, z, w);
-	}
-
-	private void setUniform(int index, Matrix3f mat) {
-		GL31.glUniformMatrix3fv(index, false, mat.get(new float[12]));
-	}
-
-	private void setUniform(int index, Matrix4f mat) {
-		GL31.glUniformMatrix4fv(index, false, mat.get(new float[16]));
-	}
-
-	private GlProgram flwProgram;
-
-	public GlProgram getProgram()
+	public void setIVec2(String glslName, int x, int y)
 	{
-		if (flwProgram == null)
-		{
-			flwProgram = new GlProgram(this.handle);
+		int uniform = getUniformLocation(glslName);
+
+		if (uniform < 0) {
+			return;
 		}
 
-		return flwProgram;
+		glUniform2i(uniform, x, y);
+	}
+
+	public void setIVec4(String glslName, int x, int y, int z, int w)
+	{
+		int uniform = getUniformLocation(glslName);
+
+		if (uniform < 0) {
+			return;
+		}
+
+		glUniform4i(uniform, x, y, z, w);
 	}
 }

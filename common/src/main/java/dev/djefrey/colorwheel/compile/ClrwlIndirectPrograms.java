@@ -2,8 +2,8 @@ package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
-import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.compile.component.SsboInstanceComponent;
+import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.backend.compile.IndirectPrograms;
@@ -31,6 +31,11 @@ import java.util.Map;
 
 public class ClrwlIndirectPrograms
 {
+	private interface ClrwlProgramsFactory
+	{
+		ClrwlPrograms build(IrisRenderingPipeline irisPipeline);
+	}
+
 	public enum Culling
 	{
 		GBUFFERS_FULL("gbuffers_full", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS),
@@ -95,22 +100,22 @@ public class ClrwlIndirectPrograms
 	private static final Compile<Culling> CULL = new Compile<>();
 	private static final Compile<ResourceLocation> UTIL = new Compile<>();
 
-	private final ClrwlPipelineCompiler compiler;
+	private final ClrwlOitPrograms oitPrograms;
 	private final CompilationHarness<InstanceType<?>> transform;
 	private final CompilationHarness<Culling> culling;
 	private final CompilationHarness<ResourceLocation> utils;
-	private final ClrwlOitPrograms oitPrograms;
+	private final ClrwlProgramsFactory programsFactory;
 
 	// WARNING: this can ONLY be used for utils ! (otherwise, kaboom)
 	private final IndirectPrograms flwPrograms;
 
-	private ClrwlIndirectPrograms(ClrwlPipelineCompiler compiler, CompilationHarness<InstanceType<?>> transform, CompilationHarness<Culling> culling, CompilationHarness<ResourceLocation> utils, ClrwlOitPrograms oitPrograms)
+	private ClrwlIndirectPrograms(ClrwlOitPrograms oitPrograms, CompilationHarness<InstanceType<?>> transform, CompilationHarness<Culling> culling, CompilationHarness<ResourceLocation> utils, ClrwlProgramsFactory programsFactory)
 	{
-		this.compiler = compiler;
+		this.oitPrograms = oitPrograms;
 		this.transform = transform;
 		this.culling = culling;
 		this.utils = utils;
-		this.oitPrograms = oitPrograms;
+		this.programsFactory = programsFactory;
 
 		try
 		{
@@ -175,13 +180,18 @@ public class ClrwlIndirectPrograms
 		var occlusionCulling = directives.shouldUseOcclusionCulling();
 		var frustumCulling = directives.shouldUseFrustumCulling();
 
-		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, programSet);
+		var oitPrograms = new ClrwlOitPrograms(sources, pipeline);
 		var transform = createTransformCompiler(sources);
 		var culling = createCullingCompiler(sources, occlusionCulling, frustumCulling);
 		var util = createUtilCompiler(sources);
-		var oitPrograms = new ClrwlOitPrograms(sources);
 
-        return new ClrwlIndirectPrograms(compiler, transform, culling, util, oitPrograms);
+		ClrwlProgramsFactory programsFactory = (irisPipeline) ->
+		{
+			var clrwlSources = new ClrwlShaderSources(sources, irisPipeline, programSet);
+			return new ClrwlPrograms(clrwlSources, pipeline, pack, irisPipeline);
+		};
+
+        return new ClrwlIndirectPrograms(oitPrograms, transform, culling, util, programsFactory);
 	}
 
 	private static CompilationHarness<InstanceType<?>> createTransformCompiler(ShaderSources sources)
@@ -257,10 +267,12 @@ public class ClrwlIndirectPrograms
 	}
 
 
-	public PipelineProgramCache createPipelineProgramsCache()
+	public ClrwlPrograms createClrwlPrograms(IrisRenderingPipeline irisPipeline)
 	{
-		return new PipelineProgramCache();
+		return programsFactory.build(irisPipeline);
 	}
+
+	public ClrwlOitPrograms getOitPrograms() { return oitPrograms; }
 
 	public GlProgram getTransformProgram(InstanceType<?> instanceType)
 	{
@@ -297,11 +309,6 @@ public class ClrwlIndirectPrograms
 		return flwPrograms.getDownsampleSecondProgram();
 	}
 
-	public ClrwlOitPrograms getOitPrograms()
-	{
-		return oitPrograms;
-	}
-
 	// WARNING: Should ONLY be used for utils programs
 	public IndirectPrograms getFlwPrograms()
 	{
@@ -310,40 +317,12 @@ public class ClrwlIndirectPrograms
 
 	public void delete()
 	{
+		oitPrograms.delete();
 		transform.delete();
 		culling.delete();
 		utils.delete();
-		oitPrograms.delete();
 
 		// flwPrograms is not deleted as it contains null references (=> kaboom)
-	}
-
-	public class PipelineProgramCache
-	{
-		private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
-
-		public ClrwlProgram get(ClrwlShaderKey key, IrisRenderingPipeline irisPipeline)
-		{
-			ClrwlProgram program = programCache.get(key);
-
-			if (program == null)
-			{
-				program = ClrwlIndirectPrograms.this.compiler.get(key, irisPipeline);
-				programCache.put(key, program);
-			}
-
-			return program;
-		}
-
-		public void delete()
-		{
-			for (ClrwlProgram program : programCache.values())
-			{
-				program.free();
-			}
-
-			programCache.clear();
-		}
 	}
 
 	private static boolean FORCE_DISABLE_SUBGROUP_BALLOT = false;

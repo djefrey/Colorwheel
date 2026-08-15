@@ -15,9 +15,9 @@ public record ClrwlShaderKey(InstanceType<?> instanceType,
                              ContextShader context,
                              boolean isShadow,
                              boolean isDebugEnabled,
-                             ClrwlPipelineCompiler.OitMode oit)
+                             ClrwlPrograms.OitMode oit)
 {
-    public static ClrwlShaderKey fromMaterial(InstanceType<?> instanceType, Material material, ContextShader context, boolean isShadow, ClrwlPipelineCompiler.OitMode oit)
+    public static ClrwlShaderKey fromMaterial(InstanceType<?> instanceType, Material material, ContextShader context, boolean isShadow, ClrwlPrograms.OitMode oit)
     {
         return new ClrwlShaderKey(instanceType, material.shaders(), material.fog(), material.cutout(), material.light(), material.transparency(), context, isShadow, ClrwlFrameUniforms.debugOn(), oit);
     }

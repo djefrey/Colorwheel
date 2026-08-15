@@ -1,11 +1,11 @@
-package dev.djefrey.colorwheel;
+package dev.djefrey.colorwheel.gl;
 
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL43;
 
 import java.util.Optional;
 
-public enum ShaderType {
+public enum ClrwlShaderType {
     VERTEX("vertex", "VERTEX_SHADER", "vert", GL20.GL_VERTEX_SHADER),
     FRAGMENT("fragment", "FRAGMENT_SHADER", "frag", GL20.GL_FRAGMENT_SHADER),
     GEOMETRY("geometry", "GEOMETRY_SHADER", "geom", GL43.GL_GEOMETRY_SHADER),
@@ -17,7 +17,7 @@ public enum ShaderType {
     public final String extension;
     public final int glEnum;
 
-    ShaderType(String name, String define, String extension, int glEnum) {
+    ClrwlShaderType(String name, String define, String extension, int glEnum) {
         this.name = name;
         this.define = define;
         this.extension = extension;

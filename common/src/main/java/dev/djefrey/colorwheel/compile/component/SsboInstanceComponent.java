@@ -1,4 +1,4 @@
-package dev.djefrey.colorwheel.compile;
+package dev.djefrey.colorwheel.compile.component;
 
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.indirect.ClrwlBufferBindings;

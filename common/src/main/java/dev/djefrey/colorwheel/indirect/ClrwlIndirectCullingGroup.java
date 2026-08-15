@@ -3,19 +3,16 @@ package dev.djefrey.colorwheel.indirect;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlIndirectPrograms;
-import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
+import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
-import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.backend.compile.ContextShader;
-import dev.engine_room.flywheel.backend.compile.PipelineCompiler;
 import dev.engine_room.flywheel.backend.engine.MaterialRenderState;
 import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
@@ -33,8 +30,6 @@ import java.util.*;
 
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
-import static org.lwjgl.opengl.GL42.GL_COMMAND_BARRIER_BIT;
-import static org.lwjgl.opengl.GL42.glMemoryBarrier;
 import static org.lwjgl.opengl.GL43.glDispatchCompute;
 
 public class ClrwlIndirectCullingGroup<I extends Instance>
@@ -246,7 +241,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		needsDrawSort = true;
 	}
 
-	public void submitSolid(ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	public void submitSolid(ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
 		if (solidDraws.isEmpty())
 		{
@@ -264,9 +259,11 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 												  multiDraw.material,
 												  multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT,
 												  isShadow,
-												  ClrwlPipelineCompiler.OitMode.OFF);
+												  ClrwlPrograms.OitMode.OFF);
 
-			if (brokenShaders.contains(key))
+			var program = programs.get(key);
+
+			if (program == null)
 			{
 				continue;
 			}
@@ -279,23 +276,11 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 				continue;
 			}
 
-			ClrwlProgram program;
-
-			try
-			{
-				program = programs.get(key, irisPipeline);
-			}
-			catch (Exception e)
-			{
-				handleBrokenShader(key, programId, e);
-				continue;
-			}
-
 			if (prevProgram != program)
 			{
 				if (prevProgram != null)
 				{
-					prevProgram.unbind();
+					ClrwlProgram.unbind();
 				}
 
 				program.bind();
@@ -319,7 +304,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	private void drawTranslucent(List<MultiDraw> draws, ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	private void drawTranslucent(List<MultiDraw> draws, ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
 		if (draws.isEmpty())
 		{
@@ -350,22 +335,12 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 												  multiDraw.material,
 												  multiDraw.embedded ? ContextShader.EMBEDDED : ContextShader.DEFAULT,
 												  isShadow,
-												  ClrwlPipelineCompiler.OitMode.OFF);
+												  ClrwlPrograms.OitMode.OFF);
 
-			if (brokenShaders.contains(key))
-			{
-				continue;
-			}
+			var program = programs.get(key);
 
-			ClrwlProgram program;
-
-			try
+			if (program == null)
 			{
-				program = programs.get(key, irisPipeline);
-			}
-			catch (Exception e)
-			{
-				handleBrokenShader(key, programId, e);
 				continue;
 			}
 
@@ -373,7 +348,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 			{
 				if (prevProgram != null)
 				{
-					prevProgram.unbind();
+					ClrwlProgram.unbind();
 				}
 
 				program.bind();
@@ -394,17 +369,17 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	public void submitTranslucent(ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	public void submitTranslucent(ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
-		drawTranslucent(translucentDraws, programs, framebuffers, irisPipeline, isShadow);
+		drawTranslucent(translucentDraws, programs, framebuffers, isShadow);
 	}
 
-	public void submitOitAsTranslucent(ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	public void submitOitAsTranslucent(ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
-		drawTranslucent(oitDraws, programs, framebuffers, irisPipeline, isShadow);
+		drawTranslucent(oitDraws, programs, framebuffers, isShadow);
 	}
 
-	public void submitOit(ClrwlPipelineCompiler.OitMode oit, ClrwlIndirectPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers, IrisRenderingPipeline irisPipeline, boolean isShadow, ClrwlRenderingPhase renderingPhase)
+	public void submitOit(ClrwlPrograms.OitMode oit, ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow, ClrwlRenderingPhase renderingPhase)
 	{
 		if (oitDraws.isEmpty())
 		{
@@ -429,20 +404,10 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 												  isShadow,
 												  oit);
 
-			if (brokenShaders.contains(key))
-			{
-				continue;
-			}
+			var program = programs.get(key);
 
-			ClrwlProgram program;
-
-			try
+			if (program == null)
 			{
-				program = programs.get(key, irisPipeline);
-			}
-			catch (Exception e)
-			{
-				handleBrokenShader(key, programId, e);
 				continue;
 			}
 
@@ -450,7 +415,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 			{
 				if (prevProgram != null)
 				{
-					prevProgram.unbind();
+					ClrwlProgram.unbind();
 				}
 
 				program.bind();
@@ -465,24 +430,13 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	public boolean bindForCrumbling(Material material, ClrwlIndirectPrograms.PipelineProgramCache programs, IrisRenderingPipeline irisPipeline, ClrwlBlendModeOverride blendModeOverride)
+	public boolean bindForCrumbling(Material material, ClrwlPrograms programs, ClrwlBlendModeOverride blendModeOverride)
 	{
-		var key = ClrwlShaderKey.fromMaterial(instanceType, material, ContextShader.CRUMBLING, false, ClrwlPipelineCompiler.OitMode.OFF);
+		var key = ClrwlShaderKey.fromMaterial(instanceType, material, ContextShader.CRUMBLING, false, ClrwlPrograms.OitMode.OFF);
+		var program = programs.get(key);
 
-		if (brokenShaders.contains(key))
+		if (program == null)
 		{
-			return false;
-		}
-
-		ClrwlProgram program;
-
-		try
-		{
-			program = programs.get(key, irisPipeline);
-		}
-		catch (Exception e)
-		{
-			handleBrokenShader(key, ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, e);
 			return false;
 		}
 
@@ -552,36 +506,11 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		buffers.delete();
 	}
 
-	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
-
-	private void handleBrokenShader(ClrwlShaderKey key, ClrwlProgramId baseProgramId, Exception e)
-	{
-		if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
-		{
-			Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"), true);
-
-			var disableComp = Component.translatable("colorwheel.alert.ask_disable").withStyle(
-					Style.EMPTY
-							.withUnderlined(true)
-							.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertBrokenPack off"))
-							.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.broken_pack.disable"))));
-
-			Colorwheel.sendWarnMessage(disableComp, false);
-		}
-
-		brokenShaders.add(key);
-
-		ClrwlProgramId realProgramId = ((ProgramSetAccessor) programSet).colorwheel$getRealClrwlProgram(baseProgramId).orElse(baseProgramId);
-		String shaderPath = realProgramId.programName() + "/" + key.getPath();
-
-		Colorwheel.LOGGER.error("Could not compile shader: " + shaderPath, e);
-	}
-
 	private record MultiDraw(Material material, boolean embedded, int start, int end)
 	{
 		private void submit(ClrwlProgram drawProgram)
 		{
-			GlCompat.safeMultiDrawElementsIndirect(drawProgram.getProgram(), GL_TRIANGLES, GL_UNSIGNED_INT, this.start, this.end, ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE);
+			GlCompat.safeMultiDrawElementsIndirect(drawProgram, GL_TRIANGLES, GL_UNSIGNED_INT, this.start, this.end, ClrwlIndirectBuffers.DRAW_COMMAND_STRIDE);
 		}
 	}
 }

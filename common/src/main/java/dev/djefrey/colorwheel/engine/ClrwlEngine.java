@@ -4,7 +4,7 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.ExtendedEngine;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
-import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
 import dev.djefrey.colorwheel.engine.embed.EmbeddedEnvironment;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlGbuffersPassUniforms;

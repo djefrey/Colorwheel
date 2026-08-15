@@ -1,7 +1,7 @@
-package dev.djefrey.colorwheel.compile.oit;
+package dev.djefrey.colorwheel.compile.component;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.compile.ClrwlPipelines;
+import dev.djefrey.colorwheel.compile.ClrwlPrograms;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBlock;
@@ -82,7 +82,7 @@ public class OitCollectCoeffsComponent implements SourceComponent
         builder.function()
                 .signature(FnSignature.create()
                         .returnType("void")
-                        .name(ClrwlPipelines.CLRWL_POST_FRAGMENT_FCT)
+                        .name(ClrwlPrograms.CLRWL_POST_FRAGMENT_FCT)
                         .build())
                 .body(body);
 

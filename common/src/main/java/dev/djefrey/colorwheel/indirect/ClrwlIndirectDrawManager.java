@@ -6,7 +6,8 @@ import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderStorageBufferHolderAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlIndirectPrograms;
-import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
+import dev.djefrey.colorwheel.compile.ClrwlPrograms;
+import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
@@ -44,7 +45,7 @@ import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
 public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInstancer<?>>
 {
-	public record PipelineData(ClrwlIndirectPrograms.PipelineProgramCache programs,
+	public record PipelineData(ClrwlPrograms programs,
 							   ClrwlFramebuffers framebuffers,
 							   ClrwlDepthPyramid depthPyramid,
 							   Map<ClrwlIndirectCullingGroup<?>, ClrwlIndirectBuffers.PipelineBuffers> buffers)
@@ -483,7 +484,7 @@ top:	{
 
 		for (var group : cullingGroups.values())
 		{
-			group.submitSolid(pipelinePrograms, framebuffers, irisPipeline, isShadow);
+			group.submitSolid(pipelinePrograms, framebuffers, isShadow);
 		}
 	}
 
@@ -544,7 +545,7 @@ top:	{
 			boolean hasOit = false;
 			for (var group : cullingGroups.values())
 			{
-				group.submitTranslucent(pipelinePrograms, framebuffers, irisPipeline, isShadow);
+				group.submitTranslucent(pipelinePrograms, framebuffers, isShadow);
 
 				if (group.hasOitDraws())
 				{
@@ -585,7 +586,7 @@ top: 		if (hasOit)
 					oitFramebuffer.prepareDepthRange();
 					for (var group : cullingGroups.values())
 					{
-						group.submitOit(ClrwlPipelineCompiler.OitMode.DEPTH_RANGE, pipelinePrograms, framebuffers, irisPipeline, isShadow, currentRenderPhase);
+						group.submitOit(ClrwlPrograms.OitMode.DEPTH_RANGE, pipelinePrograms, framebuffers, isShadow, currentRenderPhase);
 					}
 
 					if (oitFramebuffer.prepareRenderTransmittance())
@@ -594,7 +595,7 @@ top: 		if (hasOit)
 
 						for (var group : cullingGroups.values())
 						{
-							group.submitOit(ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS, pipelinePrograms, framebuffers, irisPipeline, isShadow, currentRenderPhase);
+							group.submitOit(ClrwlPrograms.OitMode.GENERATE_COEFFICIENTS, pipelinePrograms, framebuffers, isShadow, currentRenderPhase);
 						}
 					}
 
@@ -608,7 +609,7 @@ top: 		if (hasOit)
 					oitFramebuffer.prepareAccumulate();
 					for (var group : cullingGroups.values())
 					{
-						group.submitOit(ClrwlPipelineCompiler.OitMode.EVALUATE, pipelinePrograms, framebuffers, irisPipeline, isShadow, currentRenderPhase);
+						group.submitOit(ClrwlPrograms.OitMode.EVALUATE, pipelinePrograms, framebuffers, isShadow, currentRenderPhase);
 					}
 
 					setPhase(ClrwlRenderingPhase.OIT_COMPOSITE, isShadow);
@@ -619,7 +620,7 @@ top: 		if (hasOit)
 				{
 					for (var group : cullingGroups.values())
 					{
-						group.submitOitAsTranslucent(pipelinePrograms, framebuffers, irisPipeline, isShadow);
+						group.submitOitAsTranslucent(pipelinePrograms, framebuffers, isShadow);
 					}
 				}
 			}
@@ -712,7 +713,7 @@ top: 		if (hasOit)
 						// Transform the material to be suited for crumbling.
 						CommonCrumbling.applyCrumblingProperties(crumblingMaterial, draw.material());
 
-						if (cullingGroup.bindForCrumbling(crumblingMaterial, programs, irisPipeline, blendOverride))
+						if (cullingGroup.bindForCrumbling(crumblingMaterial, programs, blendOverride))
 						{
 							ClrwlMaterialRenderState.setup(crumblingMaterial, blendOverride, bufferBlendOverrides);
 
@@ -773,7 +774,7 @@ top: 		if (hasOit)
 
 	private PipelineData createPipelineData(IrisRenderingPipeline irisPipeline)
 	{
-		ClrwlIndirectPrograms.PipelineProgramCache pipelinePrograms = programs.createPipelineProgramsCache();
+		ClrwlPrograms pipelinePrograms = programs.createClrwlPrograms(irisPipeline);
 		ClrwlFramebuffers framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
 		ClrwlDepthPyramid depthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.GBUFFERS, programs, irisPipeline);
 

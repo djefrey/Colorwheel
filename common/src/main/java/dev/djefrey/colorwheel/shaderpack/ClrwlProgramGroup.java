@@ -21,4 +21,9 @@ public enum ClrwlProgramGroup
     {
         return name;
     }
+
+    public static ClrwlProgramGroup fromShadow(boolean isShadow)
+    {
+        return isShadow ? SHADOW : GBUFFERS;
+    }
 }

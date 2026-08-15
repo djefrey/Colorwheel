@@ -1,14 +1,14 @@
 package dev.djefrey.colorwheel.instancing;
 
 import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
-import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.compile.ClrwlPrograms;
+import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
 import dev.djefrey.colorwheel.engine.ClrwlMeshPool;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
-import dev.djefrey.colorwheel.compile.ClrwlPipelineCompiler;
 import dev.djefrey.colorwheel.compile.ClrwlProgram;
 import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
@@ -26,13 +26,9 @@ import dev.engine_room.flywheel.backend.gl.TextureBuffer;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
-import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
@@ -41,14 +37,12 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
 {
-	public record PipelineData(ClrwlInstancedPrograms.PipelineProgramCache programs, ClrwlFramebuffers framebuffers)
+	public record PipelineData(ClrwlPrograms programs, ClrwlFramebuffers framebuffers)
 	{
 		public void delete()
 		{
@@ -182,7 +176,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 		TextureBinder.bindLightAndOverlay();
 		light.bind();
 
-		submitDraws(solidDraws, pipelineData, irisPipeline, isShadow);
+		submitDraws(solidDraws, pipelineData, isShadow);
 
 		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
@@ -207,7 +201,7 @@ public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedIn
 
 		if (!translucentDraws.isEmpty())
 		{
-			submitDraws(translucentDraws, pipelineData, irisPipeline, isShadow);
+			submitDraws(translucentDraws, pipelineData, isShadow);
 		}
 
 top:	if (!oitDraws.isEmpty())
@@ -245,13 +239,13 @@ top:	if (!oitDraws.isEmpty())
 				oitFramebuffer.prepare();
 
 				oitFramebuffer.prepareDepthRange();
-				submitOitDraws(pipelineData, irisPipeline, isShadow, ClrwlPipelineCompiler.OitMode.DEPTH_RANGE);
+				submitOitDraws(pipelineData, isShadow, ClrwlPrograms.OitMode.DEPTH_RANGE);
 
 				setPhase(ClrwlRenderingPhase.OIT_COEFFICIENTS, isShadow);
 
 				if (oitFramebuffer.prepareRenderTransmittance())
 				{
-					submitOitDraws(pipelineData, irisPipeline, isShadow, ClrwlPipelineCompiler.OitMode.GENERATE_COEFFICIENTS);
+					submitOitDraws(pipelineData, isShadow, ClrwlPrograms.OitMode.GENERATE_COEFFICIENTS);
 				}
 
 //				oitFramebuffer.renderDepthFromTransmittance();
@@ -262,7 +256,7 @@ top:	if (!oitDraws.isEmpty())
 				setPhase(ClrwlRenderingPhase.OIT_ACCUMULATE, isShadow);
 
 				oitFramebuffer.prepareAccumulate();
-				submitOitDraws(pipelineData, irisPipeline, isShadow, ClrwlPipelineCompiler.OitMode.EVALUATE);
+				submitOitDraws(pipelineData, isShadow, ClrwlPrograms.OitMode.EVALUATE);
 
 				setPhase(ClrwlRenderingPhase.OIT_COMPOSITE, isShadow);
 
@@ -271,7 +265,7 @@ top:	if (!oitDraws.isEmpty())
 			else
 			{
 				setPhase(ClrwlRenderingPhase.TRANSLUCENT, isShadow);
-				submitDraws(oitDraws, pipelineData, irisPipeline, isShadow);
+				submitDraws(oitDraws, pipelineData, isShadow);
 			}
 		}
 
@@ -279,9 +273,7 @@ top:	if (!oitDraws.isEmpty())
 		TextureBinder.resetLightAndOverlay();
 	}
 
-	private final Set<ClrwlShaderKey> brokenShaders = new HashSet<>();
-
-	private void submitDraws(List<ClrwlInstancedDraw> draws, PipelineData pipelineData, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	private void submitDraws(List<ClrwlInstancedDraw> draws, PipelineData pipelineData, boolean isShadow)
 	{
 		var programs = pipelineData.programs();
 		var framebuffers = pipelineData.framebuffers();
@@ -295,6 +287,14 @@ top:	if (!oitDraws.isEmpty())
 			var groupKey = drawCall.groupKey;
 			var environment = groupKey.environment();
 
+			var key = ClrwlShaderKey.fromMaterial(groupKey.instanceType(), material, environment.contextShader(), isShadow, ClrwlPrograms.OitMode.OFF);
+			var program = programs.get(key);
+
+			if (program == null)
+			{
+				continue;
+			}
+
 			var programId = ClrwlProgramId.fromTransparency(material.transparency(), isShadow);
 			var framebuffer = framebuffers.getFramebuffer(programId);
 
@@ -303,30 +303,11 @@ top:	if (!oitDraws.isEmpty())
 				continue;
 			}
 
-			var key = ClrwlShaderKey.fromMaterial(groupKey.instanceType(), material, environment.contextShader(), isShadow, ClrwlPipelineCompiler.OitMode.OFF);
-
-			if (brokenShaders.contains(key))
-			{
-				continue;
-			}
-
-			ClrwlProgram program;
-
-			try
-			{
-				program = programs.get(key, irisPipeline);
-			}
-			catch (Exception e)
-			{
-				handleBrokenShader(key, programId, e);
-				continue;
-			}
-
 			if (prevProgram != program)
 			{
 				if (prevProgram != null)
 				{
-					prevProgram.unbind();
+					ClrwlProgram.unbind();
 				}
 
 				program.bind();
@@ -337,7 +318,7 @@ top:	if (!oitDraws.isEmpty())
 
 			program.setClrwlCommonUniforms(material, blendOverride, currentRenderPhase);
 			program.setInstancingUniforms(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter());
-			environment.setupDraw(program.getProgram());
+			environment.setupDraw(program);
 			ClrwlMaterialRenderState.setup(material, blendOverride, bufferBlendOverrides);
 
 			ClrwlSamplers.INSTANCE_BUFFER.makeActive();
@@ -355,11 +336,11 @@ top:	if (!oitDraws.isEmpty())
 
 		if (prevProgram != null)
 		{
-			prevProgram.unbind();
+			ClrwlProgram.unbind();
 		}
 	}
 
-	private void submitOitDraws(PipelineData pipelineData, IrisRenderingPipeline irisPipeline, boolean isShadow, ClrwlPipelineCompiler.OitMode oit)
+	private void submitOitDraws(PipelineData pipelineData, boolean isShadow, ClrwlPrograms.OitMode oit)
 	{
 		var programs = pipelineData.programs();
 		var framebuffers = pipelineData.framebuffers();
@@ -376,21 +357,10 @@ top:	if (!oitDraws.isEmpty())
 			var environment = groupKey.environment();
 
 			var key = ClrwlShaderKey.fromMaterial(groupKey.instanceType(), material, environment.contextShader(), isShadow, oit);
+			var program = programs.get(key);
 
-			if (brokenShaders.contains(key))
+			if (program == null)
 			{
-				continue;
-			}
-
-			ClrwlProgram program;
-
-			try
-			{
-				program = programs.get(key, irisPipeline);
-			}
-			catch (Exception e)
-			{
-				handleBrokenShader(key, programId, e);
 				continue;
 			}
 
@@ -398,7 +368,7 @@ top:	if (!oitDraws.isEmpty())
 			{
 				if (prevProgram != null)
 				{
-					prevProgram.unbind();
+					ClrwlProgram.unbind();
 				}
 
 				program.bind();
@@ -406,7 +376,7 @@ top:	if (!oitDraws.isEmpty())
 
 			program.setClrwlCommonUniforms(material, blendOverride, currentRenderPhase);
 			program.setInstancingUniforms(drawCall.mesh().baseVertex(), 0, material, drawCall.visual(), drawCall.mesh().meshCenter());
-			environment.setupDraw(program.getProgram());
+			environment.setupDraw(program);
 			ClrwlMaterialRenderState.setupOit(material);
 
 			Samplers.INSTANCE_BUFFER.makeActive();
@@ -418,7 +388,7 @@ top:	if (!oitDraws.isEmpty())
 
 		if (prevProgram != null)
 		{
-			prevProgram.unbind();
+			ClrwlProgram.unbind();
 		}
 	}
 
@@ -494,22 +464,11 @@ top:	if (!oitDraws.isEmpty())
 					{
 						CommonCrumbling.applyCrumblingProperties(crumblingMaterial, draw.material());
 
-						var shaderKey = ClrwlShaderKey.fromMaterial(key.instanceType(), crumblingMaterial, ContextShader.CRUMBLING, false, ClrwlPipelineCompiler.OitMode.OFF);
+						var shaderKey = ClrwlShaderKey.fromMaterial(key.instanceType(), crumblingMaterial, ContextShader.CRUMBLING, false, ClrwlPrograms.OitMode.OFF);
+						var program = programs.get(shaderKey);
 
-						if (brokenShaders.contains(shaderKey))
+						if (program == null)
 						{
-							continue;
-						}
-
-						ClrwlProgram program;
-
-						try
-						{
-							program = programs.get(shaderKey, irisPipeline);
-						}
-						catch (Exception e)
-						{
-							handleBrokenShader(shaderKey, ClrwlProgramId.GBUFFERS_DAMAGEDBLOCK, e);
 							continue;
 						}
 
@@ -517,7 +476,7 @@ top:	if (!oitDraws.isEmpty())
 						{
 							if (prevProgram != null)
 							{
-								prevProgram.unbind();
+								ClrwlProgram.unbind();
 							}
 
 							program.bind();
@@ -539,38 +498,11 @@ top:	if (!oitDraws.isEmpty())
 
 		if (prevProgram != null)
 		{
-			prevProgram.unbind();
+			ClrwlProgram.unbind();
 		}
 
 		ClrwlMaterialRenderState.reset();
 		TextureBinder.resetLightAndOverlay();
-	}
-
-	private void handleBrokenShader(ClrwlShaderKey key, ClrwlProgramId baseProgramId, Exception e)
-	{
-		if (brokenShaders.isEmpty() && Colorwheel.CONFIG.shouldAlertBrokenPack())
-		{
-			Colorwheel.sendWarnMessage(Component.translatable("colorwheel.alert.broken_pack"), true);
-
-			var clickHereComp = Component.translatable("colorwheel.click_here");
-			var disableComp = Component.translatable("colorwheel.alert.ask_disable")
-					.append(" (").append(clickHereComp).append(")")
-					.withStyle(
-						Style.EMPTY
-							.withUnderlined(true)
-							.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/colorwheel alertBrokenPack off"))
-							.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("colorwheel.alert.broken_pack.disable")))
-					);
-
-			Colorwheel.sendWarnMessage(disableComp, false);
-		}
-
-		brokenShaders.add(key);
-
-		ClrwlProgramId realProgramId = ((ProgramSetAccessor) programSet).colorwheel$getRealClrwlProgram(baseProgramId).orElse(baseProgramId);
-		String shaderPath = realProgramId.programName() + "/" + key.getPath();
-
-		Colorwheel.LOGGER.error("Could not compile shader: " + shaderPath, e);
 	}
 
 	private PipelineData getPipelineData(IrisRenderingPipeline pipeline)
@@ -580,7 +512,7 @@ top:	if (!oitDraws.isEmpty())
 
 	private PipelineData createPipelineData(IrisRenderingPipeline irisPipeline)
 	{
-		var pipelinePrograms = programs.createPipelineProgramsCache();
+		var pipelinePrograms = programs.createClrwlPrograms(irisPipeline);
 		var framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
 
 		Colorwheel.LOGGER.info("Created pipeline data for {}", irisPipeline);
@@ -614,8 +546,6 @@ top:	if (!oitDraws.isEmpty())
 	@Override
 	public void delete()
 	{
-		brokenShaders.clear();
-
 		instancers.values()
 				.forEach(ClrwlInstancedInstancer::delete);
 

@@ -1,7 +1,7 @@
-package dev.djefrey.colorwheel.compile.oit;
+package dev.djefrey.colorwheel.compile.component;
 
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.compile.GlslFragmentOutput;
+import dev.djefrey.colorwheel.compile.glsl.GlslFragmentOutput;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBuilder;
 
