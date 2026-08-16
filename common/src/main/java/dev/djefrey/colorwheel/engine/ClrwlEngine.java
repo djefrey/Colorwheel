@@ -27,8 +27,10 @@ import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -47,7 +49,7 @@ public class ClrwlEngine implements ExtendedEngine
 {
 	public interface DrawManagerFactory
 	{
-		ClrwlDrawManager<?> build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean isFallback);
+		ClrwlDrawManager<?> build(ShaderSources sources, ShaderPack pack, ProgramSet programSet, boolean isFallback);
 	}
 
 	public static List<ClrwlEngine> ENGINES = new ArrayList<>();
@@ -74,7 +76,7 @@ public class ClrwlEngine implements ExtendedEngine
 		var programSet = pack.getProgramSet(dimension);
 		var isFallback = (((ProgramSetAccessor) programSet).colorwheel$isFallbackMode());
 
-		this.drawManager = drawManagerFactory.build(FlwPrograms.SOURCES, pack, dimension, isFallback);
+		this.drawManager = drawManagerFactory.build(FlwPrograms.SOURCES, pack, programSet, isFallback);
 		this.sqrMaxOriginDistance = maxOriginDistance * maxOriginDistance;
 		this.environmentStorage = new EnvironmentStorage();
 		this.lightStorage = new LightStorage(level);
@@ -149,6 +151,14 @@ public class ClrwlEngine implements ExtendedEngine
 		}
 	}
 
+	private void preparePass(RenderContext context, IrisRenderingPipeline irisPipeline, boolean isShadow)
+	{
+		// TODO: frame uniforms per pipeline ??
+
+		ClrwlUniforms.update(context, pack, dimension);
+		drawManager.preparePass(irisPipeline, isShadow);
+	}
+
 	@Override
 	public void render(RenderContext context)
 	{
@@ -156,26 +166,35 @@ public class ClrwlEngine implements ExtendedEngine
 		{
 			prepareFrame();
 
-			if (context instanceof ShadowRenderContext shadowContext)
+			var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
+
+			if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
 			{
-				if (shadowContext.phase() == ShadowRenderingPhase.SOLID)
+				if (context instanceof ShadowRenderContext shadowContext)
 				{
-					ClrwlUniforms.update(context, pack, dimension);
-					drawManager.renderSolid(true);
+					if (shadowContext.phase() == ShadowRenderingPhase.SOLID)
+					{
+						preparePass(context, irisPipeline, true);
+						drawManager.renderSolid(irisPipeline, true);
+					}
+					else
+					{
+						drawManager.renderTranslucent(irisPipeline, true);
+					}
+				}
+				else if (context instanceof TranslucentRenderContext)
+				{
+					drawManager.renderTranslucent(irisPipeline, false);
 				}
 				else
 				{
-					drawManager.renderTranslucent(true);
+					preparePass(context, irisPipeline, false);
+					drawManager.renderSolid(irisPipeline, false);
 				}
-			}
-			else if (context instanceof TranslucentRenderContext)
-			{
-				drawManager.renderTranslucent(false);
 			}
 			else
 			{
-				ClrwlUniforms.update(context, pack, dimension);
-				drawManager.renderSolid(false);
+				handleInvalidPipeline(curPipeline);
 			}
 		}
 		catch (Exception e)
@@ -190,7 +209,16 @@ public class ClrwlEngine implements ExtendedEngine
 	{
 		try (var state = GlStateTracker.getRestoreState())
 		{
-			drawManager.renderCrumbling(crumblingBlocks);
+			var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
+
+			if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
+			{
+				drawManager.renderCrumbling(irisPipeline, crumblingBlocks);
+			}
+			else
+			{
+				handleInvalidPipeline(curPipeline);
+			}
 		}
 		catch (Exception e)
 		{
@@ -202,6 +230,21 @@ public class ClrwlEngine implements ExtendedEngine
 	public void onIrisPipelineDestroy(IrisRenderingPipeline pipeline)
 	{
 		drawManager.onIrisPipelineDestroy(pipeline);
+	}
+
+	protected boolean alreadyGotInvalidPipeline = false;
+
+	protected void handleInvalidPipeline(WorldRenderingPipeline worldPipeline)
+	{
+		if (alreadyGotInvalidPipeline)
+		{
+			return;
+		}
+
+		Colorwheel.LOGGER.warn("Got unexpected rendering pipeline, rendering issues may occur.");
+		Colorwheel.LOGGER.warn("Got pipeline: {}", worldPipeline);
+
+		alreadyGotInvalidPipeline = true;
 	}
 
 	@Override

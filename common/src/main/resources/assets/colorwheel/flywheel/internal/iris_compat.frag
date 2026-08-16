@@ -3,15 +3,6 @@
 #include "colorwheel:internal/oit/wavelet.glsl"
 #include "colorwheel:internal/colorizer.glsl"
 
-#ifdef CLRWL_IS_FALLBACK
-in ClrwlFallbackVertexData
-{
-    vec4 clrwl_overlayColor;
-};
-#else
-vec4 clrwl_overlayColor = vec4(0.0);
-#endif
-
 void clrwl_computeDiscard(vec4 color)
 {
     #ifdef _FLW_USE_DISCARD

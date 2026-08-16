@@ -92,10 +92,11 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 		initializationQueue.clear();
 	}
 
-	public abstract void renderSolid(boolean isShadow);
-	public abstract void renderTranslucent(boolean isShadow);
+	public abstract void preparePass(IrisRenderingPipeline pipeline, boolean isShadow);
+	public abstract void renderSolid(IrisRenderingPipeline pipeline, boolean isShadow);
+	public abstract void renderTranslucent(IrisRenderingPipeline pipeline, boolean isShadow);
 
-	public abstract void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks);
+	public abstract void renderCrumbling(IrisRenderingPipeline pipeline, List<Engine.CrumblingBlock> crumblingBlocks);
 
 	public abstract void onIrisPipelineDestroy(IrisRenderingPipeline pipeline);
 
@@ -185,21 +186,6 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 			}
 		}
 		return byType;
-	}
-
-	protected boolean alreadyGotInvalidPipeline = false;
-
-	protected void handleInvalidPipeline(WorldRenderingPipeline worldPipeline)
-	{
-		if (alreadyGotInvalidPipeline)
-		{
-			return;
-		}
-
-		Colorwheel.LOGGER.warn("Got unexpected rendering pipeline, rendering issues may occur.");
-		Colorwheel.LOGGER.warn("Got pipeline: {}", worldPipeline);
-
-		alreadyGotInvalidPipeline = true;
 	}
 
 	public void delete()

@@ -24,7 +24,8 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
     @Override
     public boolean isColorwheelCurrentBackend()
     {
-        return FlwApiLink.INSTANCE.getCurrentBackend() == ClrwlBackend.IRIS_INSTANCING;
+        var backend = FlwApiLink.INSTANCE.getCurrentBackend();
+        return backend == ClrwlBackend.IRIS_INSTANCING || backend == ClrwlBackend.IRIS_INDIRECT;
     }
 
     @Override

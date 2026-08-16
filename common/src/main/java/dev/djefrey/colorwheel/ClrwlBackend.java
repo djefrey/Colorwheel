@@ -1,13 +1,18 @@
 package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
+import dev.djefrey.colorwheel.indirect.ClrwlBufferBindings;
+import dev.djefrey.colorwheel.indirect.ClrwlIndirectDrawManager;
 import dev.djefrey.colorwheel.instancing.ClrwlInstancedDrawManager;
 import dev.djefrey.colorwheel.util.AccumulateTimer;
 import dev.engine_room.flywheel.api.backend.Backend;
+import dev.engine_room.flywheel.backend.gl.Driver;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.lib.backend.SimpleBackend;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.gl.sampler.SamplerLimits;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.network.chat.ClickEvent;
@@ -27,6 +32,23 @@ public class ClrwlBackend
             .supported(() -> GlCompat.SUPPORTS_INSTANCING && isUsingCompatibleShaderPack())
             .register(Colorwheel.rl("instancing"));
 
+    public static final Backend IRIS_INDIRECT = SimpleBackend.builder()
+            .engineFactory(level -> new ClrwlEngine(level, 256, ClrwlIndirectDrawManager::build))
+            .priority(() -> {
+                // Read from GlCompat in these provider because loading GlCompat
+                // at the same time the backends are registered causes GlCapabilities to be null.
+                if (GlCompat.DRIVER == Driver.INTEL)
+                {
+                    // Intel has very poor performance with indirect rendering, and on top of that has graphics bugs
+                    return 1;
+                }
+                else
+                {
+                    return 1000;
+                }
+            })
+            .supported(() -> GlCompat.SUPPORTS_INDIRECT && isUsingCompatibleShaderPack() && hasEnoughShaderStorageUnits())
+            .register(Colorwheel.rl("indirect"));
 
     public static void init()
     {
@@ -105,6 +127,28 @@ public class ClrwlBackend
         }
 
         return true;
+    }
+
+    public static boolean hasEnoughShaderStorageUnits()
+    {
+        Optional<ShaderPack> pack = Iris.getCurrentPack();
+
+        if (pack.isEmpty())
+        {
+            return false;
+        }
+
+        int clrwlBuffers = ClrwlBufferBindings.TOTAL_BINDING_COUNT;
+        int irisBuffers = ((ShaderPackAccessor) pack.get()).colorwheel$getPackProperties().getBufferObjects().size();
+        int maxUnits = SamplerLimits.get().getMaxShaderStorageUnits();
+        boolean hasEnoughUnits = clrwlBuffers + irisBuffers <= maxUnits;
+
+        if (!hasEnoughUnits)
+        {
+            Colorwheel.LOGGER.error("Graphics card doesn't have enough storage units: {} + {} > {}", clrwlBuffers, irisBuffers, maxUnits);
+        }
+
+        return hasEnoughUnits;
     }
 
     public static Optional<String> findPatchedShaderpack(String shaderpack)

@@ -5,8 +5,10 @@ import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +39,7 @@ public class ClrwlInstancedPrograms
 		return extensions.build();
 	}
 
-	public static ClrwlInstancedPrograms build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean fallback)
+	public static ClrwlInstancedPrograms build(ShaderSources sources, ShaderPack pack, ProgramSet programSet, boolean fallback)
 	{
 		if (!GlCompat.SUPPORTS_INSTANCING)
 		{
@@ -48,7 +50,7 @@ public class ClrwlInstancedPrograms
 				? ClrwlPipelines.INSTANCING_FALLBACK
 				: ClrwlPipelines.INSTANCING;
 
-		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, dimension);
+		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, programSet);
 		var oitPrograms = new ClrwlOitPrograms(sources);
 
         return new ClrwlInstancedPrograms(compiler, oitPrograms);
@@ -73,13 +75,13 @@ public class ClrwlInstancedPrograms
 	{
 		private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
 
-		public ClrwlProgram get(ClrwlShaderKey key)
+		public ClrwlProgram get(ClrwlShaderKey key, IrisRenderingPipeline irisPipeline)
 		{
 			ClrwlProgram program = programCache.get(key);
 
 			if (program == null)
 			{
-				program = ClrwlInstancedPrograms.this.compiler.get(key);
+				program = ClrwlInstancedPrograms.this.compiler.get(key, irisPipeline);
 				programCache.put(key, program);
 			}
 

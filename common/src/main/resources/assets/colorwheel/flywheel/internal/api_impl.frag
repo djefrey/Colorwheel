@@ -13,6 +13,10 @@ in ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+#endif
+
 #ifdef _FLW_DEBUG
     vec2 clrwl_vertexEntity;
     vec2 clrwl_vertexMidTexCoord;
@@ -28,6 +32,19 @@ bool flw_fragDiffuse;
 vec4 flw_fragColor;
 ivec2 flw_fragOverlay;
 vec2 flw_fragLight;
+
+vec4 clrwl_overlayColor = vec4(0.0);
+
+#else // CLRWL_IS_FALLBACK
+
+in ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+#endif
+};
 #endif
 
 FlwMaterial flw_material;
