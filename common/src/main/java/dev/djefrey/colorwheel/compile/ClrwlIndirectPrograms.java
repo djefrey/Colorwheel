@@ -92,6 +92,8 @@ public class ClrwlIndirectPrograms
 	private static final ResourceLocation TRANSFORM_SHADER_MAIN = Colorwheel.rl("internal/indirect/transform.glsl");
 	private static final ResourceLocation APPLY_SHADER_MAIN = Colorwheel.rl("internal/indirect/apply.glsl");
 	private static final ResourceLocation ZERO_SHADER_MAIN = Colorwheel.rl("internal/indirect/zero_models.glsl");
+	private static final ResourceLocation DOWNSAMPLE_FIRST = Colorwheel.rl("internal/indirect/downsample_first.glsl");
+	private static final ResourceLocation DOWNSAMPLE_SECOND = Colorwheel.rl("internal/indirect/downsample_second.glsl");
 
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 	private static final List<String> COMPUTE_EXTENSIONS = getComputeExtensions(GlCompat.MAX_GLSL_VERSION);
@@ -301,12 +303,12 @@ public class ClrwlIndirectPrograms
 
 	public GlProgram getDownsampleFirstProgram()
 	{
-		return flwPrograms.getDownsampleFirstProgram();
+		return utils.get(DOWNSAMPLE_FIRST);
 	}
 
 	public GlProgram getDownsampleSecondProgram()
 	{
-		return flwPrograms.getDownsampleSecondProgram();
+		return utils.get(DOWNSAMPLE_SECOND);
 	}
 
 	// WARNING: Should ONLY be used for utils programs
