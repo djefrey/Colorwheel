@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.indirect;
 
+import static org.lwjgl.opengl.GL30.glBindBufferBase;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 import static org.lwjgl.opengl.GL44.nglBindBuffersRange;
 
@@ -15,10 +16,11 @@ import dev.engine_room.flywheel.lib.memory.MemoryBlock;
 public class ClrwlIndirectBuffers
 {
     // Number of vbos created.
-    public static final int BUFFER_COUNT = 5;
+    public static final int BUFFER_COUNT = 6;
 
     public static final long INT_SIZE = Integer.BYTES;
     public static final long PTR_SIZE = Pointer.POINTER_SIZE;
+    public static final long SPHERE_SIZE = Float.BYTES * 4L;
 
     public static final long MODEL_STRIDE = 28 + 8;
 
@@ -35,6 +37,7 @@ public class ClrwlIndirectBuffers
 
     // Offsets to the vbos
     private static final long PAGE_FRAME_DESCRIPTOR_HANDLE_OFFSET = HANDLE_OFFSET + ClrwlBufferBindings.PAGE_FRAME_DESCRIPTOR * INT_SIZE;
+    private static final long BOUNDING_SPHERE_HANDLE_OFFSET = HANDLE_OFFSET + ClrwlBufferBindings.BOUNDING_SPHERES * INT_SIZE;
     private static final long INSTANCE_HANDLE_OFFSET = HANDLE_OFFSET + ClrwlBufferBindings.INSTANCE * INT_SIZE;
     private static final long DRAW_INSTANCE_INDEX_HANDLE_OFFSET = HANDLE_OFFSET + ClrwlBufferBindings.DRAW_INSTANCE_INDEX * INT_SIZE;
     private static final long MODEL_HANDLE_OFFSET = HANDLE_OFFSET + ClrwlBufferBindings.MODEL * INT_SIZE;
@@ -42,6 +45,7 @@ public class ClrwlIndirectBuffers
 
     // Offsets to the sizes
     private static final long PAGE_FRAME_DESCRIPTOR_SIZE_OFFSET = SIZE_OFFSET + ClrwlBufferBindings.PAGE_FRAME_DESCRIPTOR * PTR_SIZE;
+    private static final long BOUNDING_SPHERE_SIZE_OFFSET = SIZE_OFFSET + ClrwlBufferBindings.BOUNDING_SPHERES * PTR_SIZE;
     private static final long INSTANCE_SIZE_OFFSET = SIZE_OFFSET + ClrwlBufferBindings.INSTANCE * PTR_SIZE;
     private static final long DRAW_INSTANCE_INDEX_SIZE_OFFSET = SIZE_OFFSET + ClrwlBufferBindings.DRAW_INSTANCE_INDEX * PTR_SIZE;
     private static final long MODEL_SIZE_OFFSET = SIZE_OFFSET + ClrwlBufferBindings.MODEL * PTR_SIZE;
@@ -67,6 +71,7 @@ public class ClrwlIndirectBuffers
     private final MemoryBlock multiBindBlock;
 
     public final ObjectStorage objectStorage;
+    public final ResizableStorageArray boundingSpheres;
     public final ResizableStorageArray drawInstanceIndex;
     public final ResizableStorageArray model;
     public final ResizableStorageArray draw;
@@ -76,6 +81,7 @@ public class ClrwlIndirectBuffers
         this.multiBindBlock = MemoryBlock.calloc(BUFFERS_SIZE_BYTES, 1);
 
         objectStorage = new ObjectStorage(instanceStride);
+        boundingSpheres = new ResizableStorageArray(SPHERE_SIZE, INSTANCE_GROWTH_FACTOR);
         drawInstanceIndex = new ResizableStorageArray(INT_SIZE, INSTANCE_GROWTH_FACTOR);
         model = new ResizableStorageArray(MODEL_STRIDE, MODEL_GROWTH_FACTOR);
         draw = new ResizableStorageArray(DRAW_COMMAND_STRIDE, DRAW_GROWTH_FACTOR);
@@ -85,36 +91,59 @@ public class ClrwlIndirectBuffers
     {
         final long ptr = multiBindBlock.ptr();
 
+        boundingSpheres.ensureCapacity(getAllocatedInstanceCount());
         drawInstanceIndex.ensureCapacity(instanceCount);
         model.ensureCapacity(modelCount);
         draw.ensureCapacity(drawCount);
 
         MemoryUtil.memPutInt(ptr + PAGE_FRAME_DESCRIPTOR_HANDLE_OFFSET, objectStorage.frameDescriptorBuffer.handle());
+        MemoryUtil.memPutInt(ptr + BOUNDING_SPHERE_HANDLE_OFFSET, boundingSpheres.handle());
         MemoryUtil.memPutInt(ptr + INSTANCE_HANDLE_OFFSET, objectStorage.objectBuffer.handle());
         MemoryUtil.memPutInt(ptr + DRAW_INSTANCE_INDEX_HANDLE_OFFSET, drawInstanceIndex.handle());
         MemoryUtil.memPutInt(ptr + MODEL_HANDLE_OFFSET, model.handle());
         MemoryUtil.memPutInt(ptr + DRAW_HANDLE_OFFSET, draw.handle());
 
         MemoryUtil.memPutAddress(ptr + PAGE_FRAME_DESCRIPTOR_SIZE_OFFSET, objectStorage.frameDescriptorBuffer.capacity());
+        MemoryUtil.memPutAddress(ptr + BOUNDING_SPHERE_SIZE_OFFSET, SPHERE_SIZE * boundingSpheres.capacity());
         MemoryUtil.memPutAddress(ptr + INSTANCE_SIZE_OFFSET, objectStorage.objectBuffer.capacity());
         MemoryUtil.memPutAddress(ptr + DRAW_INSTANCE_INDEX_SIZE_OFFSET, INT_SIZE * instanceCount);
         MemoryUtil.memPutAddress(ptr + MODEL_SIZE_OFFSET, MODEL_STRIDE * modelCount);
         MemoryUtil.memPutAddress(ptr + DRAW_SIZE_OFFSET, DRAW_COMMAND_STRIDE * drawCount);
     }
 
+    private long getAllocatedPageCount()
+    {
+        return objectStorage.frameDescriptorBuffer.capacity() / 2L / 4L; // 2 * 4 bytes per page
+    }
+
+    private long getAllocatedInstanceCount()
+    {
+        return getAllocatedPageCount() * 32L; // 1 page = 32 instances
+    }
+
+    public void bindForTransform()
+    {
+        multiBind(0, 5);
+    }
+
     public void bindForCull()
     {
-        multiBind(0, 4);
+        multiBind(0, 5);
     }
 
     public void bindForApply()
     {
-        multiBind(3, 2);
+        multiBind(4, 2);
+    }
+
+    public void bindForModelReset()
+    {
+        multiBind(4, 1);
     }
 
     public void bindForDraw()
     {
-        multiBind(1, 4);
+        multiBind(2, 4);
         GlBufferType.DRAW_INDIRECT_BUFFER.bind(draw.handle());
     }
 
@@ -135,8 +164,39 @@ public class ClrwlIndirectBuffers
         multiBindBlock.free();
 
         objectStorage.delete();
+        boundingSpheres.delete();
         drawInstanceIndex.delete();
         model.delete();
         draw.delete();
+    }
+
+    public PipelineBuffers makePipelineBuffers()
+    {
+        return new PipelineBuffers();
+    }
+
+    public class PipelineBuffers
+    {
+        public final ResizableStorageArray lastFrameVisibility;
+
+        public PipelineBuffers()
+        {
+            lastFrameVisibility = new ResizableStorageArray(INT_SIZE, INSTANCE_GROWTH_FACTOR);
+        }
+
+        public void updateCounts()
+        {
+            lastFrameVisibility.ensureCapacity(ClrwlIndirectBuffers.this.getAllocatedPageCount());
+        }
+
+        public void bindForCull()
+        {
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ClrwlBufferBindings.VISIBILITY, lastFrameVisibility.handle());
+        }
+
+        public void delete()
+        {
+            lastFrameVisibility.delete();
+        }
     }
 }

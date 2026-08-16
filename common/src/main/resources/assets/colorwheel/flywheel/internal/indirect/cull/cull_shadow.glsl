@@ -19,6 +19,10 @@ layout(std430, binding = _FLW_PAGE_FRAME_DESCRIPTOR_BUFFER_BINDING) restrict rea
     uint _flw_pageFrameDescriptors[];
 };
 
+layout(std430, binding = _FLW_BOUNDING_SPHERE_BUFFER_BINDING) restrict readonly buffer BoundingSphereBuffer {
+    FlwBoundingSphere _flw_boundingSpheres[];
+};
+
 layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer {
     FlwModelDescriptor _flw_models[];
 };
@@ -66,21 +70,9 @@ bool _clrwl_testSphere(vec3 center, float radius)
 
 bool _clrwl_isVisible(uint instanceIndex, uint modelIndex)
 {
-    uint matrixIndex = _flw_models[modelIndex].matrixIndex;
-    FlwBoundingSphere sphere = _flw_models[modelIndex].boundingSphere;
-
     vec3 center;
     float radius;
-    _flw_unpackBoundingSphere(sphere, center, radius);
-
-    FlwInstance instance = _flw_unpackInstance(instanceIndex);
-
-    flw_transformBoundingSphere(instance, center, radius);
-
-    if (matrixIndex > 0)
-    {
-        transformBoundingSphere(_flw_matrices[matrixIndex].pose, center, radius);
-    }
+    _flw_unpackBoundingSphere(_flw_boundingSpheres[instanceIndex], center, radius);
 
     bool isVisible = _clrwl_testSphere(center, radius);
 
@@ -97,10 +89,10 @@ void main()
     }
 
     uint modelIndex = _flw_pageFrameDescriptors[pageIndex];
-
     uint pageValidity = _flw_pageFrameDescriptors[pageIndex + 1];
+    uint localInvocationMask = 1u << gl_LocalInvocationID.x;
 
-    if (((1u << gl_LocalInvocationID.x) & pageValidity) == 0)
+    if ((localInvocationMask & pageValidity) == 0)
     {
         return;
     }

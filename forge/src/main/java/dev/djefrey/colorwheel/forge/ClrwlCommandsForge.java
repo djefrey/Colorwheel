@@ -6,6 +6,7 @@ import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlGbuffersPassUniforms;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowPassUniforms;
 import dev.djefrey.colorwheel.engine.uniform.DebugMode;
+import dev.djefrey.colorwheel.indirect.ClrwlIndirectDrawManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -59,6 +60,34 @@ public class ClrwlCommandsForge
                                 .executes(ctx ->
                                 {
                                     ClrwlShadowPassUniforms.unpauseFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                }))));
+
+        debug.then(Commands.literal("cull")
+                .then(Commands.literal("two_pass")
+                        .then(Commands.literal("enable")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleTwoPassCull(true);
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(Commands.literal("disable")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleTwoPassCull(false);
+                                    return Command.SINGLE_SUCCESS;
+                                })))
+                .then(Commands.literal("late")
+                        .then(Commands.literal("enable")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleLateCull(true);
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(Commands.literal("disable")
+                                .executes(ctx ->
+                                {
+                                    ClrwlIndirectDrawManager.toggleLateCull(false);
                                     return Command.SINGLE_SUCCESS;
                                 }))));
 
