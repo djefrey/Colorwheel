@@ -10,11 +10,13 @@ public class ClrwlShaderSources
     private final ShaderSources flwSources;
     private final ProgramSet programSet;
     private final ClrwlProgramSources clrwlSources;
+    private final IrisRenderingPipeline irisPipeline;
 
-    public ClrwlShaderSources(ShaderSources flwSources, IrisRenderingPipeline irisPipeline, ProgramSet programSet)
+    public ClrwlShaderSources(ShaderSources flwSources, ProgramSet programSet, IrisRenderingPipeline irisPipeline)
     {
         this.flwSources = flwSources;
         this.programSet = programSet;
+        this.irisPipeline = irisPipeline;
         this.clrwlSources = new ClrwlProgramSources(irisPipeline, programSet);
     }
 
@@ -26,6 +28,11 @@ public class ClrwlShaderSources
     public ProgramSet programSet()
     {
         return programSet;
+    }
+
+    public IrisRenderingPipeline irisPipeline()
+    {
+        return irisPipeline;
     }
 
     public ClrwlProgramSources clrwlSources()

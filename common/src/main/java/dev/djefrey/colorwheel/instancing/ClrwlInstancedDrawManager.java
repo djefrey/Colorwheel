@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel.instancing;
 
-import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
-import dev.djefrey.colorwheel.compile.ClrwlPrograms;
+import dev.djefrey.colorwheel.compile.*;
 import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
 import dev.djefrey.colorwheel.engine.ClrwlMeshPool;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
@@ -9,8 +8,6 @@ import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
-import dev.djefrey.colorwheel.compile.ClrwlProgram;
-import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
@@ -42,7 +39,7 @@ import java.util.*;
 
 public class ClrwlInstancedDrawManager extends ClrwlDrawManager<ClrwlInstancedInstancer<?>>
 {
-	public record PipelineData(ClrwlPrograms programs, ClrwlFramebuffers framebuffers)
+	public record PipelineData(ClrwlInstancedPrograms.PipelinePrograms programs, ClrwlFramebuffers framebuffers)
 	{
 		public void delete()
 		{
@@ -512,7 +509,7 @@ top:	if (!oitDraws.isEmpty())
 
 	private PipelineData createPipelineData(IrisRenderingPipeline irisPipeline)
 	{
-		var pipelinePrograms = programs.createClrwlPrograms(irisPipeline);
+		var pipelinePrograms = programs.createPipelinePrograms(irisPipeline);
 		var framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
 
 		Colorwheel.LOGGER.info("Created pipeline data for {}", irisPipeline);

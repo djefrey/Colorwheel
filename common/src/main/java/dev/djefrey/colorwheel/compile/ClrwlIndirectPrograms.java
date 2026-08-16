@@ -2,8 +2,15 @@ package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.compile.component.IrisShaderComponent;
 import dev.djefrey.colorwheel.compile.component.SsboInstanceComponent;
-import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.compile.core.ClrwlCompilation;
+import dev.djefrey.colorwheel.compile.core.ClrwlCompilationHarness;
+import dev.djefrey.colorwheel.compile.core.ClrwlCompile;
+import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.backend.compile.IndirectPrograms;
@@ -23,6 +30,7 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -31,27 +39,33 @@ import java.util.Map;
 
 public class ClrwlIndirectPrograms
 {
-	private interface ClrwlProgramsFactory
+	private interface PipelineProgramsFactory
 	{
-		ClrwlPrograms build(IrisRenderingPipeline irisPipeline);
+		PipelinePrograms build(IrisRenderingPipeline irisPipeline);
 	}
 
 	public enum Culling
 	{
-		GBUFFERS_FULL("gbuffers_full", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS),
-		GBUFFERS_EARLY("gbuffers_early", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_early.glsl"), ClrwlProgramGroup.GBUFFERS),
-		GBUFFERS_LATE("gbuffers_late", Colorwheel.rl("internal/indirect/cull/cull_gbuffers_late.glsl"), ClrwlProgramGroup.GBUFFERS),
-		SHADOW("shadow", Colorwheel.rl("internal/indirect/cull/cull_shadow.glsl"), ClrwlProgramGroup.SHADOW);
+		GBUFFERS_EARLY("gbuffers_early", Colorwheel.rl("internal/indirect/cull/gbuffers_early.glsl"), ClrwlProgramGroup.GBUFFERS, false, true),
+		GBUFFERS_LATE("gbuffers_late", Colorwheel.rl("internal/indirect/cull/gbuffers_late.glsl"), ClrwlProgramGroup.GBUFFERS, true, true),
+		GBUFFERS_FULL("gbuffers_full", Colorwheel.rl("internal/indirect/cull/gbuffers_full.glsl"), ClrwlProgramGroup.GBUFFERS, true, true),
+		SHADOW_EARLY("shadow_early", Colorwheel.rl("internal/indirect/cull/shadow_early.glsl"), ClrwlProgramGroup.SHADOW, false, true),
+		SHADOW_LATE("shadow_late", Colorwheel.rl("internal/indirect/cull/shadow_late.glsl"), ClrwlProgramGroup.SHADOW, true, true),
+		SHADOW_FULL("shadow_full", Colorwheel.rl("internal/indirect/cull/shadow_full.glsl"), ClrwlProgramGroup.SHADOW, true, true);
 
 		private final String name;
 		private final ResourceLocation shader;
 		private final ClrwlProgramGroup group;
+		private final boolean occlusion;
+		private final boolean frustum;
 
-		Culling(String name, ResourceLocation shader, ClrwlProgramGroup group)
+		Culling(String name, ResourceLocation shader, ClrwlProgramGroup group, boolean occlusion, boolean frustum)
 		{
 			this.name = name;
 			this.shader = shader;
 			this.group = group;
+			this.occlusion = occlusion;
+			this.frustum = frustum;
 		}
 
 		public String shaderName()
@@ -64,14 +78,24 @@ public class ClrwlIndirectPrograms
 			return this.shader;
 		}
 
-		public void setDefines(Compilation c)
+		public boolean useOcclusion()
 		{
-			switch (group)
+			return occlusion;
+		}
+
+		public boolean useFrustum()
+		{
+			return frustum;
+		}
+
+		public void injectCode(ClrwlCompilation c, ClrwlPrograms.Pipeline pipeline, ClrwlShaderSources sources)
+		{
+			if (this == SHADOW_FULL || this == SHADOW_LATE)
 			{
-                case GBUFFERS -> c.define("_CLRWL_IS_GBUFFERS_PASS");
-                case SHADOW -> c.define("_CLRWL_IS_SHADOW_PASS");
-				default -> {}
-            }
+				var computeSrc = ((ProgramSetAccessor) sources.programSet()).colorwheel$getShadowTransformSource().orElseThrow();
+				var src = sources.clrwlSources().getComputeSource(computeSrc, pipeline.ssboOffset());
+				c.appendComponent(new IrisShaderComponent(computeSrc.getName(), src.shader()));
+			}
 		}
 
 		public boolean isShadow()
@@ -88,7 +112,7 @@ public class ClrwlIndirectPrograms
 		}
 	}
 
-	private static final ResourceLocation CULL_SHADER_API_IMPL = Colorwheel.rl("internal/indirect/cull/cull_api_impl.glsl");
+	private static final ResourceLocation CULL_SHADER_API_IMPL = Colorwheel.rl("internal/indirect/cull/api_impl.glsl");
 	private static final ResourceLocation TRANSFORM_SHADER_MAIN = Colorwheel.rl("internal/indirect/transform.glsl");
 	private static final ResourceLocation APPLY_SHADER_MAIN = Colorwheel.rl("internal/indirect/apply.glsl");
 	private static final ResourceLocation ZERO_SHADER_MAIN = Colorwheel.rl("internal/indirect/zero_models.glsl");
@@ -99,23 +123,23 @@ public class ClrwlIndirectPrograms
 	private static final List<String> COMPUTE_EXTENSIONS = getComputeExtensions(GlCompat.MAX_GLSL_VERSION);
 
 	private static final Compile<InstanceType<?>> TRANSFORM = new Compile<>();
-	private static final Compile<Culling> CULL = new Compile<>();
+	private static final ClrwlCompile<Culling, GlProgram> CULL = new ClrwlCompile<>();
 	private static final Compile<ResourceLocation> UTIL = new Compile<>();
 
 	private final ClrwlOitPrograms oitPrograms;
 	private final CompilationHarness<InstanceType<?>> transform;
-	private final CompilationHarness<Culling> culling;
 	private final CompilationHarness<ResourceLocation> utils;
-	private final ClrwlProgramsFactory programsFactory;
+	private final PipelineProgramsFactory programsFactory;
 
 	// WARNING: this can ONLY be used for utils ! (otherwise, kaboom)
 	private final IndirectPrograms flwPrograms;
 
-	private ClrwlIndirectPrograms(ClrwlOitPrograms oitPrograms, CompilationHarness<InstanceType<?>> transform, CompilationHarness<Culling> culling, CompilationHarness<ResourceLocation> utils, ClrwlProgramsFactory programsFactory)
+	private ClrwlIndirectPrograms(ClrwlOitPrograms oitPrograms,
+	                              CompilationHarness<InstanceType<?>> transform, CompilationHarness<ResourceLocation> utils,
+	                              PipelineProgramsFactory programsFactory)
 	{
 		this.oitPrograms = oitPrograms;
 		this.transform = transform;
-		this.culling = culling;
 		this.utils = utils;
 		this.programsFactory = programsFactory;
 
@@ -178,22 +202,17 @@ public class ClrwlIndirectPrograms
 				? ClrwlPipelines.INDIRECT_FALLBACK
 				: ClrwlPipelines.INDIRECT;
 
-		var directives = programSet.getPackDirectives();
-		var occlusionCulling = directives.shouldUseOcclusionCulling();
-		var frustumCulling = directives.shouldUseFrustumCulling();
-
 		var oitPrograms = new ClrwlOitPrograms(sources, pipeline);
 		var transform = createTransformCompiler(sources);
-		var culling = createCullingCompiler(sources, occlusionCulling, frustumCulling);
 		var util = createUtilCompiler(sources);
 
-		ClrwlProgramsFactory programsFactory = (irisPipeline) ->
+		PipelineProgramsFactory programsFactory = (irisPipeline) ->
 		{
-			var clrwlSources = new ClrwlShaderSources(sources, irisPipeline, programSet);
-			return new ClrwlPrograms(clrwlSources, pipeline, pack, irisPipeline);
+			var clrwlSources = new ClrwlShaderSources(sources, programSet, irisPipeline);
+			return new PipelinePrograms(clrwlSources, pipeline, pack);
 		};
 
-        return new ClrwlIndirectPrograms(oitPrograms, transform, culling, util, programsFactory);
+        return new ClrwlIndirectPrograms(oitPrograms, transform, util, programsFactory);
 	}
 
 	private static CompilationHarness<InstanceType<?>> createTransformCompiler(ShaderSources sources)
@@ -220,38 +239,42 @@ public class ClrwlIndirectPrograms
 	/**
 	 * A compiler for cull shaders, parameterized by the instance type.
 	 */
-	private static CompilationHarness<Culling> createCullingCompiler(ShaderSources sources, boolean occlusion, boolean frustum)
+	private static ClrwlCompilationHarness<Culling, GlProgram> createCullingCompiler(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline, boolean occlusion, boolean frustum)
 	{
-		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ShaderType.COMPUTE)
-				.nameMapper(cull -> "colorwheel/cull/" + cull.shaderName())
+		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ClrwlShaderType.COMPUTE)
+				.nameMapper(cull -> "cull/" + cull.shaderName())
 				.requireExtensions(COMPUTE_EXTENSIONS)
 				.enableExtension("GL_KHR_shader_subgroup_basic")
 				.enableExtension("GL_KHR_shader_subgroup_ballot")
 				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-				.onCompile((k, c) -> k.setDefines(c));
+				.onCompile((k, c) -> ClrwlPrograms.defineClrwlPass(k.isShadow(), c));
 
 		if (FORCE_DISABLE_SUBGROUP_BALLOT)
 		{
 			shader = shader.define("_CLRWL_FORCE_DISABLE_SUBGROUP_BALLOT", 1);
 		}
 
-		if (occlusion)
+		shader.onCompile((k, c) ->
 		{
-			shader = shader.define("_CLRWL_OCCLUSION_CULLING", 1);
-		}
+			if (occlusion && k.useOcclusion())
+			{
+				c.define("_CLRWL_OCCLUSION_CULLING", "1");
+			}
 
-		if (frustum)
-		{
-			shader = shader.define("_CLRWL_FRUSTUM_CULLING", 1);
-		}
+			if (frustum && k.useFrustum())
+			{
+				c.define("_CLRWL_FRUSTUM_CULLING", "1");
+			}
+		});
 
 		shader = shader
+				.onCompile((c, cc) -> c.injectCode(cc, pipeline, sources))
 				.withResource(Culling::shader);
 
 		return CULL.program()
 				.link(shader)
 				.postLink((key, program) -> ClrwlUniforms.setUniformsBlockBindings(program))
-				.harness("culling", sources);
+				.harness("culling", sources, ($, h) -> new GlProgram(h));
 	}
 
 	/**
@@ -269,7 +292,7 @@ public class ClrwlIndirectPrograms
 	}
 
 
-	public ClrwlPrograms createClrwlPrograms(IrisRenderingPipeline irisPipeline)
+	public PipelinePrograms createPipelinePrograms(IrisRenderingPipeline irisPipeline)
 	{
 		return programsFactory.build(irisPipeline);
 	}
@@ -279,11 +302,6 @@ public class ClrwlIndirectPrograms
 	public GlProgram getTransformProgram(InstanceType<?> instanceType)
 	{
 		return this.transform.get(instanceType);
-	}
-
-	public GlProgram getCullingProgram(Culling culling)
-	{
-		return this.culling.get(culling);
 	}
 
 	public GlProgram getApplyProgram()
@@ -321,10 +339,42 @@ public class ClrwlIndirectPrograms
 	{
 		oitPrograms.delete();
 		transform.delete();
-		culling.delete();
 		utils.delete();
 
 		// flwPrograms is not deleted as it contains null references (=> kaboom)
+	}
+
+	public static class PipelinePrograms
+	{
+		ClrwlPrograms clrwlPrograms;
+		ClrwlCompilationHarness<Culling, GlProgram> cullPrograms;
+
+		public PipelinePrograms(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline, ShaderPack pack)
+		{
+			var directives = sources.programSet().getPackDirectives();
+			var occlusionCulling = directives.shouldUseOcclusionCulling();
+			var frustumCulling = directives.shouldUseFrustumCulling();
+
+			this.clrwlPrograms = new ClrwlPrograms(sources, pipeline, pack);
+			this.cullPrograms = createCullingCompiler(sources, pipeline, occlusionCulling, frustumCulling);
+		}
+
+		@Nullable
+		public ClrwlProgram get(ClrwlShaderKey key)
+		{
+			return clrwlPrograms.get(key);
+		}
+
+		public GlProgram getCullingProgram(Culling culling)
+		{
+			return cullPrograms.get(culling);
+		}
+
+		public void delete()
+		{
+			clrwlPrograms.delete();
+			cullPrograms.delete();
+		}
 	}
 
 	private static boolean FORCE_DISABLE_SUBGROUP_BALLOT = false;

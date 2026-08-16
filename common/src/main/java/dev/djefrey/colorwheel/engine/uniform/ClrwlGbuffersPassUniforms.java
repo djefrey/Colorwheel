@@ -176,7 +176,7 @@ public final class ClrwlGbuffersPassUniforms extends UniformWriter
 		ptr = writeFloat(ptr, pyramidWidth); // pyramidWidth
 		ptr = writeFloat(ptr, pyramidHeight); // pyramidHeight
 		ptr = writeInt(ptr, pyramidDepth - 1); // pyramidLevels
-		ptr = writeInt(ptr, 0); // useMin
+		ptr = writeInt(ptr, 0); // orthographicProjection
 
 		return ptr;
 	}

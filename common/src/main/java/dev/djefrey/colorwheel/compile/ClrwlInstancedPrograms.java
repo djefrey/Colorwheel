@@ -10,6 +10,7 @@ import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import org.apache.commons.lang3.function.TriFunction;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,17 +18,17 @@ import java.util.Map;
 
 public class ClrwlInstancedPrograms
 {
-	private interface ClrwlProgramsFactory
+	private interface PipelineProgramsFactory
 	{
-		ClrwlPrograms build(IrisRenderingPipeline irisPipeline);
+		PipelinePrograms build(IrisRenderingPipeline irisPipeline);
 	}
 
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 
 	private final ClrwlOitPrograms oitPrograms;
-	private final ClrwlProgramsFactory programsFactory;
+	private final PipelineProgramsFactory programsFactory;
 
-	private ClrwlInstancedPrograms(ClrwlOitPrograms oitPrograms, ClrwlProgramsFactory programsFactory)
+	private ClrwlInstancedPrograms(ClrwlOitPrograms oitPrograms, PipelineProgramsFactory programsFactory)
 	{
 		this.oitPrograms = oitPrograms;
 		this.programsFactory = programsFactory;
@@ -57,16 +58,16 @@ public class ClrwlInstancedPrograms
 				: ClrwlPipelines.INSTANCING;
 
 		var oitPrograms = new ClrwlOitPrograms(sources, pipeline);
-		ClrwlProgramsFactory programsFactory = (irisPipeline) ->
+		PipelineProgramsFactory programsFactory = (irisPipeline) ->
 		{
-			var clrwlSources = new ClrwlShaderSources(sources, irisPipeline, programSet);
-			return new ClrwlPrograms(clrwlSources, pipeline, pack, irisPipeline);
+			var clrwlSources = new ClrwlShaderSources(sources, programSet, irisPipeline);
+			return new PipelinePrograms(clrwlSources, pipeline, pack);
 		};
 
 		return new ClrwlInstancedPrograms(oitPrograms, programsFactory);
 	}
 
-	public ClrwlPrograms createClrwlPrograms(IrisRenderingPipeline irisPipeline)
+	public PipelinePrograms createPipelinePrograms(IrisRenderingPipeline irisPipeline)
 	{
 		return programsFactory.build(irisPipeline);
 	}
@@ -79,5 +80,26 @@ public class ClrwlInstancedPrograms
 	public void delete()
 	{
 		oitPrograms.delete();
+	}
+
+	public static class PipelinePrograms
+	{
+		private final ClrwlPrograms clrwlPrograms;
+
+		private PipelinePrograms(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline, ShaderPack pack)
+		{
+			this.clrwlPrograms = new ClrwlPrograms(sources, pipeline, pack);
+		}
+
+		@Nullable
+		public ClrwlProgram get(ClrwlShaderKey key)
+		{
+			return clrwlPrograms.get(key);
+		}
+
+		public void delete()
+		{
+			clrwlPrograms.delete();
+		}
 	}
 }

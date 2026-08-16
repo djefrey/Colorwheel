@@ -21,7 +21,7 @@ struct _FlwCullData
     float pyramidWidth;
     float pyramidHeight;
     int pyramidLevels;
-    uint useMin;
+    uint orthographic;
 };
 
 struct _ClrwlShadowFrustumPlanesGroup

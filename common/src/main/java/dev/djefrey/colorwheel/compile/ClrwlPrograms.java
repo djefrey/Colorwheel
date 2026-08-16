@@ -83,13 +83,13 @@ public class ClrwlPrograms
     private final ClrwlCompilationHarness<ClrwlShaderKey, ClrwlProgram> pipelineHarness;
     private final ProgramSet programSet;
 
-    public ClrwlPrograms(ClrwlShaderSources sources, Pipeline pipeline, ShaderPack pack, IrisRenderingPipeline irisPipeline)
+    public ClrwlPrograms(ClrwlShaderSources sources, Pipeline pipeline, ShaderPack pack)
     {
-        this.pipelineHarness = createPipeline(sources, pipeline, pack, irisPipeline);
+        this.pipelineHarness = createPipeline(sources, pipeline, pack);
         this.programSet = sources.programSet();
     }
 
-    private static ClrwlCompilationHarness<ClrwlShaderKey, ClrwlProgram> createPipeline(ClrwlShaderSources sources, Pipeline pipeline, ShaderPack pack, IrisRenderingPipeline irisPipeline)
+    private static ClrwlCompilationHarness<ClrwlShaderKey, ClrwlProgram> createPipeline(ClrwlShaderSources sources, Pipeline pipeline, ShaderPack pack)
     {
         ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
 
@@ -170,7 +170,7 @@ public class ClrwlPrograms
         return PIPELINE.program()
                 .link(vert).link(geom).link(frag)
                 .preLink(($, p) -> p.preLink())
-                .postLink(($, p) -> p.postLink(irisPipeline, properties))
+                .postLink(($, p) -> p.postLink(sources.irisPipeline(), properties))
                 .harness(pipeline.id(), sources, (k, h) ->
                 {
                     var instanceName = ResourceUtil.toDebugFileNameNoExtension(k.instanceType().vertexShader());
@@ -253,7 +253,7 @@ public class ClrwlPrograms
         }
     }
 
-    private static void defineClrwlPass(boolean isShadow, ClrwlCompilation c)
+    public static void defineClrwlPass(boolean isShadow, ClrwlCompilation c)
     {
         if (isShadow)
         {

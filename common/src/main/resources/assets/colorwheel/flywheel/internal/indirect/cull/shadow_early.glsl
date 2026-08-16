@@ -3,6 +3,7 @@
 #include "colorwheel:internal/indirect/matrices.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 #include "flywheel:util/matrix.glsl"
+#include "colorwheel:internal/indirect/cull/common.glsl"
 
 layout(local_size_x = 32) in;
 
@@ -26,32 +27,36 @@ layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer 
     FlwModelDescriptor _flw_models[];
 };
 
-// Disgustingly vectorized sphere frustum intersection taking advantage of ahead of time packing.
-// Only uses 6 fmas and some boolean ops.
-// See also:
-// flywheel:uniform/flywheel.glsl
-// dev.engine_room.flywheel.lib.math.MatrixMath.writePackedFrustumPlanes
-// org.joml.FrustumIntersection.testSphere
-bool _flw_testSphere(vec3 center, float radius)
+bool _clrwl_testSphere(vec3 center, float radius)
 {
-    bvec4 xyInside = greaterThanEqual(fma(flw_frustumPlanes.xyX, center.xxxx, fma(flw_frustumPlanes.xyY, center.yyyy, fma(flw_frustumPlanes.xyZ, center.zzzz, flw_frustumPlanes.xyW))), -radius.xxxx);
-    bvec2 zInside = greaterThanEqual(fma(flw_frustumPlanes.zX, center.xx, fma(flw_frustumPlanes.zY, center.yy, fma(flw_frustumPlanes.zZ, center.zz, flw_frustumPlanes.zW))), -radius.xx);
+    float reversedCullDist = clrwl_shadowFrustumPlanes.groups[2].X.w;
+    float cullDist = clrwl_shadowFrustumPlanes.groups[2].Y.w;
 
-    return all(xyInside) && all(zInside);
+    if (_clrwl_isSphereInCube(center, radius, flw_cameraPos, reversedCullDist))
+    {
+        return true;
+    }
+
+    if (!_clrwl_isSphereInCube(center, radius, flw_cameraPos, cullDist))
+    {
+        return false;
+    }
+
+    return _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[0])
+        && _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[1])
+        && _clrwl_testSphereOn3Planes(center, radius, clrwl_shadowFrustumPlanes.groups[2]);
 }
 
-bool _flw_isVisible(uint instanceIndex, uint modelIndex)
+bool _clrwl_isVisible(uint instanceIndex, uint modelIndex)
 {
     vec3 center;
     float radius;
     _flw_unpackBoundingSphere(_flw_boundingSpheres[instanceIndex], center, radius);
 
-    bool isVisible = _flw_testSphere(center, radius);
+    bool isVisible = _clrwl_testSphere(center, radius);
 
     return isVisible;
 }
-
-uniform uint clrwl_materialFilter;
 
 void main()
 {
@@ -63,13 +68,6 @@ void main()
     }
 
     uint modelIndex = _flw_pageFrameDescriptors[pageIndex];
-    uint materialBitset = _clrwl_unpackMaterialBitset(_flw_models[modelIndex]);
-
-    if ((materialBitset & clrwl_materialFilter) == 0)
-    {
-        return;
-    }
-
     uint pageValidity = _flw_pageFrameDescriptors[pageIndex + 1];
     uint localInvocationMask = 1u << gl_LocalInvocationID.x;
 
@@ -80,7 +78,7 @@ void main()
 
     uint instanceIndex = gl_GlobalInvocationID.x;
 
-    if (!_flw_isVisible(instanceIndex, modelIndex))
+    if (!_clrwl_isVisible(instanceIndex, modelIndex))
     {
         return;
     }

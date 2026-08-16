@@ -185,25 +185,30 @@ public class ClrwlIndirectBuffers
     public class PipelineBuffers
     {
         public final ResizableStorageArray lastFrameVisibility;
+        public final ResizableStorageArray shadowLastFrameVisibility;
 
         public PipelineBuffers()
         {
             lastFrameVisibility = new ResizableStorageArray(INT_SIZE, INSTANCE_GROWTH_FACTOR);
+            shadowLastFrameVisibility = new ResizableStorageArray(INT_SIZE, INSTANCE_GROWTH_FACTOR);
         }
 
         public void updateCounts()
         {
             lastFrameVisibility.ensureCapacity(ClrwlIndirectBuffers.this.getAllocatedPageCount());
+            shadowLastFrameVisibility.ensureCapacity(ClrwlIndirectBuffers.this.getAllocatedPageCount());
         }
 
-        public void bindForCull()
+        public void bindForCull(boolean isShadow)
         {
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ClrwlBufferBindings.VISIBILITY, lastFrameVisibility.handle());
+            var handle = isShadow ? shadowLastFrameVisibility.handle() : lastFrameVisibility.handle();
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ClrwlBufferBindings.VISIBILITY, handle);
         }
 
         public void delete()
         {
             lastFrameVisibility.delete();
+            shadowLastFrameVisibility.delete();
         }
     }
 

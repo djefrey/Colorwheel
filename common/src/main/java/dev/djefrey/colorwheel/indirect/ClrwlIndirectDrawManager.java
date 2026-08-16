@@ -45,9 +45,10 @@ import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
 public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInstancer<?>>
 {
-	public record PipelineData(ClrwlPrograms programs,
+	public record PipelineData(ClrwlIndirectPrograms.PipelinePrograms programs,
 							   ClrwlFramebuffers framebuffers,
 							   ClrwlDepthPyramid depthPyramid,
+							   ClrwlDepthPyramid shadowDepthPyramid,
 							   Map<ClrwlIndirectCullingGroup<?>, ClrwlIndirectBuffers.PipelineBuffers> buffers)
 	{
 		public ClrwlIndirectBuffers.PipelineBuffers getBuffers(ClrwlIndirectCullingGroup<?> group)
@@ -57,7 +58,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		public ClrwlDepthPyramid depthPyramid(boolean isShadow)
 		{
-			return depthPyramid;
+			return isShadow ? shadowDepthPyramid : depthPyramid;
 		}
 
 		public void delete()
@@ -65,6 +66,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 			programs.delete();
 			framebuffers.delete();
 			depthPyramid.delete();
+			shadowDepthPyramid.delete();
 
 			for (var buffer : buffers.values())
 			{
@@ -236,7 +238,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	{
 		setPhase(ClrwlRenderingPhase.INDIRECT_CULL, culling.isShadow());
 
-		var program = programs.getCullingProgram(culling);
+		var program = pipelineData.programs.getCullingProgram(culling);
 
 		program.bind();
 		program.setUInt("clrwl_materialFilter", materialFilter);
@@ -248,7 +250,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 				continue;
 			}
 
-			pipelineData.getBuffers(group).bindForCull();
+			pipelineData.getBuffers(group).bindForCull(culling.isShadow());
 			group.dispatchCull();
 		}
 
@@ -316,7 +318,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	private void computeEarlyCull(boolean isShadow, PipelineData pipelineData)
 	{
 		ClrwlIndirectPrograms.Culling cullProgram = isShadow
-				? ClrwlIndirectPrograms.Culling.SHADOW
+				? ClrwlIndirectPrograms.Culling.SHADOW_EARLY
 				: ClrwlIndirectPrograms.Culling.GBUFFERS_EARLY;
 
 		resetModelCountIfDirty(true);
@@ -331,7 +333,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	private void computeLateCull(boolean isShadow, PipelineData pipelineData)
 	{
 		ClrwlIndirectPrograms.Culling cullProgram = isShadow
-				? ClrwlIndirectPrograms.Culling.SHADOW
+				? ClrwlIndirectPrograms.Culling.SHADOW_LATE
 				: ClrwlIndirectPrograms.Culling.GBUFFERS_LATE;
 
 		var depthPyramid = pipelineData.depthPyramid(isShadow);
@@ -352,7 +354,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	private void computeFullCull(boolean isShadow, int matFilter, boolean useOcclusion, PipelineData pipelineData)
 	{
 		ClrwlIndirectPrograms.Culling cullProgram = isShadow
-					? ClrwlIndirectPrograms.Culling.SHADOW
+					? ClrwlIndirectPrograms.Culling.SHADOW_FULL
 					: ClrwlIndirectPrograms.Culling.GBUFFERS_FULL;
 
 		var depthPyramid = pipelineData.depthPyramid(isShadow);
@@ -747,8 +749,10 @@ top: 		if (hasOit)
 			var directives = programSet.getPackDirectives();
 			return directives.shouldUseOcclusionCulling();
 		}
-
-		return false;
+		else
+		{
+			return true;
+		}
 	}
 
 	private boolean useTwoPassCulling(boolean isShadow)
@@ -763,8 +767,10 @@ top: 		if (hasOit)
 			var directives = programSet.getPackDirectives();
 			return directives.shouldUseOcclusionCulling() && directives.shouldUseFrustumCulling();
 		}
-
-		return false;
+		else
+		{
+			return true;
+		}
 	}
 
 	private PipelineData getPipelineData(IrisRenderingPipeline pipeline)
@@ -774,13 +780,14 @@ top: 		if (hasOit)
 
 	private PipelineData createPipelineData(IrisRenderingPipeline irisPipeline)
 	{
-		ClrwlPrograms pipelinePrograms = programs.createClrwlPrograms(irisPipeline);
+		ClrwlIndirectPrograms.PipelinePrograms pipelinePrograms = programs.createPipelinePrograms(irisPipeline);
 		ClrwlFramebuffers framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
 		ClrwlDepthPyramid depthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.GBUFFERS, programs, irisPipeline);
+		ClrwlDepthPyramid shadowDepthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.SHADOW, programs, irisPipeline);
 
 		Colorwheel.LOGGER.info("Created pipeline data for {}", irisPipeline);
 
-		return new PipelineData(pipelinePrograms, framebuffers, depthPyramid, new HashMap<>());
+		return new PipelineData(pipelinePrograms, framebuffers, depthPyramid, shadowDepthPyramid, new HashMap<>());
 	}
 
 	public void onIrisPipelineDestroy(IrisRenderingPipeline irisPipeline)

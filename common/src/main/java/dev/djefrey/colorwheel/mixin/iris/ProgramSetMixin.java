@@ -9,6 +9,7 @@ import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.parsing.ConstDirectiveParser;
 import net.irisshaders.iris.shaderpack.parsing.DispatchingDirectiveHolder;
+import net.irisshaders.iris.shaderpack.programs.ComputeSource;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
@@ -43,9 +44,18 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		throw new RuntimeException();
 	}
 
-    @Unique
+	@Shadow
+	private static ComputeSource readComputeSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties) {
+		throw new UnsupportedOperationException("Implemented via mixin");
+	}
+
+	@Unique
 	@Final
 	private Map<ClrwlProgramId, ProgramSource> colorwheel$programSrcs = new HashMap<>();
+
+	@Unique
+	@Nullable
+	private ComputeSource colorwheel$shadowTransformSrc;
 
 	@Unique
 	private boolean colorwheel$isFallbackMode = false;
@@ -72,6 +82,10 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 						.requireValid()
 						.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
 			}
+
+			readComputeSource(directory, sourceProvider, "clrwl_shadow_transform", (ProgramSet) (Object) this, shaderProperties)
+					.requireValid()
+					.ifPresent(programSource -> colorwheel$shadowTransformSrc = programSource);
 		}
 		else
 		{
@@ -200,6 +214,11 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 
 		return Optional.empty();
+	}
+
+	public Optional<ComputeSource> colorwheel$getShadowTransformSource()
+	{
+		return Optional.ofNullable(colorwheel$shadowTransformSrc);
 	}
 
 	@Unique

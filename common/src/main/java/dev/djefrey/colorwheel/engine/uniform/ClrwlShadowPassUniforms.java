@@ -5,35 +5,18 @@ import dev.djefrey.colorwheel.engine.ShadowRenderContext;
 import dev.djefrey.colorwheel.indirect.ClrwlDepthPyramid;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
-import dev.engine_room.flywheel.lib.instance.PosedInstance;
-import dev.engine_room.flywheel.lib.instance.TransformedInstance;
-import dev.engine_room.flywheel.lib.util.ExtraMemoryOps;
 import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
-import net.irisshaders.iris.shaderpack.properties.PackShadowDirectives;
-import net.irisshaders.iris.shaderpack.properties.ShadowCullState;
 import net.irisshaders.iris.shadows.ShadowMatrices;
-import net.irisshaders.iris.shadows.frustum.advanced.BaseClippingPlanes;
 import net.irisshaders.iris.shadows.frustum.advanced.NeighboringPlaneSet;
-import net.irisshaders.iris.uniforms.CelestialUniforms;
 import net.minecraft.Util;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.joml.*;
 import org.joml.Math;
 import org.lwjgl.system.MemoryUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class ClrwlShadowPassUniforms extends UniformWriter
 {
@@ -99,16 +82,19 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 		int resolution = shadowDirectives.getResolution();
 		float zNear;
 		float zFar;
+		boolean orthographicProj;
 
 		if (shadowDirectives.getFov() != null)
 		{
 			zNear = ShadowMatrices.NEAR;
 			zFar = ShadowMatrices.FAR;
+			orthographicProj = false;
 		}
 		else
 		{
 			zNear = shadowDirectives.getNearPlane();
 			zFar = shadowDirectives.getFarPlane();
+			orthographicProj = true;
 		}
 
 		VIEW.set(context.stack().last().pose());
@@ -143,7 +129,7 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 		writeShadowCullData(ptr, culling, !frustumPaused ? playerViewProj : capturedPlayerProjView);
 		ptr += 12 * 16;
 
-		ptr = writeCullData(ptr, resolution, zNear, zFar);
+		ptr = writeCullData(ptr, resolution, zNear, zFar, orthographicProj);
 
 		ptr = writeMatrices(ptr);
 
@@ -200,10 +186,10 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 		return ptr;
 	}
 
-	private static long writeCullData(long ptr, int resolution, float zNear, float zFar)
+	private static long writeCullData(long ptr, int resolution, float zNear, float zFar, boolean orthographic)
 	{
-		int pyramidRes = DepthPyramid.mip0Size(resolution);
-		int pyramidDepth = DepthPyramid.getImageMipLevels(pyramidRes, pyramidRes);
+		int pyramidRes = ClrwlDepthPyramid.mip0Size(resolution);
+		int pyramidDepth = ClrwlDepthPyramid.getImageMipLevels(pyramidRes, pyramidRes);
 
 		ptr = writeFloat(ptr, zNear);
 		ptr = writeFloat(ptr, zFar);
@@ -212,7 +198,7 @@ public final class ClrwlShadowPassUniforms extends UniformWriter
 		ptr = writeFloat(ptr, pyramidRes); // pyramidWidth
 		ptr = writeFloat(ptr, pyramidRes); // pyramidHeight
 		ptr = writeInt(ptr, pyramidDepth - 1); // pyramidLevels
-		ptr = writeInt(ptr, 0); // useMin
+		ptr = writeInt(ptr, orthographic ? 1 : 0); // orthographicProjection
 
 		return ptr;
 	}

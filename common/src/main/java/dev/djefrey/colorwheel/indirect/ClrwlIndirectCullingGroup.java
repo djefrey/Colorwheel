@@ -241,7 +241,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		needsDrawSort = true;
 	}
 
-	public void submitSolid(ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
+	public void submitSolid(ClrwlIndirectPrograms.PipelinePrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
 		if (solidDraws.isEmpty())
 		{
@@ -304,7 +304,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	private void drawTranslucent(List<MultiDraw> draws, ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
+	private void drawTranslucent(List<MultiDraw> draws, ClrwlIndirectPrograms.PipelinePrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
 		if (draws.isEmpty())
 		{
@@ -369,17 +369,17 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	public void submitTranslucent(ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
+	public void submitTranslucent(ClrwlIndirectPrograms.PipelinePrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
 		drawTranslucent(translucentDraws, programs, framebuffers, isShadow);
 	}
 
-	public void submitOitAsTranslucent(ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
+	public void submitOitAsTranslucent(ClrwlIndirectPrograms.PipelinePrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow)
 	{
 		drawTranslucent(oitDraws, programs, framebuffers, isShadow);
 	}
 
-	public void submitOit(ClrwlPrograms.OitMode oit, ClrwlPrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow, ClrwlRenderingPhase renderingPhase)
+	public void submitOit(ClrwlPrograms.OitMode oit, ClrwlIndirectPrograms.PipelinePrograms programs, ClrwlFramebuffers framebuffers, boolean isShadow, ClrwlRenderingPhase renderingPhase)
 	{
 		if (oitDraws.isEmpty())
 		{
@@ -430,7 +430,7 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		}
 	}
 
-	public boolean bindForCrumbling(Material material, ClrwlPrograms programs, ClrwlBlendModeOverride blendModeOverride)
+	public boolean bindForCrumbling(Material material, ClrwlIndirectPrograms.PipelinePrograms programs, ClrwlBlendModeOverride blendModeOverride)
 	{
 		var key = ClrwlShaderKey.fromMaterial(instanceType, material, ContextShader.CRUMBLING, false, ClrwlPrograms.OitMode.OFF);
 		var program = programs.get(key);

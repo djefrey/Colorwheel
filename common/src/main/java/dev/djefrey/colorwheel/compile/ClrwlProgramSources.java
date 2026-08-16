@@ -1,5 +1,6 @@
 package dev.djefrey.colorwheel.compile;
 
+import dev.djefrey.colorwheel.compile.transform.ClrwlComputeTransformPatcher;
 import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSourceAccessor;
@@ -20,7 +21,7 @@ public class ClrwlProgramSources
     private final IrisRenderingPipeline irisPipeline;
     private final ProgramSet programSet;
     private final Map<GbuffersKey, PatchedGbuffersSources> gbuffersSources;
-    private final Map<ComputeSource, PatchedComputeSource> computeSources;
+    private final Map<ComputeKey, PatchedComputeSource> computeSources;
 
     public ClrwlProgramSources(IrisRenderingPipeline irisPipeline, ProgramSet programSet)
     {
@@ -43,9 +44,10 @@ public class ClrwlProgramSources
         return gbuffersSources.computeIfAbsent(key, this::patchGbuffersSources);
     }
 
-    public PatchedComputeSource getComputeSource(ComputeSource source)
+    public PatchedComputeSource getComputeSource(ComputeSource source, int ssboOffset)
     {
-        return computeSources.computeIfAbsent(source, this::patchComputeSource);
+        var key = new ComputeKey(source.getSource().orElseThrow(), ssboOffset);
+        return computeSources.computeIfAbsent(key, this::patchComputeSource);
     }
 
     private PatchedGbuffersSources patchGbuffersSources(GbuffersKey k)
@@ -62,9 +64,9 @@ public class ClrwlProgramSources
         return new PatchedGbuffersSources(vertexSource, geometrySource, fragmentSource, extensions, drawBuffers);
     }
 
-    private PatchedComputeSource patchComputeSource(ComputeSource src)
+    private PatchedComputeSource patchComputeSource(ComputeKey k)
     {
-        var patchedSrc = TransformPatcher.patchCompute(src.getName(), src.getSource().orElseThrow(), TextureStage.GBUFFERS_AND_SHADOW, irisPipeline.getTextureMap());
+        var patchedSrc = ClrwlComputeTransformPatcher.patchCompute(k.shader(), k.ssboOffset(), irisPipeline.getTextureMap());
         return new PatchedComputeSource(patchedSrc);
     }
 
@@ -74,6 +76,10 @@ public class ClrwlProgramSources
 
     public record PatchedGbuffersSources(String vertex, Optional<String> geometry, ClrwlTransformOutput fragment,
                                          EnumMap<ClrwlShaderType, List<String>> extensions, int[] drawBuffers)
+    {
+    }
+
+    public record ComputeKey(String shader, int ssboOffset)
     {
     }
 
