@@ -59,7 +59,7 @@ public class ClrwlPipelineCompiler
 		ClrwlProgramId baseProgramId = ClrwlProgramId.fromTransparency(key.transparency(), isShadow);
 
 		String name = String.format("%s/%s/%s_%s%s", baseProgramId.programName(), instanceName, materialName, contextName, oitName);
-		var irisSources = this.patchedSources.getSources(baseProgramId, key.oit(), programSet, irisPipeline);
+		var irisSources = this.patchedSources.getSources(baseProgramId, key.oit(), pipeline.ssboOffset(), programSet, irisPipeline);
 
 		var vertex = compileStage(pipeline.vertex(), key, irisPipeline, irisSources);
 		var geometry = compileOptionalStage(pipeline.geometry(), key, irisPipeline, irisSources);

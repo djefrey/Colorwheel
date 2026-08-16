@@ -24,7 +24,7 @@ public class ClrwlProgramSources
         this.sources = new HashMap<>();
     }
 
-    public PatchedSources getSources(ClrwlProgramId programId, ClrwlPipelineCompiler.OitMode oit, ProgramSet programSet, IrisRenderingPipeline pipeline)
+    public PatchedSources getSources(ClrwlProgramId programId, ClrwlPipelineCompiler.OitMode oit, int ssboOffset, ProgramSet programSet, IrisRenderingPipeline pipeline)
     {
         ProgramSetAccessor programAccessor = (ProgramSetAccessor) programSet;
         ClrwlProgramId realProgramId = programAccessor.colorwheel$getRealClrwlProgram(programId).orElseThrow();
@@ -40,9 +40,9 @@ public class ClrwlProgramSources
             Map<ShaderType, List<String>> extensions = ((ProgramSourceAccessor) sources).colorwheel$getShaderExtensions();
             int[] drawBuffers = sources.getDirectives().getDrawBuffers();
 
-            String vertexSource = ClrwlTransformPatcher.patchVertex(sources.getVertexSource().orElseThrow(), k.isCrumbling(), pipeline.getTextureMap());
-            Optional<String> geometrySource = sources.getGeometrySource().map(s -> ClrwlTransformPatcher.patchGeometry(s, k.isCrumbling(), pipeline.getTextureMap()));
-            ClrwlTransformOutput fragmentSource = ClrwlTransformPatcher.patchFragment(sources.getFragmentSource().orElseThrow(), k.isCrumbling(), k.customOutputs(), pipeline.getTextureMap());
+            String vertexSource = ClrwlTransformPatcher.patchVertex(sources.getVertexSource().orElseThrow(), k.isCrumbling(), ssboOffset, pipeline.getTextureMap());
+            Optional<String> geometrySource = sources.getGeometrySource().map(s -> ClrwlTransformPatcher.patchGeometry(s, k.isCrumbling(), ssboOffset, pipeline.getTextureMap()));
+            ClrwlTransformOutput fragmentSource = ClrwlTransformPatcher.patchFragment(sources.getFragmentSource().orElseThrow(), k.isCrumbling(), k.customOutputs(), ssboOffset, pipeline.getTextureMap());
 
             return new PatchedSources(vertexSource, geometrySource, fragmentSource, extensions, drawBuffers);
         });

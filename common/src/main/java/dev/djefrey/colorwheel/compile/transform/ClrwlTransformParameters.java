@@ -19,13 +19,15 @@ public class ClrwlTransformParameters extends Parameters
 {
 	private final boolean isCrumbling;
 	private final boolean customOutputs;
+	private final int ssboOffset;
 
-	public ClrwlTransformParameters(PatchShaderType type, boolean isCrumbling, boolean customOutputs, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public ClrwlTransformParameters(PatchShaderType type, boolean isCrumbling, boolean customOutputs, int ssboOffset, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
 		super(Patch.VANILLA, textureMap);
 		super.type = type;
 		this.isCrumbling = isCrumbling;
 		this.customOutputs = customOutputs;
+		this.ssboOffset = ssboOffset;
 	}
 
 	public boolean usesCustomOutputs()
@@ -36,6 +38,11 @@ public class ClrwlTransformParameters extends Parameters
 	public boolean isCrumbling()
 	{
 		return isCrumbling;
+	}
+
+	public int getSSBOOffset()
+	{
+		return ssboOffset;
 	}
 
 	@Override

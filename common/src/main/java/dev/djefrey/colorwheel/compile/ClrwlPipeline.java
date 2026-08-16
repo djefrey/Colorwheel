@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 public record ClrwlPipeline(String id,
                             GlslVersion minVersion,
                             List<String> extensions,
+                            int ssboOffset,
                             ClrwlPipelineStage<ClrwlShaderKey> vertex,
                             ClrwlPipelineStage<ClrwlShaderKey> geometry,
                             ClrwlPipelineStage<ClrwlShaderKey> fragment)
@@ -40,6 +41,7 @@ public record ClrwlPipeline(String id,
         private String id;
         private GlslVersion minVersion;
         private final List<String> extensions = new ArrayList<>();
+        private int ssboOffset = 0;
         private ClrwlPipelineStage<ClrwlShaderKey> vertex;
         private ClrwlPipelineStage<ClrwlShaderKey> geometry;
         private ClrwlPipelineStage<ClrwlShaderKey> fragment;
@@ -65,6 +67,12 @@ public record ClrwlPipeline(String id,
         public Builder onSetup(Consumer<Builder> consume)
         {
             consume.accept(this);
+            return this;
+        }
+
+        public Builder ssboOffset(int ssboOffset)
+        {
+            this.ssboOffset = ssboOffset;
             return this;
         }
 
@@ -95,7 +103,7 @@ public record ClrwlPipeline(String id,
             Objects.requireNonNull(geometry);
             Objects.requireNonNull(fragment);
 
-            return new ClrwlPipeline(id, minVersion, extensions, vertex, geometry, fragment);
+            return new ClrwlPipeline(id, minVersion, extensions, ssboOffset, vertex, geometry, fragment);
         }
     }
 }
