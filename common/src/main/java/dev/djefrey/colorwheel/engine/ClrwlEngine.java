@@ -140,7 +140,7 @@ public class ClrwlEngine implements ExtendedEngine
 		shouldPrepareFrame = true;
 	}
 
-	private void prepareFrame()
+	private void prepareFrame(RenderContext context)
 	{
 		if (shouldPrepareFrame)
 		{
@@ -148,6 +148,7 @@ public class ClrwlEngine implements ExtendedEngine
 
 			environmentStorage.flush();
 			drawManager.prepareFrame(lightStorage, environmentStorage);
+			ClrwlUniforms.updateFrame(context);
 		}
 	}
 
@@ -155,8 +156,8 @@ public class ClrwlEngine implements ExtendedEngine
 	{
 		// TODO: frame uniforms per pipeline ??
 
-		ClrwlUniforms.update(context, pack, dimension);
 		drawManager.preparePass(irisPipeline, isShadow);
+		ClrwlUniforms.updatePass(context, pack, dimension);
 	}
 
 	@Override
@@ -164,7 +165,7 @@ public class ClrwlEngine implements ExtendedEngine
 	{
 		try (var state = GlStateTracker.getRestoreState())
 		{
-			prepareFrame();
+			prepareFrame(context);
 
 			var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
 

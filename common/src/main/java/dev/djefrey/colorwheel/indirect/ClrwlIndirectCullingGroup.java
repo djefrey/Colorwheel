@@ -53,7 +53,8 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	private final List<MultiDraw> oitDraws = new ArrayList<>();
 
 	private final ProgramSet programSet;
-	private final GlProgram cullProgram;
+	private final GlProgram gbuffersCullProgram;
+	private final GlProgram shadowCullProgram;
 
 	private boolean needsDrawBarrier;
 	private boolean needsDrawSort;
@@ -66,7 +67,8 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 		buffers = new ClrwlIndirectBuffers(instanceStride, programSet.getPackDirectives().getShadowDirectives().isShadowEnabled().orElse(true));
 
 		this.programSet = programSet;
-		cullProgram = programs.getCullingProgram(instanceType);
+		gbuffersCullProgram = programs.getGbuffersCullingProgram(instanceType);
+		shadowCullProgram = programs.getShadowCullingProgram(instanceType);
 	}
 
 	public boolean flushInstancers()
@@ -131,7 +133,16 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 
 	public void dispatchCull(boolean isShadow)
 	{
-		cullProgram.bind();
+		ClrwlUniforms.bind(isShadow);
+
+		if (isShadow)
+		{
+			shadowCullProgram.bind();
+		}
+		else
+		{
+			gbuffersCullProgram.bind();
+		}
 
 		buffers.bindForCull(isShadow);
 		glDispatchCompute(buffers.objectStorage.capacity(), 1, 1);

@@ -4,7 +4,8 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
-import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowFrameUniforms;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlGbuffersPassUniforms;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowPassUniforms;
 import dev.djefrey.colorwheel.engine.uniform.DebugMode;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -30,20 +31,32 @@ public class ClrwlCommandsFabric
                         })));
 
         debug.then(ClientCommandManager.literal("frustum")
-                .then(ClientCommandManager.literal("capture")
-                        .executes(ctx ->
-                        {
-                            ClrwlFrameUniforms.captureFrustum();
-                            ClrwlShadowFrameUniforms.captureFrustum();
-                            return Command.SINGLE_SUCCESS;
-                        }))
-                .then(ClientCommandManager.literal("unpause"))
-                .executes(ctx ->
-                {
-                    ClrwlFrameUniforms.unpauseFrustum();
-                    ClrwlShadowFrameUniforms.unpauseFrustum();
-                    return Command.SINGLE_SUCCESS;
-                }));
+                .then(ClientCommandManager.literal("gbuffers")
+                        .then(ClientCommandManager.literal("capture")
+                                .executes(ctx ->
+                                {
+                                    ClrwlGbuffersPassUniforms.captureFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(ClientCommandManager.literal("unpause")
+                                .executes(ctx ->
+                                {
+                                    ClrwlGbuffersPassUniforms.unpauseFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                })))
+                .then(ClientCommandManager.literal("shadow")
+                        .then(ClientCommandManager.literal("capture")
+                                .executes(ctx ->
+                                {
+                                    ClrwlShadowPassUniforms.captureFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(ClientCommandManager.literal("unpause")
+                                .executes(ctx ->
+                                {
+                                    ClrwlShadowPassUniforms.unpauseFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                }))));
 
         command.then(debug);
 

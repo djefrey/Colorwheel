@@ -152,12 +152,23 @@ public class ClrwlPipelines
         {
             var stage = ClrwlPipeline.vertexStage()
                 .define("IS_COLORWHEEL")
-                .define("CLRWL_IS_" + id.toUpperCase());
+                .define("CLRWL_IS_" + id.toUpperCase())
+                .onCompile((k, c) ->
+                {
+                    if (k.isShadow())
+                    {
+                        c.define("_CLRWL_IS_SHADOW_PASS");
+                    }
+                    else
+                    {
+                        c.define("_CLRWL_IS_GBUFFERS_PASS");
+                    }
+                });
 
             if (fallback)
             {
                 stage = stage
-                        .define("CLRWL_IS_FALLBACK");
+                        .define("_CLRWL_IS_FALLBACK");
             }
 
             stage = stage
@@ -219,12 +230,23 @@ public class ClrwlPipelines
         {
             var stage = ClrwlPipeline.geometryStage()
                     .define("IS_COLORWHEEL")
-                    .define("CLRWL_IS_" + id.toUpperCase());
+                    .define("CLRWL_IS_" + id.toUpperCase())
+                    .onCompile((k, c) ->
+                    {
+                        if (k.isShadow())
+                        {
+                            c.define("_CLRWL_IS_SHADOW_PASS");
+                        }
+                        else
+                        {
+                            c.define("_CLRWL_IS_GBUFFERS_PASS");
+                        }
+                    });
 
             if (fallback)
             {
                 stage = stage
-                        .define("CLRWL_IS_FALLBACK");
+                        .define("_CLRWL_IS_FALLBACK");
             }
 
             stage = stage
@@ -257,12 +279,23 @@ public class ClrwlPipelines
         {
             var stage = ClrwlPipeline.fragmentStage()
                 .define("IS_COLORWHEEL")
-                .define("CLRWL_IS_" + id.toUpperCase());
+                .define("CLRWL_IS_" + id.toUpperCase())
+                .onCompile((k, c) ->
+                {
+                    if (k.isShadow())
+                    {
+                        c.define("_CLRWL_IS_SHADOW_PASS");
+                    }
+                    else
+                    {
+                        c.define("_CLRWL_IS_GBUFFERS_PASS");
+                    }
+                });
 
             if (fallback)
             {
                 stage = stage
-                    .define("CLRWL_IS_FALLBACK");
+                    .define("_CLRWL_IS_FALLBACK");
             }
 
             stage = stage

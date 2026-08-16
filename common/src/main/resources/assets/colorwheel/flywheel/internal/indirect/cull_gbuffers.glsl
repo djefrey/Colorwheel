@@ -35,16 +35,19 @@ layout(binding = 0) uniform sampler2D _flw_depthPyramid;
 // flywheel:uniform/flywheel.glsl
 // dev.engine_room.flywheel.lib.math.MatrixMath.writePackedFrustumPlanes
 // org.joml.FrustumIntersection.testSphere
-bool _flw_testSphere(vec3 center, float radius) {
+bool _flw_testSphere(vec3 center, float radius)
+{
     bvec4 xyInside = greaterThanEqual(fma(flw_frustumPlanes.xyX, center.xxxx, fma(flw_frustumPlanes.xyY, center.yyyy, fma(flw_frustumPlanes.xyZ, center.zzzz, flw_frustumPlanes.xyW))), -radius.xxxx);
     bvec2 zInside = greaterThanEqual(fma(flw_frustumPlanes.zX, center.xx, fma(flw_frustumPlanes.zY, center.yy, fma(flw_frustumPlanes.zZ, center.zz, flw_frustumPlanes.zW))), -radius.xx);
 
     return all(xyInside) && all(zInside);
 }
 
-bool projectSphere(vec3 c, float r, float znear, float P00, float P11, out vec4 aabb) {
+bool projectSphere(vec3 c, float r, float znear, float P00, float P11, out vec4 aabb)
+{
     // Closest point on the sphere is between the camera and the near plane, don't even attempt to cull.
-    if (c.z + r > -znear) {
+    if (c.z + r > -znear)
+    {
         return false;
     }
 
@@ -65,7 +68,8 @@ bool projectSphere(vec3 c, float r, float znear, float P00, float P11, out vec4 
     return true;
 }
 
-bool _flw_isVisible(uint instanceIndex, uint modelIndex) {
+bool _flw_isVisible(uint instanceIndex, uint modelIndex)
+{
     uint matrixIndex = _flw_models[modelIndex].matrixIndex;
     FlwBoundingSphere sphere = _flw_models[modelIndex].boundingSphere;
 
@@ -77,13 +81,15 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex) {
 
     flw_transformBoundingSphere(instance, center, radius);
 
-    if (matrixIndex > 0) {
+    if (matrixIndex > 0)
+    {
         transformBoundingSphere(_flw_matrices[matrixIndex].pose, center, radius);
     }
 
     bool isVisible = _flw_testSphere(center, radius);
 
-    /*if (isVisible) {
+    if (isVisible)
+    {
         transformBoundingSphere(flw_view, center, radius);
 
         vec4 aabb;
@@ -115,15 +121,17 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex) {
 
             isVisible = isVisible && depthSphere <= depth;
         }
-    }*/
+    }
 
-    return true;
+    return isVisible;
 }
 
-void main() {
+void main()
+{
     uint pageIndex = gl_WorkGroupID.x << 1u;
 
-    if (pageIndex >= _flw_pageFrameDescriptors.length()) {
+    if (pageIndex >= _flw_pageFrameDescriptors.length())
+    {
         return;
     }
 
@@ -131,13 +139,15 @@ void main() {
 
     uint pageValidity = _flw_pageFrameDescriptors[pageIndex + 1];
 
-    if (((1u << gl_LocalInvocationID.x) & pageValidity) == 0) {
+    if (((1u << gl_LocalInvocationID.x) & pageValidity) == 0)
+    {
         return;
     }
 
     uint instanceIndex = gl_GlobalInvocationID.x;
 
-    if (_flw_isVisible(instanceIndex, modelIndex)) {
+    if (_flw_isVisible(instanceIndex, modelIndex))
+    {
         uint localIndex = atomicAdd(_flw_models[modelIndex].instanceCount, 1);
         uint targetIndex = _flw_models[modelIndex].baseInstance + localIndex;
         _flw_instanceIndices[targetIndex] = instanceIndex;

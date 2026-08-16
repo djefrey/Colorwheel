@@ -1,16 +1,14 @@
 package dev.djefrey.colorwheel.engine.uniform;
 
-import dev.djefrey.colorwheel.engine.ShadowRenderContext;
+import dev.djefrey.colorwheel.indirect.ClrwlDepthPyramid;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import dev.engine_room.flywheel.backend.engine.indirect.DepthPyramid;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
 import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
-import net.irisshaders.iris.shaderpack.properties.PackShadowDirectives;
-import net.irisshaders.iris.shadows.ShadowMatrices;
+import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -23,17 +21,16 @@ import org.joml.*;
 import org.joml.Math;
 import org.lwjgl.system.MemoryUtil;
 
-public final class ClrwlShadowFrameUniforms extends UniformWriter
+public final class ClrwlGbuffersPassUniforms extends UniformWriter
 {
 	private static final int SIZE = 96 	        		// Frustum
 								  + 32 	        		// Cull
 								  + 64 * 9      		// View + Projection
 								  + 64 * 4      		// Shadow View + Projection
 								  + 48 		    		// Normal
-								  + 5 * 16 + 2 * 8      // Camera
-								  + 4 * (15 + 1);     	// Remaining
+								  + 6 * 8;     			// Remaining
 
-	public static final UniformBuffer BUFFER = new UniformBuffer(ClrwlUniforms.FRAME_INDEX, SIZE);
+	public static final UniformBuffer BUFFER = new UniformBuffer(ClrwlUniforms.PASS_INDEX, SIZE);
 
 	private static final Matrix4f VIEW = new Matrix4f();
 	private static final Matrix4f VIEW_INVERSE = new Matrix4f();
@@ -44,6 +41,11 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 	private static final Matrix4f VIEW_PROJECTION = new Matrix4f();
 	private static final Matrix4f VIEW_PROJECTION_INVERSE = new Matrix4f();
 	private static final Matrix4f VIEW_PROJECTION_PREV = new Matrix4f();
+
+	private static final Matrix4f SHADOW_VIEW = new Matrix4f();
+	private static final Matrix4f SHADOW_VIEW_INVERSE = new Matrix4f();
+	private static final Matrix4f SHADOW_PROJECTION = new Matrix4f();
+	private static final Matrix4f SHADOW_PROJECTION_INVERSE = new Matrix4f();
 
 	private static final Matrix3f NORMAL = new Matrix3f();
 
@@ -59,21 +61,23 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 	private static boolean frustumPaused = false;
 	private static boolean frustumCapture = false;
 
-	private ClrwlShadowFrameUniforms() {
+	private ClrwlGbuffersPassUniforms() {
 	}
 
-	public static void captureFrustum() {
+	public static void captureFrustum()
+	{
 		frustumPaused = true;
 		frustumCapture = true;
 	}
 
-	public static void unpauseFrustum() {
+	public static void unpauseFrustum()
+	{
 		frustumPaused = false;
 	}
 
-	public static void update(ShadowRenderContext context, ShaderPack pack, NamespacedId dimension)
+	public static void update(RenderContext context, ShaderPack pack, NamespacedId dimension)
 	{
-		PackShadowDirectives directives = pack.getProgramSet(dimension).getPackDirectives().getShadowDirectives();
+		PackDirectives directives = pack.getProgramSet(dimension).getPackDirectives();
 
 		long ptr = BUFFER.ptr();
 		setPrev();
@@ -81,24 +85,10 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		Vec3i renderOrigin = VisualizationManager.getOrThrow(context.level())
 				.renderOrigin();
 		var camera = context.camera();
-		var camX = (context.camX() - renderOrigin.getX());
-		var camY = (context.camY() - renderOrigin.getY());
-		var camZ = (context.camZ() - renderOrigin.getZ());
-
-		int resolution = directives.getResolution();
-		float zNear;
-		float zFar;
-
-		if (directives.getFov() != null)
-		{
-			zNear = ShadowMatrices.NEAR;
-			zFar = ShadowMatrices.FAR;
-		}
-		else
-		{
-			zNear = directives.getNearPlane();
-			zFar = directives.getFarPlane();
-		}
+		Vec3 cameraPos = camera.getPosition();
+		var camX = (float) (cameraPos.x - renderOrigin.getX());
+		var camY = (float) (cameraPos.y - renderOrigin.getY());
+		var camZ = (float) (cameraPos.z - renderOrigin.getZ());
 
 		VIEW.set(context.stack().last().pose());
 		VIEW.translate(-camX, -camY, -camZ);
@@ -106,9 +96,18 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		VIEW_PROJECTION.set(context.viewProjection());
 		VIEW_PROJECTION.translate(-camX, -camY, -camZ);
 
-		CAMERA_POS.set(camX, camY, camZ);
-		CAMERA_LOOK.set(camera.getLookVector());
-		CAMERA_ROT.set(camera.getXRot(), camera.getYRot());
+		if (ShadowRenderer.MODELVIEW != null && ShadowRenderer.PROJECTION != null)
+		{
+			SHADOW_VIEW.set(ShadowRenderer.MODELVIEW);
+			SHADOW_VIEW.translate(-camX, -camY, -camZ);
+			SHADOW_PROJECTION.set(ShadowRenderer.PROJECTION);
+		}
+		else
+		{
+			SHADOW_VIEW.identity();
+			SHADOW_VIEW.translate(-camX, -camY, -camZ);
+			SHADOW_PROJECTION.identity();
+		}
 		
 		Matrix4f normal = new Matrix4f(context.stack().last().pose())
 				.translate(-camX, -camY, -camZ)
@@ -116,51 +115,43 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 				.transpose();
 		normal.get3x3(NORMAL);
 
-		if (firstWrite) {
+		CAMERA_POS.set(camX, camY, camZ);
+		CAMERA_LOOK.set(camera.getLookVector());
+		CAMERA_ROT.set(camera.getXRot(), camera.getYRot());
+
+		if (firstWrite)
+		{
 			setPrev();
 		}
 
-		if (firstWrite || !frustumPaused || frustumCapture) {
+		if (firstWrite || !frustumPaused || frustumCapture)
+		{
 			writePackedFrustumPlanes(ptr, VIEW_PROJECTION);
 			frustumCapture = false;
 		}
 
 		ptr += 96;
 
-		ptr = writeCullData(ptr, resolution, zNear, zFar);
+		ptr = writeCullData(ptr);
 
 		ptr = writeMatrices(ptr);
 
-		ptr = writeRenderOrigin(ptr, renderOrigin);
-
-		ptr = writeCamera(ptr);
-
-		var window = Minecraft.getInstance().getWindow();
-		ptr = writeVec2(ptr, resolution, resolution);
-		ptr = writeFloat(ptr, 1.0f);
+		var window = Minecraft.getInstance()
+				.getWindow();
+		ptr = writeVec2(ptr, window.getWidth(), window.getHeight());
+		ptr = writeFloat(ptr, (float) window.getWidth() / (float) window.getHeight());
 		// default line width: net.minecraft.client.renderer.RenderStateShard.LineStateShard
 		ptr = writeFloat(ptr, Math.max(2.5F, (float) window.getWidth() / 1920.0F * 2.5F));
-		ptr = writeFloat(ptr, zFar);
+		ptr = writeFloat(ptr, Minecraft.getInstance().gameRenderer.getDepthFar());
 
 		ptr = writeTime(ptr, context);
-
-		ptr = writeCameraIn(ptr, camera);
-
-		ptr = writeInt(ptr, DebugMode.OFF.ordinal());
-
-		// OIT noise factor
-		ptr = writeFloat(ptr, 0.07f);
 
 		firstWrite = false;
 		BUFFER.markDirty();
 	}
 
-	private static long writeRenderOrigin(long ptr, Vec3i renderOrigin) {
-		ptr = writeIVec3(ptr, renderOrigin.getX(), renderOrigin.getY(), renderOrigin.getZ());
-		return ptr;
-	}
-
-	private static void setPrev() {
+	private static void setPrev()
+	{
 		VIEW_PREV.set(VIEW);
 		PROJECTION_PREV.set(PROJECTION);
 		VIEW_PROJECTION_PREV.set(VIEW_PROJECTION);
@@ -169,7 +160,8 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		CAMERA_ROT_PREV.set(CAMERA_ROT);
 	}
 
-	private static long writeMatrices(long ptr) {
+	private static long writeMatrices(long ptr)
+	{
 		ptr = writeMat4(ptr, VIEW);
 		ptr = writeMat4(ptr, VIEW.invert(VIEW_INVERSE));
 		ptr = writeMat4(ptr, VIEW_PREV);
@@ -179,25 +171,16 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		ptr = writeMat4(ptr, VIEW_PROJECTION);
 		ptr = writeMat4(ptr, VIEW_PROJECTION.invert(VIEW_PROJECTION_INVERSE));
 		ptr = writeMat4(ptr, VIEW_PROJECTION_PREV);
-		ptr = writeMat4(ptr, VIEW); // Shadow Matrices
-		ptr = writeMat4(ptr, VIEW_INVERSE);
-		ptr = writeMat4(ptr, PROJECTION);
-		ptr = writeMat4(ptr, PROJECTION_INVERSE);
+		ptr = writeMat4(ptr, SHADOW_VIEW);
+		ptr = writeMat4(ptr, SHADOW_VIEW.invert(SHADOW_VIEW_INVERSE));
+		ptr = writeMat4(ptr, SHADOW_PROJECTION);
+		ptr = writeMat4(ptr, SHADOW_PROJECTION.invert(SHADOW_PROJECTION_INVERSE));
 		ptr = writeMat3(ptr, NORMAL);
 		return ptr;
 	}
 
-	private static long writeCamera(long ptr) {
-		ptr = writeVec3(ptr, CAMERA_POS.x, CAMERA_POS.y, CAMERA_POS.z);
-		ptr = writeVec3(ptr, CAMERA_POS_PREV.x, CAMERA_POS_PREV.y, CAMERA_POS_PREV.z);
-		ptr = writeVec3(ptr, CAMERA_LOOK.x, CAMERA_LOOK.y, CAMERA_LOOK.z);
-		ptr = writeVec3(ptr, CAMERA_LOOK_PREV.x, CAMERA_LOOK_PREV.y, CAMERA_LOOK_PREV.z);
-		ptr = writeVec2(ptr, CAMERA_ROT.x, CAMERA_ROT.y);
-		ptr = writeVec2(ptr, CAMERA_ROT_PREV.x, CAMERA_ROT_PREV.y);
-		return ptr;
-	}
-
-	private static long writeTime(long ptr, RenderContext context) {
+	private static long writeTime(long ptr, RenderContext context)
+	{
 		int ticks = ((LevelRendererAccessor) context.renderer()).flywheel$getTicks();
 		float partialTick = context.partialTick();
 		float renderTicks = ticks + partialTick;
@@ -214,30 +197,21 @@ public final class ClrwlShadowFrameUniforms extends UniformWriter
 		return ptr;
 	}
 
-	private static long writeCameraIn(long ptr, Camera camera) {
-		if (!camera.isInitialized()) {
-			ptr = writeInt(ptr, 0);
-			ptr = writeInt(ptr, 0);
-			return ptr;
-		}
-
-		Level level = camera.getEntity().level();
-		BlockPos blockPos = camera.getBlockPosition();
-		Vec3 cameraPos = camera.getPosition();
-		return writeInFluidAndBlock(ptr, level, blockPos, cameraPos);
-	}
-
-	private static long writeCullData(long ptr, int resolution, float zNear, float zFar)
+	private static long writeCullData(long ptr)
 	{
-		int pyramidRes = DepthPyramid.mip0Size(resolution);
-		int pyramidDepth = DepthPyramid.getImageMipLevels(pyramidRes, pyramidRes);
+		var mc = Minecraft.getInstance();
+		var mainRenderTarget = mc.getMainRenderTarget();
 
-		ptr = writeFloat(ptr, zNear);
-		ptr = writeFloat(ptr, zFar);
+		int pyramidWidth = ClrwlDepthPyramid.mip0Size(mainRenderTarget.width);
+		int pyramidHeight = ClrwlDepthPyramid.mip0Size(mainRenderTarget.height);
+		int pyramidDepth = ClrwlDepthPyramid.getImageMipLevels(pyramidWidth, pyramidHeight);
+
+		ptr = writeFloat(ptr, GameRenderer.PROJECTION_Z_NEAR); // zNear
+		ptr = writeFloat(ptr, mc.gameRenderer.getDepthFar()); // zFar
 		ptr = writeFloat(ptr, PROJECTION.m00()); // P00
 		ptr = writeFloat(ptr, PROJECTION.m11()); // P11
-		ptr = writeFloat(ptr, pyramidRes); // pyramidWidth
-		ptr = writeFloat(ptr, pyramidRes); // pyramidHeight
+		ptr = writeFloat(ptr, pyramidWidth); // pyramidWidth
+		ptr = writeFloat(ptr, pyramidHeight); // pyramidHeight
 		ptr = writeInt(ptr, pyramidDepth - 1); // pyramidLevels
 		ptr = writeInt(ptr, 0); // useMin
 

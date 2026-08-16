@@ -54,20 +54,13 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 {
 	public record PipelineData(ClrwlIndirectPrograms.PipelineProgramCache programs,
 							   ClrwlFramebuffers framebuffers,
-							   ClrwlDepthPyramid gbuffersDepthPyramid,
-							   @Nullable
-							   ClrwlDepthPyramid shadowDepthPyramid)
+							   ClrwlDepthPyramid depthPyramid)
 	{
 		public void delete()
 		{
 			programs.delete();
 			framebuffers.delete();
-			gbuffersDepthPyramid.delete();
-
-			if (shadowDepthPyramid != null)
-			{
-				shadowDepthPyramid.delete();
-			}
+			depthPyramid.delete();
 		}
 	}
 
@@ -155,6 +148,9 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		setPhase(ClrwlRenderingPhase.STAGING_BUFFER_FLUSH, false);
 		stagingBuffer.flush();
+
+		// Done in preparePass
+		// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
 	public void preparePass(IrisRenderingPipeline pipeline, boolean isShadow)
@@ -187,26 +183,21 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		var pipelineData = getPipelineData(irisPipeline);
 		var pipelinePrograms = pipelineData.programs();
 		var framebuffers = pipelineData.framebuffers();
-		var depthPyramid = !isShadow
-			? pipelineData.gbuffersDepthPyramid()
-			: pipelineData.shadowDepthPyramid();
 
-		if (depthPyramid == null)
+		if (!isShadow) // hiz cull
 		{
-			// Should never happen
-			return;
+			var depthPyramid = pipelineData.depthPyramid();
+
+			setPhase(ClrwlRenderingPhase.INDIRECT_DEPTH_PYRAMID, isShadow);
+
+			depthPyramid.generate();
+
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+			depthPyramid.bindForCull();
 		}
 
-		ClrwlUniforms.bind(isShadow);
-
-		setPhase(ClrwlRenderingPhase.INDIRECT_DEPTH_PYRAMID, isShadow);
-
-		depthPyramid.generate();
-
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		setPhase(ClrwlRenderingPhase.INDIRECT_CULL, isShadow);
-
-		depthPyramid.bindForCull();
 
 		for (var group : cullingGroups.values())
 		{
@@ -233,6 +224,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 		setPhase(ClrwlRenderingPhase.SOLID, isShadow);
 
+		ClrwlUniforms.bind(isShadow);
 		vao.bindForDraw();
 		lightBuffers.bind();
 		matrixBuffer.bind();
@@ -365,17 +357,11 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 	{
 		ClrwlIndirectPrograms.PipelineProgramCache pipelinePrograms = programs.createPipelineProgramsCache();
 		ClrwlFramebuffers framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
-		ClrwlDepthPyramid gbuffersDepthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.GBUFFERS, programs, irisPipeline);
-		ClrwlDepthPyramid shadowDepthPyramid = null;
-
-		if (programSet.getPackDirectives().getShadowDirectives().isShadowEnabled().orElse(true))
-		{
-			shadowDepthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.SHADOW, programs, irisPipeline);
-		}
+		ClrwlDepthPyramid depthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.GBUFFERS, programs, irisPipeline);
 
 		Colorwheel.LOGGER.info("Created pipeline data for {}", irisPipeline);
 
-		return new PipelineData(pipelinePrograms, framebuffers, gbuffersDepthPyramid, shadowDepthPyramid);
+		return new PipelineData(pipelinePrograms, framebuffers, depthPyramid);
 	}
 
 	public void onIrisPipelineDestroy(IrisRenderingPipeline irisPipeline)

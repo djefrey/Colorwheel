@@ -12,6 +12,7 @@ import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shadows.ShadowRenderer;
+import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -56,6 +57,8 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
                     Minecraft.getInstance().renderBuffers(),
                     modelView,
                     ShadowRenderer.PROJECTION,
+                    CapturedRenderingState.INSTANCE.getGbufferModelView(),
+                    CapturedRenderingState.INSTANCE.getGbufferProjection(),
                     playerCamera,
                     (float) cameraPos.x(), (float) cameraPos.y(), (float) cameraPos.z(),
                     tickDelta,

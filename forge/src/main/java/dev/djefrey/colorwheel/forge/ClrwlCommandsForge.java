@@ -3,7 +3,8 @@ package dev.djefrey.colorwheel.forge;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlFrameUniforms;
-import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowFrameUniforms;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlGbuffersPassUniforms;
+import dev.djefrey.colorwheel.engine.uniform.ClrwlShadowPassUniforms;
 import dev.djefrey.colorwheel.engine.uniform.DebugMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -34,20 +35,32 @@ public class ClrwlCommandsForge
                     })));
 
         debug.then(Commands.literal("frustum")
-                .then(Commands.literal("capture")
-                    .executes(ctx ->
-                    {
-                        ClrwlFrameUniforms.captureFrustum();
-                        ClrwlShadowFrameUniforms.captureFrustum();
-                        return Command.SINGLE_SUCCESS;
-                    }))
-                .then(Commands.literal("unpause"))
-                    .executes(ctx ->
-                    {
-                        ClrwlFrameUniforms.unpauseFrustum();
-                        ClrwlShadowFrameUniforms.unpauseFrustum();
-                        return Command.SINGLE_SUCCESS;
-                    }));
+                    .then(Commands.literal("gbuffers")
+                        .then(Commands.literal("capture")
+                            .executes(ctx ->
+                            {
+                                ClrwlGbuffersPassUniforms.captureFrustum();
+                                return Command.SINGLE_SUCCESS;
+                            }))
+                        .then(Commands.literal("unpause")
+                            .executes(ctx ->
+                            {
+                                ClrwlGbuffersPassUniforms.unpauseFrustum();
+                                return Command.SINGLE_SUCCESS;
+                            })))
+                    .then(Commands.literal("shadow")
+                        .then(Commands.literal("capture")
+                                .executes(ctx ->
+                                {
+                                    ClrwlShadowPassUniforms.captureFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(Commands.literal("unpause")
+                                .executes(ctx ->
+                                {
+                                    ClrwlShadowPassUniforms.unpauseFrustum();
+                                    return Command.SINGLE_SUCCESS;
+                                }))));
 
         command.then(debug);
 
