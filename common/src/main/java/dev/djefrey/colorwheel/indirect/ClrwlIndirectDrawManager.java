@@ -313,6 +313,8 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 		stagingBuffer.flush();
 
 		snapshots.clear();
+
+		hasInflightApply = true;
 	}
 
 	private void computeEarlyCull(boolean isShadow, PipelineData pipelineData)
