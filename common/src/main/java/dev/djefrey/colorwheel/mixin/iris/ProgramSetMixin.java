@@ -88,9 +88,12 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 						.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
 			}
 
-			readComputeSource(directory, sourceProvider, "clrwl_shadow_transform", (ProgramSet) (Object) this, shaderProperties)
-					.requireValid()
-					.ifPresent(programSource -> colorwheel$shadowTransformSrc = programSource);
+			var shadowTransform = readComputeSource(directory, sourceProvider, "clrwl_shadow_transform", (ProgramSet) (Object) this, shaderProperties);
+
+			if (shadowTransform != null && shadowTransform.isValid())
+			{
+				this.colorwheel$shadowTransformSrc = shadowTransform;
+			}
 		}
 		else
 		{

@@ -1,6 +1,7 @@
 package dev.djefrey.colorwheel.shaderpack;
 
 import com.google.common.collect.ImmutableList;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ShadowCulling;
 import net.irisshaders.iris.gl.blending.BufferBlendInformation;
@@ -54,7 +55,8 @@ public class ClrwlPackDirectives
         gbuffersOcclusionCulling = clrwlProperties.getShadowOcclusionCulling().orElse(directives.shouldUseOcclusionCulling());
         gbuffersFrustumCulling = clrwlProperties.getFrustumCulling().orElse(directives.shouldUseFrustumCulling());
 
-        shadowOcclusionCulling = clrwlProperties.getShadowOcclusionCulling().orElse(false);
+        shadowOcclusionCulling = clrwlProperties.getShadowOcclusionCulling().orElse(false)
+                             && ((ProgramSetAccessor) programSet).colorwheel$getShadowTransformSource().isPresent();
         shadowFrustumCulling = ShadowCulling.useFrustumCulling(programSet, shadowCullState);
     }
 

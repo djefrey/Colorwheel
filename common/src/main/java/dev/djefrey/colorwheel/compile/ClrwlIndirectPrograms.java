@@ -91,16 +91,6 @@ public class ClrwlIndirectPrograms
 			return frustum;
 		}
 
-		public void injectCode(ClrwlCompilation c, ClrwlPrograms.Pipeline pipeline, ClrwlShaderSources sources)
-		{
-			if (this == SHADOW_FULL || this == SHADOW_LATE)
-			{
-				var computeSrc = ((ProgramSetAccessor) sources.programSet()).colorwheel$getShadowTransformSource().orElseThrow();
-				var src = sources.clrwlSources().getComputeSource(computeSrc, pipeline.ssboOffset());
-				c.appendComponent(new IrisShaderComponent(computeSrc.getName(), src.shader()));
-			}
-		}
-
 		public ClrwlProgramGroup programGroup()
 		{
 			return group;
@@ -274,7 +264,17 @@ public class ClrwlIndirectPrograms
 
 		shader = shader
 				.withResource(CULL_SHADER_API_IMPL)
-				.onCompile((c, cc) -> c.injectCode(cc, pipeline, sources))
+				.onCompile((k, c) ->
+				{
+					ClrwlPackDirectives directives = ((ProgramSetAccessor) sources.programSet()).colorwheel$getClrwlDirectives();
+
+					if (k.programGroup() == ClrwlProgramGroup.SHADOW && directives.getOcclusionCulling(ClrwlProgramGroup.SHADOW) && k.useOcclusion())
+					{
+						var computeSrc = ((ProgramSetAccessor) sources.programSet()).colorwheel$getShadowTransformSource().orElseThrow();
+						var src = sources.clrwlSources().getComputeSource(computeSrc, pipeline.ssboOffset());
+						c.appendComponent(new IrisShaderComponent(computeSrc.getName(), src.shader()));
+					}
+				})
 				.withResource(Culling::shader);
 
 		return CULL.program()
