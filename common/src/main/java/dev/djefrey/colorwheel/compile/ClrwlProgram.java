@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.shaders.ProgramManager;
 import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
+import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
@@ -99,14 +100,15 @@ public class ClrwlProgram extends GlProgram
 		bindAttribLocation("_flw_aOverlay", 9);
 	}
 
-	public void postLink(IrisRenderingPipeline irisPipeline, ClrwlShaderProperties properties)
+	public void postLink(IrisRenderingPipeline irisPipeline, ClrwlPackDirectives directives)
 	{
 		var handle = handle();
 		var customUniforms = irisPipeline.getCustomUniforms();
-		var oitCoeffs = properties.getOitCoeffRanks(programId.group());
+		var oitConfig = directives.getOitConfig(programId.group());
+		var oitRanks = oitConfig.coeffRanks();
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(name, handle);
-		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(handle, getReservedTextureUnits(oitCoeffs.length));
+		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(handle, getReservedTextureUnits(oitRanks.length));
 		ProgramImages.Builder   imageBuilder   = ProgramImages.builder(handle);
 
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DIFFUSE.number, "flw_diffuseTex");
@@ -119,7 +121,7 @@ public class ClrwlProgram extends GlProgram
 		samplerBuilder.addExternalSampler(ClrwlSamplers.DEPTH_RANGE.number, "_flw_depthRange");
 		samplerBuilder.addExternalSampler(ClrwlSamplers.NOISE.number, "_flw_blueNoise");
 
-		for (int i = 0; i < oitCoeffs.length; i++)
+		for (int i = 0; i < oitRanks.length; i++)
 		{
 			samplerBuilder.addExternalSampler(ClrwlSamplers.getCoefficient(i).number, "clrwl_coefficients" + i);
 		}

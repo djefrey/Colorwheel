@@ -1,6 +1,10 @@
 package dev.djefrey.colorwheel.engine;
 
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import net.irisshaders.iris.gui.option.IrisVideoSettings;
+import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.properties.ShadowCullState;
@@ -30,14 +34,13 @@ public class ShadowCulling
     public ShadowCulling(ProgramSet programSet)
     {
         var directives = programSet.getPackDirectives();
+        var clrwlDirectives = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDirectives();
         var shadowDirectives = directives.getShadowDirectives();
 
-        cullState = shadowDirectives.getCullingState();
+        cullState = clrwlDirectives.getShadowCullState();
         shadowDist = shadowDirectives.getDistance();
         voxelDist = shadowDirectives.getVoxelDistance();
-        packHasVoxelization = programSet.get(ProgramId.Shadow)
-                .map(src -> src.getGeometrySource().isPresent())
-                .orElse(false);
+        packHasVoxelization = packHasVoxelization(programSet);
         sunPathRotation = directives.getSunPathRotation();
 
         var multiplier = shadowDirectives.getDistanceRenderMul();
@@ -112,5 +115,33 @@ public class ShadowCulling
     public Vector3f getShadowLightVectorFromOrigin()
     {
         return shadowLightVectorFromOrigin;
+    }
+
+    private static boolean packHasVoxelization(ProgramSet programSet)
+    {
+        return programSet.get(ProgramId.Shadow)
+                .map(src -> src.getGeometrySource().isPresent())
+                .orElse(false);
+    }
+
+    public static boolean useFrustumCulling(ProgramSet programSet, ShadowCullState cullState)
+    {
+        switch (cullState)
+        {
+            case DEFAULT ->
+            {
+                return !packHasVoxelization(programSet);
+            }
+
+            case DISTANCE ->
+            {
+                return false;
+            }
+
+            default ->
+            {
+                return true;
+            }
+        }
     }
 }

@@ -3,14 +3,17 @@ package dev.djefrey.colorwheel.compile;
 import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.component.IrisShaderComponent;
 import dev.djefrey.colorwheel.compile.component.SsboInstanceComponent;
 import dev.djefrey.colorwheel.compile.core.ClrwlCompilation;
 import dev.djefrey.colorwheel.compile.core.ClrwlCompilationHarness;
 import dev.djefrey.colorwheel.compile.core.ClrwlCompile;
 import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
+import dev.djefrey.colorwheel.engine.ShadowCulling;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.djefrey.colorwheel.gl.ClrwlShaderType;
+import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.backend.compile.IndirectPrograms;
@@ -98,9 +101,9 @@ public class ClrwlIndirectPrograms
 			}
 		}
 
-		public boolean isShadow()
+		public ClrwlProgramGroup programGroup()
 		{
-			return group == ClrwlProgramGroup.SHADOW;
+			return group;
 		}
 
 		public static class MaterialFilter
@@ -209,7 +212,7 @@ public class ClrwlIndirectPrograms
 		PipelineProgramsFactory programsFactory = (irisPipeline) ->
 		{
 			var clrwlSources = new ClrwlShaderSources(sources, programSet, irisPipeline);
-			return new PipelinePrograms(clrwlSources, pipeline, pack);
+			return new PipelinePrograms(clrwlSources, pipeline);
 		};
 
         return new ClrwlIndirectPrograms(oitPrograms, transform, util, programsFactory);
@@ -239,7 +242,7 @@ public class ClrwlIndirectPrograms
 	/**
 	 * A compiler for cull shaders, parameterized by the instance type.
 	 */
-	private static ClrwlCompilationHarness<Culling, GlProgram> createCullingCompiler(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline, boolean occlusion, boolean frustum)
+	private static ClrwlCompilationHarness<Culling, GlProgram> createCullingCompiler(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline)
 	{
 		var shader = CULL.shader(GlCompat.MAX_GLSL_VERSION, ClrwlShaderType.COMPUTE)
 				.nameMapper(cull -> "cull/" + cull.shaderName())
@@ -247,7 +250,7 @@ public class ClrwlIndirectPrograms
 				.enableExtension("GL_KHR_shader_subgroup_basic")
 				.enableExtension("GL_KHR_shader_subgroup_ballot")
 				.define("_FLW_SUBGROUP_SIZE", GlCompat.SUBGROUP_SIZE)
-				.onCompile((k, c) -> ClrwlPrograms.defineClrwlPass(k.isShadow(), c));
+				.onCompile((k, c) -> ClrwlPrograms.defineClrwlPass(k.programGroup() == ClrwlProgramGroup.SHADOW, c));
 
 		if (FORCE_DISABLE_SUBGROUP_BALLOT)
 		{
@@ -256,18 +259,21 @@ public class ClrwlIndirectPrograms
 
 		shader.onCompile((k, c) ->
 		{
-			if (occlusion && k.useOcclusion())
+			ClrwlPackDirectives directives = ((ProgramSetAccessor) sources.programSet()).colorwheel$getClrwlDirectives();
+
+			if (directives.getOcclusionCulling(k.programGroup()) && k.useOcclusion())
 			{
 				c.define("_CLRWL_OCCLUSION_CULLING", "1");
 			}
 
-			if (frustum && k.useFrustum())
+			if (directives.getFrustumCulling(k.programGroup()) && k.useFrustum())
 			{
 				c.define("_CLRWL_FRUSTUM_CULLING", "1");
 			}
 		});
 
 		shader = shader
+				.withResource(CULL_SHADER_API_IMPL)
 				.onCompile((c, cc) -> c.injectCode(cc, pipeline, sources))
 				.withResource(Culling::shader);
 
@@ -349,14 +355,10 @@ public class ClrwlIndirectPrograms
 		ClrwlPrograms clrwlPrograms;
 		ClrwlCompilationHarness<Culling, GlProgram> cullPrograms;
 
-		public PipelinePrograms(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline, ShaderPack pack)
+		public PipelinePrograms(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline)
 		{
-			var directives = sources.programSet().getPackDirectives();
-			var occlusionCulling = directives.shouldUseOcclusionCulling();
-			var frustumCulling = directives.shouldUseFrustumCulling();
-
-			this.clrwlPrograms = new ClrwlPrograms(sources, pipeline, pack);
-			this.cullPrograms = createCullingCompiler(sources, pipeline, occlusionCulling, frustumCulling);
+			this.clrwlPrograms = new ClrwlPrograms(sources, pipeline);
+			this.cullPrograms = createCullingCompiler(sources, pipeline);
 		}
 
 		@Nullable

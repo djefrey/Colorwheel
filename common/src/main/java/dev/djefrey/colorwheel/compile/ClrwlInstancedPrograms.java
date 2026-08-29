@@ -61,7 +61,7 @@ public class ClrwlInstancedPrograms
 		PipelineProgramsFactory programsFactory = (irisPipeline) ->
 		{
 			var clrwlSources = new ClrwlShaderSources(sources, programSet, irisPipeline);
-			return new PipelinePrograms(clrwlSources, pipeline, pack);
+			return new PipelinePrograms(clrwlSources, pipeline);
 		};
 
 		return new ClrwlInstancedPrograms(oitPrograms, programsFactory);
@@ -86,9 +86,9 @@ public class ClrwlInstancedPrograms
 	{
 		private final ClrwlPrograms clrwlPrograms;
 
-		private PipelinePrograms(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline, ShaderPack pack)
+		private PipelinePrograms(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline)
 		{
-			this.clrwlPrograms = new ClrwlPrograms(sources, pipeline, pack);
+			this.clrwlPrograms = new ClrwlPrograms(sources, pipeline);
 		}
 
 		@Nullable

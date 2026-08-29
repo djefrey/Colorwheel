@@ -11,6 +11,7 @@ import dev.djefrey.colorwheel.compile.core.ClrwlCompile;
 import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.djefrey.colorwheel.engine.ClrwlVertex;
+import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
@@ -83,15 +84,15 @@ public class ClrwlPrograms
     private final ClrwlCompilationHarness<ClrwlShaderKey, ClrwlProgram> pipelineHarness;
     private final ProgramSet programSet;
 
-    public ClrwlPrograms(ClrwlShaderSources sources, Pipeline pipeline, ShaderPack pack)
+    public ClrwlPrograms(ClrwlShaderSources sources, Pipeline pipeline)
     {
-        this.pipelineHarness = createPipeline(sources, pipeline, pack);
+        this.pipelineHarness = createPipeline(sources, pipeline);
         this.programSet = sources.programSet();
     }
 
-    private static ClrwlCompilationHarness<ClrwlShaderKey, ClrwlProgram> createPipeline(ClrwlShaderSources sources, Pipeline pipeline, ShaderPack pack)
+    private static ClrwlCompilationHarness<ClrwlShaderKey, ClrwlProgram> createPipeline(ClrwlShaderSources sources, Pipeline pipeline)
     {
-        ClrwlShaderProperties properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+        ClrwlPackDirectives directives = ((ProgramSetAccessor) sources.programSet()).colorwheel$getClrwlDirectives();
 
         var vert = PIPELINE.shader(GlCompat.MAX_GLSL_VERSION, ClrwlShaderType.VERTEX)
                 .nameMapper(k ->
@@ -154,10 +155,10 @@ public class ClrwlPrograms
                 .withResource(k -> k.fog().source())
                 .withResource(k -> k.light().source())
                 .withResource(IRIS_COMPAT_FRAG)
-                .withComponent(k -> getOitInouts(k, properties))
+                .withComponent(k -> getOitInouts(k, directives))
                 .with((k, src) -> getIrisShaderSource(k, src, pipeline, ClrwlShaderType.FRAGMENT))
                 .withResource(pipeline.fragment())
-                .with((k, src) -> getPostShaderFragmentSource(k, src, pipeline, properties));
+                .with((k, src) -> getPostShaderFragmentSource(k, src, pipeline, directives));
         }
         else
         {
@@ -170,7 +171,7 @@ public class ClrwlPrograms
         return PIPELINE.program()
                 .link(vert).link(geom).link(frag)
                 .preLink(($, p) -> p.preLink())
-                .postLink(($, p) -> p.postLink(sources.irisPipeline(), properties))
+                .postLink(($, p) -> p.postLink(sources.irisPipeline(), directives))
                 .harness(pipeline.id(), sources, (k, h) ->
                 {
                     var instanceName = ResourceUtil.toDebugFileNameNoExtension(k.instanceType().vertexShader());
@@ -301,18 +302,18 @@ public class ClrwlPrograms
         throw new RuntimeException("Got unexpected ShaderType: " + type);
     }
 
-    private static SourceComponent getOitInouts(ClrwlShaderKey k, ClrwlShaderProperties properties)
+    private static SourceComponent getOitInouts(ClrwlShaderKey k, ClrwlPackDirectives directives)
     {
         var programGroup = ClrwlProgramGroup.fromShadow(k.isShadow());
 
         if (k.oit() == OitMode.GENERATE_COEFFICIENTS)
         {
-            var ranks = properties.getOitCoeffRanks(programGroup);
+            var ranks = directives.getOitConfig(programGroup).coeffRanks();
             return new OitCoefficientsOutputComponent(ranks);
         }
         else if (k.oit() == OitMode.EVALUATE)
         {
-            var ranks = properties.getOitCoeffRanks(programGroup);
+            var ranks = directives.getOitConfig(programGroup).coeffRanks();
             return new OitCoefficientsSamplersComponent(ranks.length);
         }
         else
@@ -321,7 +322,7 @@ public class ClrwlPrograms
         }
     }
 
-    private static SourceComponent getPostShaderFragmentSource(ClrwlShaderKey k, ClrwlShaderSources sources, Pipeline pipeline, ClrwlShaderProperties properties)
+    private static SourceComponent getPostShaderFragmentSource(ClrwlShaderKey k, ClrwlShaderSources sources, Pipeline pipeline, ClrwlPackDirectives directives)
     {
         var programId = getProgram(k);
         var programGroup = programId.group();
@@ -337,15 +338,14 @@ public class ClrwlPrograms
             {
                 var src = sources.clrwlSources().getGbuffersSources(programId, k.oit(), pipeline.ssboOffset());
                 var drawBuffers = src.drawBuffers();
-                var ranks = properties.getOitCoeffRanks(programGroup);
-                var overrides = properties.getOitAccumulateOverrides(programGroup);
+                var config = directives.getOitConfig(programGroup);
 
                 Map<Integer, Integer> coeffFrag = new HashMap<>();
 
                 for (int i = 0; i < drawBuffers.length; i++)
                 {
                     int buffer = drawBuffers[i];
-                    var maybeCoeffId = Utils.findFirst(overrides, e -> e.drawBuffer() == buffer)
+                    var maybeCoeffId = Utils.findFirst(config.accumulateOverrides(), e -> e.drawBuffer() == buffer)
                             .flatMap(ClrwlOitAccumulateOverride::coefficientId);
 
                     if (maybeCoeffId.isPresent())
@@ -354,18 +354,17 @@ public class ClrwlPrograms
                     }
                 }
 
-                return new OitCollectCoeffsComponent(ranks, coeffFrag, src.fragment().outputs());
+                return new OitCollectCoeffsComponent(config.coeffRanks(), coeffFrag, src.fragment().outputs());
             }
 
             case EVALUATE ->
             {
                 var src = sources.clrwlSources().getGbuffersSources(programId, k.oit(), pipeline.ssboOffset());
                 var drawBuffers = src.drawBuffers();
-                var ranks = properties.getOitCoeffRanks(programGroup);
-                var overrides = properties.getOitAccumulateOverrides(programGroup);
+                var config = directives.getOitConfig(programGroup);
                 var outputs = src.fragment().outputs();
 
-                return new OitEvaluateComponent(drawBuffers, ranks, overrides, outputs);
+                return new OitEvaluateComponent(drawBuffers, config.coeffRanks(), config.accumulateOverrides(), outputs);
             }
         }
 

@@ -3,7 +3,7 @@
 #include "colorwheel:internal/indirect/matrices.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 #include "flywheel:util/matrix.glsl"
-#include "colorwheel:internal/indirect/cull/common.glsl"
+#include "colorwheel:internal/indirect/cull/gbuffers_common.glsl"
 
 layout(local_size_x = 32) in;
 
@@ -33,7 +33,11 @@ bool _flw_isVisible(uint instanceIndex, uint modelIndex)
     float radius;
     _flw_unpackBoundingSphere(_flw_boundingSpheres[instanceIndex], center, radius);
 
-    bool isVisible = _flw_testSphere(center, radius);
+    bool isVisible = true;
+
+    #ifdef _CLRWL_FRUSTUM_CULLING
+    isVisible = isVisible && _flw_testSphere(center, radius);
+    #endif
 
     return isVisible;
 }

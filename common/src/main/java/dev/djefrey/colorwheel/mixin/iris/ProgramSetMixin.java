@@ -1,9 +1,11 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
+import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.accessors.iris.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
@@ -48,6 +50,9 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 	private static ComputeSource readComputeSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties) {
 		throw new UnsupportedOperationException("Implemented via mixin");
 	}
+
+	@Unique
+	private ClrwlPackDirectives colorwheel$clrwlDirectives;
 
 	@Unique
 	@Final
@@ -104,9 +109,19 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 		if (clrwlProperties != null)
 		{
-			// Handle ProgramSet overrides
-			((PackShadowDirectivesAccessor) this.packDirectives.getShadowDirectives()).colorwheel$setFlywheelShadowRendering(clrwlProperties.shouldRenderShadow());
+			colorwheel$setupClrwlDirectives(clrwlProperties);
 		}
+	}
+
+	public void colorwheel$setupClrwlDirectives(ClrwlShaderProperties properties)
+	{
+		this.colorwheel$clrwlDirectives = new ClrwlPackDirectives((ProgramSet) (Object) this, properties);
+		((PackShadowDirectivesAccessor) this.packDirectives.getShadowDirectives()).colorwheel$setFlywheelShadowRendering(properties.shouldRenderShadow());
+	}
+
+	public ClrwlPackDirectives colorwheel$getClrwlDirectives()
+	{
+		return colorwheel$clrwlDirectives;
 	}
 
 	@Unique

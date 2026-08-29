@@ -3,7 +3,7 @@
 #include "colorwheel:internal/indirect/matrices.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 #include "flywheel:util/matrix.glsl"
-#include "colorwheel:internal/indirect/cull/common.glsl"
+#include "colorwheel:internal/indirect/cull/shadow_common.glsl"
 
 layout(local_size_x = 32) in;
 
@@ -27,26 +27,6 @@ layout(std430, binding = _FLW_MODEL_BUFFER_BINDING) restrict buffer ModelBuffer 
     FlwModelDescriptor _flw_models[];
 };
 
-bool _clrwl_testSphere(vec3 center, float radius)
-{
-    float reversedCullDist = clrwl_shadowFrustumPlanes.groups[2].X.w;
-    float cullDist = clrwl_shadowFrustumPlanes.groups[2].Y.w;
-
-    if (_clrwl_isSphereInCube(center, radius, flw_cameraPos, reversedCullDist))
-    {
-        return true;
-    }
-
-    if (!_clrwl_isSphereInCube(center, radius, flw_cameraPos, cullDist))
-    {
-        return false;
-    }
-
-    return _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[0])
-        && _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[1])
-        && _clrwl_testSphereOn3Planes(center, radius, clrwl_shadowFrustumPlanes.groups[2]);
-}
-
 bool _clrwl_isVisible(uint instanceIndex, uint modelIndex)
 {
     vec3 center;
@@ -54,6 +34,17 @@ bool _clrwl_isVisible(uint instanceIndex, uint modelIndex)
     _flw_unpackBoundingSphere(_flw_boundingSpheres[instanceIndex], center, radius);
 
     bool isVisible = _clrwl_testSphere(center, radius);
+
+    #ifdef _CLRWL_FRUSTUM_CULLING
+    if (isVisible)
+    {
+        bool inFrustum = _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[0])
+                      && _clrwl_testSphereOn4Planes(center, radius, clrwl_shadowFrustumPlanes.groups[1])
+                      && _clrwl_testSphereOn3Planes(center, radius, clrwl_shadowFrustumPlanes.groups[2]);
+
+        isVisible = isVisible && inFrustum;
+    }
+    #endif
 
     return isVisible;
 }

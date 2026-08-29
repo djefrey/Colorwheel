@@ -4,9 +4,7 @@ import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.BlendModeOverrideAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlOitPrograms;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
-import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
+import dev.djefrey.colorwheel.shaderpack.*;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
@@ -25,7 +23,6 @@ import java.util.*;
 public class ClrwlFramebuffers
 {
     private final IrisRenderingPipeline irisPipeline;
-    private final ShaderPack pack;
     private final ProgramSet programSet;
 
     private final Map<ClrwlProgramId, GlFramebuffer> framebuffers = new HashMap<>();
@@ -37,10 +34,9 @@ public class ClrwlFramebuffers
 
     private final Map<ClrwlProgramId, List<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
 
-    public ClrwlFramebuffers(IrisRenderingPipeline irisPipeline, ShaderPack pack, ProgramSet programSet)
+    public ClrwlFramebuffers(IrisRenderingPipeline irisPipeline, ProgramSet programSet)
     {
         this.irisPipeline = irisPipeline;
-        this.pack = pack;
         this.programSet = programSet;
     }
 
@@ -98,7 +94,7 @@ public class ClrwlFramebuffers
     }
 
     @Nullable
-    public ClrwlOitFramebuffers getOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms oitPrograms, ClrwlShaderProperties properties, PackDirectives packDirectives, ProgramDirectives directives)
+    public ClrwlOitFramebuffers getOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms oitPrograms, ProgramSet programSet, ProgramDirectives directives)
     {
         switch (programGroup)
         {
@@ -106,7 +102,7 @@ public class ClrwlFramebuffers
             {
                 if (gbuffersOitFramebuffer == null)
                 {
-                    gbuffersOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, packDirectives, directives);
+                    gbuffersOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, programSet, directives);
                 }
 
                 return gbuffersOitFramebuffer;
@@ -115,7 +111,7 @@ public class ClrwlFramebuffers
             {
                 if (shadowOitFramebuffer == null)
                 {
-                    shadowOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, properties, packDirectives, directives);
+                    shadowOitFramebuffer = new ClrwlOitFramebuffers(programGroup, oitPrograms, irisPipeline, programSet, directives);
                 }
 
                 return shadowOitFramebuffer;
@@ -131,10 +127,10 @@ public class ClrwlFramebuffers
 
         if (!programSetAccessor.colorwheel$isFallbackMode())
         {
-            var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+            var directives = programSetAccessor.colorwheel$getClrwlDirectives();
             var realProgramId = programSetAccessor.colorwheel$getRealClrwlProgram(programId);
 
-            return realProgramId.flatMap(properties::getBlendModeOverride).or(programId::defaultBlendOverride);
+            return realProgramId.flatMap(directives::getBlendModeOverride).or(programId::defaultBlendOverride);
         }
         else
         {
@@ -161,11 +157,11 @@ public class ClrwlFramebuffers
 
             return bufferBlendOverrides.computeIfAbsent(realProgram.get(), (key) ->
             {
-                var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
+                var directives = programSetAccessor.colorwheel$getClrwlDirectives();
                 var maybeSrc = programSetAccessor.colorwheel$getClrwlProgramSource(key);
 
                 return maybeSrc
-                        .map(src -> computeBufferBlendOff(src, properties.getBufferBlendModeOverrides(realProgram.get())))
+                        .map(src -> computeBufferBlendOff(src, directives.getBufferBlendModeOverrides(realProgram.get())))
                         .orElse(Collections.emptyList());
             });
         }

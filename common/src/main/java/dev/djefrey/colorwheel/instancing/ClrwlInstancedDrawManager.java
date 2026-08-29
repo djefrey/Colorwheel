@@ -207,7 +207,8 @@ top:	if (!oitDraws.isEmpty())
 					? ClrwlProgramId.GBUFFERS_TRANSLUCENT
 					: ClrwlProgramId.SHADOW_TRANSLUCENT;
 
-			var isOitEnabled = GlCompat.SUPPORTS_OIT && ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled(program.group());
+			var clrwlDirectives = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDirectives();
+			var isOitEnabled = GlCompat.SUPPORTS_OIT && clrwlDirectives.getOitConfig(program.group()).enabled();
 
 			if (isOitEnabled)
 			{
@@ -218,11 +219,10 @@ top:	if (!oitDraws.isEmpty())
 					break top;
 				}
 
-				var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
 				var directives = maybeSrc.get().getDirectives();
 
 				var framebuffer = framebuffers.getFramebuffer(program);
-				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), properties,  programSet.getPackDirectives(), directives);
+				var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), programSet, directives);
 				var blendOverride = framebuffers.getBlendModeOverride(program).orElse(null);
 				var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program);
 
@@ -510,7 +510,7 @@ top:	if (!oitDraws.isEmpty())
 	private PipelineData createPipelineData(IrisRenderingPipeline irisPipeline)
 	{
 		var pipelinePrograms = programs.createPipelinePrograms(irisPipeline);
-		var framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
+		var framebuffers = new ClrwlFramebuffers(irisPipeline, programSet);
 
 		Colorwheel.LOGGER.info("Created pipeline data for {}", irisPipeline);
 

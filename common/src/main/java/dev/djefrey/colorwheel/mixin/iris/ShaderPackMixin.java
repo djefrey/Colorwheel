@@ -1,6 +1,8 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
 import com.google.common.collect.ImmutableList;
+import com.llamalad7.mixinextras.sugar.Local;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.accessors.iris.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
@@ -12,6 +14,7 @@ import net.irisshaders.iris.shaderpack.option.ProfileSet;
 import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.properties.ShaderProperties;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -59,7 +62,7 @@ public abstract class ShaderPackMixin implements ShaderPackAccessor
 				.map((str) -> new ClrwlShaderProperties(str, shaderPackOptions, finalEnvironmentDefines1))
 				.orElseGet(ClrwlShaderProperties::new);
 
-		((PackShadowDirectivesAccessor) this.base.getPackDirectives().getShadowDirectives()).colorwheel$setFlywheelShadowRendering(colorwheel$getProperties().shouldRenderShadow());
+		((ProgramSetAccessor) this.base).colorwheel$setupClrwlDirectives(colorwheel$properties);
 	}
 
 	public ImmutableList<StringPair> colorwheel$getEnvironmentDefines()

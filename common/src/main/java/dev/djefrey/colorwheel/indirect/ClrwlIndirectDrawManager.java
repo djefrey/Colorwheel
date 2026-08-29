@@ -236,7 +236,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 
 	private void dispatchCull(ClrwlIndirectPrograms.Culling culling, int materialFilter, PipelineData pipelineData)
 	{
-		setPhase(ClrwlRenderingPhase.INDIRECT_CULL, culling.isShadow());
+		setPhase(ClrwlRenderingPhase.INDIRECT_CULL, culling.programGroup() == ClrwlProgramGroup.SHADOW);
 
 		var program = pipelineData.programs.getCullingProgram(culling);
 
@@ -250,7 +250,7 @@ public class ClrwlIndirectDrawManager extends ClrwlDrawManager<ClrwlIndirectInst
 				continue;
 			}
 
-			pipelineData.getBuffers(group).bindForCull(culling.isShadow());
+			pipelineData.getBuffers(group).bindForCull(culling.programGroup() == ClrwlProgramGroup.SHADOW);
 			group.dispatchCull();
 		}
 
@@ -559,7 +559,8 @@ top:	{
 
 top: 		if (hasOit)
 			{
-				var isOitEnabled = GlCompat.SUPPORTS_OIT && ((ShaderPackAccessor) pack).colorwheel$getProperties().isOitEnabled(program.group());
+				var clrwlDirectives = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDirectives();
+				var isOitEnabled = GlCompat.SUPPORTS_OIT && clrwlDirectives.getOitConfig(program.group()).enabled();
 
 				if (isOitEnabled)
 				{
@@ -571,10 +572,8 @@ top: 		if (hasOit)
 					}
 
 					var framebuffer = framebuffers.getFramebuffer(program);
-					var properties = ((ShaderPackAccessor) pack).colorwheel$getProperties();
-
 					var directives = maybeSrc.get().getDirectives();
-					var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), properties, programSet.getPackDirectives(), directives);
+					var oitFramebuffer = framebuffers.getOitFramebuffers(program.group(), programs.getOitPrograms(), programSet, directives);
 					var blendOverride = framebuffers.getBlendModeOverride(program).orElse(null);
 					var bufferBlendOverrides = framebuffers.getBufferBlendModeOverrides(program);
 
@@ -746,15 +745,10 @@ top: 		if (hasOit)
 
 	private boolean useOcclusionCulling(boolean isShadow)
 	{
-		if (!isShadow)
-		{
-			var directives = programSet.getPackDirectives();
-			return directives.shouldUseOcclusionCulling();
-		}
-		else
-		{
-			return true;
-		}
+		var directives = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDirectives();
+		var programGroup = ClrwlProgramGroup.fromShadow(isShadow);
+
+		return directives.getOcclusionCulling(programGroup);
 	}
 
 	private boolean useTwoPassCulling(boolean isShadow)
@@ -764,15 +758,10 @@ top: 		if (hasOit)
 			return false;
 		}
 
-		if (!isShadow)
-		{
-			var directives = programSet.getPackDirectives();
-			return directives.shouldUseOcclusionCulling() && directives.shouldUseFrustumCulling();
-		}
-		else
-		{
-			return true;
-		}
+		var directives = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDirectives();
+		var programGroup = ClrwlProgramGroup.fromShadow(isShadow);
+
+		return directives.getOcclusionCulling(programGroup) && directives.getFrustumCulling(programGroup);
 	}
 
 	private PipelineData getPipelineData(IrisRenderingPipeline pipeline)
@@ -783,7 +772,7 @@ top: 		if (hasOit)
 	private PipelineData createPipelineData(IrisRenderingPipeline irisPipeline)
 	{
 		ClrwlIndirectPrograms.PipelinePrograms pipelinePrograms = programs.createPipelinePrograms(irisPipeline);
-		ClrwlFramebuffers framebuffers = new ClrwlFramebuffers(irisPipeline, pack, programSet);
+		ClrwlFramebuffers framebuffers = new ClrwlFramebuffers(irisPipeline, programSet);
 		ClrwlDepthPyramid depthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.GBUFFERS, programs, irisPipeline);
 		ClrwlDepthPyramid shadowDepthPyramid = new ClrwlDepthPyramid(ClrwlProgramGroup.SHADOW, programs, irisPipeline);
 

@@ -4,7 +4,9 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.*;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlOitConfig;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.util.Utils;
@@ -19,11 +21,10 @@ import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.shadows.ShadowMatrices;
-import net.irisshaders.iris.shadows.ShadowRenderTargets;
-import net.irisshaders.iris.targets.RenderTargets;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
@@ -45,7 +46,7 @@ public class ClrwlOitFramebuffers
     private final ClrwlProgramGroup programGroup;
     private final ClrwlOitPrograms programs;
     private final IrisRenderingPipeline irisPipeline;
-    private final ClrwlShaderProperties properties;
+    private final ClrwlOitConfig config;
 
     private final float passZFar;
 
@@ -61,12 +62,15 @@ public class ClrwlOitFramebuffers
     private int lastWidth = -1;
     private int lastHeight = -1;
 
-    public ClrwlOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, ClrwlShaderProperties properties, PackDirectives packDirectives, ProgramDirectives directives)
+    public ClrwlOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, ProgramSet programSet, ProgramDirectives directives)
     {
+        ClrwlOitConfig config = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDirectives().getOitConfig(programGroup);
+        PackDirectives packDirectives = programSet.getPackDirectives();
+
         this.programGroup = programGroup;
         this.programs = programs;
         this.irisPipeline = irisPipeline;
-        this.properties = properties;
+        this.config = config;
         this.programDrawBuffers = directives.getDrawBuffers();
 
         if (GlCompat.SUPPORTS_DSA)
@@ -391,10 +395,7 @@ public class ClrwlOitFramebuffers
             RenderSystem.bindTexture(accumulate[i]);
         }
 
-        var ranks = properties.getOitCoeffRanks(programGroup);
-        var overrides = properties.getOitAccumulateOverrides(programGroup);
-
-        programs.getOitCompositeProgram(programDrawBuffers, ranks, overrides, isShadow)
+        programs.getOitCompositeProgram(programDrawBuffers, config.coeffRanks(), config.accumulateOverrides(), isShadow)
                 .bind();
 
         drawFullscreenQuad();
@@ -425,7 +426,7 @@ public class ClrwlOitFramebuffers
 
     private void resizeMainFBO(int width, int height)
     {
-        var overrides = properties.getOitAccumulateOverrides(programGroup);
+        var overrides = config.accumulateOverrides();
         var accumulateCnt = programDrawBuffers.length;
 
         mainFbo = GL46.glCreateFramebuffers();
@@ -518,7 +519,7 @@ public class ClrwlOitFramebuffers
 
     private void resizeCoeffsFBO(int width, int height)
     {
-        var coeffRanks = properties.getOitCoeffRanks(programGroup);
+        var coeffRanks = config.coeffRanks();
         var coeffCnt = coeffRanks.length;
 
         if (coeffCnt == 0) // Only opaques
