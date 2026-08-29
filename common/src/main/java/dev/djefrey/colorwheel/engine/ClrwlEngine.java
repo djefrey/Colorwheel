@@ -181,7 +181,7 @@ public class ClrwlEngine implements ExtendedEngine
 		{
 			prepareFrame(context);
 
-			var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
+			var curPipeline = Iris.getPipelineManager().getPipelineNullable();
 
 			if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
 			{
@@ -227,7 +227,7 @@ public class ClrwlEngine implements ExtendedEngine
 	{
 		try (var state = GlStateTracker.getRestoreState())
 		{
-			var curPipeline = Iris.getPipelineManager().preparePipeline(dimension);
+			var curPipeline = Iris.getPipelineManager().getPipelineNullable();
 
 			if (curPipeline instanceof IrisRenderingPipeline irisPipeline)
 			{
