@@ -56,7 +56,7 @@ public class ClrwlPackDirectives
         gbuffersFrustumCulling = clrwlProperties.getFrustumCulling().orElse(directives.shouldUseFrustumCulling());
 
         shadowOcclusionCulling = clrwlProperties.getShadowOcclusionCulling().orElse(false)
-                             && ((ProgramSetAccessor) programSet).colorwheel$getShadowTransformSource().isPresent();
+                             && ((ProgramSetAccessor) programSet).colorwheel$getShadowDistortSource().isPresent();
         shadowFrustumCulling = ShadowCulling.useFrustumCulling(programSet, shadowCullState);
     }
 

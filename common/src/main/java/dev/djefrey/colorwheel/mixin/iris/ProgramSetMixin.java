@@ -60,7 +60,7 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 	@Unique
 	@Nullable
-	private ComputeSource colorwheel$shadowTransformSrc;
+	private ComputeSource colorwheel$shadowDistortSrc;
 
 	@Unique
 	private boolean colorwheel$isFallbackMode = false;
@@ -88,11 +88,11 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 						.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
 			}
 
-			var shadowTransform = readComputeSource(directory, sourceProvider, "clrwl_shadow_transform", (ProgramSet) (Object) this, shaderProperties);
+			var shadowTransform = readComputeSource(directory, sourceProvider, "clrwl_shadow_distort", (ProgramSet) (Object) this, shaderProperties);
 
 			if (shadowTransform != null && shadowTransform.isValid())
 			{
-				this.colorwheel$shadowTransformSrc = shadowTransform;
+				this.colorwheel$shadowDistortSrc = shadowTransform;
 			}
 		}
 		else
@@ -234,9 +234,9 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		return Optional.empty();
 	}
 
-	public Optional<ComputeSource> colorwheel$getShadowTransformSource()
+	public Optional<ComputeSource> colorwheel$getShadowDistortSource()
 	{
-		return Optional.ofNullable(colorwheel$shadowTransformSrc);
+		return Optional.ofNullable(colorwheel$shadowDistortSrc);
 	}
 
 	@Unique

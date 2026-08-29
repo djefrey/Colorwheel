@@ -31,6 +31,6 @@ public abstract class ShaderPackSourceNamesMixin
 			callAddStarts(builder, programId.programName());
 		}
 
-		callAddComputeStarts(builder, "clrwl_shadow_transform");
+		callAddComputeStarts(builder, "clrwl_shadow_distort");
 	}
 }

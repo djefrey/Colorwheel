@@ -15,7 +15,7 @@ public interface ProgramSetAccessor
 	Optional<ClrwlProgramId> colorwheel$getRealClrwlProgram(ClrwlProgramId programId);
 	Optional<ProgramId> colorwheel$getRealFallbackProgram(ClrwlProgramId programId);
 	Optional<ProgramSource> colorwheel$getClrwlProgramSource(ClrwlProgramId programId);
-	Optional<ComputeSource> colorwheel$getShadowTransformSource();
+	Optional<ComputeSource> colorwheel$getShadowDistortSource();
 	boolean colorwheel$isFallbackMode();
 	void colorwheel$setupClrwlDirectives(ClrwlShaderProperties properties);
 }

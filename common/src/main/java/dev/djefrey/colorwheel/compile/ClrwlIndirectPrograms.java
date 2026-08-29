@@ -270,7 +270,7 @@ public class ClrwlIndirectPrograms
 
 					if (k.programGroup() == ClrwlProgramGroup.SHADOW && directives.getOcclusionCulling(ClrwlProgramGroup.SHADOW) && k.useOcclusion())
 					{
-						var computeSrc = ((ProgramSetAccessor) sources.programSet()).colorwheel$getShadowTransformSource().orElseThrow();
+						var computeSrc = ((ProgramSetAccessor) sources.programSet()).colorwheel$getShadowDistortSource().orElseThrow();
 						var src = sources.clrwlSources().getComputeSource(computeSrc, pipeline.ssboOffset());
 						c.appendComponent(new IrisShaderComponent(computeSrc.getName(), src.shader()));
 					}
