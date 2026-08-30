@@ -4,14 +4,16 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.gl.ClrwlGlShader;
 import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
-import dev.engine_room.flywheel.backend.gl.shader.GlShader;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.lib.util.StringUtil;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A typed provider for shader compiler builders.

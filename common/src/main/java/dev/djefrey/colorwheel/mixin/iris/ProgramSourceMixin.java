@@ -1,8 +1,8 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSourceAccessor;
 import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
+import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
@@ -13,7 +13,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Optional;
 
 @Mixin(ProgramSource.class)
 public class ProgramSourceMixin implements ProgramSourceAccessor

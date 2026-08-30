@@ -2,8 +2,8 @@ package dev.djefrey.colorwheel.compile.component;
 
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.compile.ClrwlPrograms;
-import dev.djefrey.colorwheel.util.Utils;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
+import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 import dev.engine_room.flywheel.backend.glsl.generate.FnSignature;
 import dev.engine_room.flywheel.backend.glsl.generate.GlslBlock;

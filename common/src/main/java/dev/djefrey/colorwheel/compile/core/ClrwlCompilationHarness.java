@@ -1,15 +1,11 @@
 package dev.djefrey.colorwheel.compile.core;
 
-import dev.engine_room.flywheel.backend.compile.core.ProgramLinker;
-import dev.engine_room.flywheel.backend.compile.core.ShaderCache;
 import dev.engine_room.flywheel.backend.gl.GlObject;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
-import dev.engine_room.flywheel.backend.glsl.ShaderSources;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class ClrwlCompilationHarness<K, P extends GlProgram>
 {

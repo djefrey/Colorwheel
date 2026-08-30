@@ -1,14 +1,11 @@
 package dev.djefrey.colorwheel.compile.core;
 
 import dev.djefrey.colorwheel.gl.ClrwlGlShader;
-import dev.engine_room.flywheel.backend.compile.core.LinkResult;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
-import dev.engine_room.flywheel.backend.gl.shader.GlShader;
 
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.opengl.GL20.*;

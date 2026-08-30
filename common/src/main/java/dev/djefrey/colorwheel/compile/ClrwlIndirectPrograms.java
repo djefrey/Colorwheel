@@ -3,14 +3,11 @@ package dev.djefrey.colorwheel.compile;
 import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import dev.djefrey.colorwheel.compile.component.IrisShaderComponent;
 import dev.djefrey.colorwheel.compile.component.SsboInstanceComponent;
-import dev.djefrey.colorwheel.compile.core.ClrwlCompilation;
 import dev.djefrey.colorwheel.compile.core.ClrwlCompilationHarness;
 import dev.djefrey.colorwheel.compile.core.ClrwlCompile;
 import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
-import dev.djefrey.colorwheel.engine.ShadowCulling;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
@@ -20,7 +17,6 @@ import dev.engine_room.flywheel.backend.compile.IndirectPrograms;
 import dev.engine_room.flywheel.backend.compile.OitPrograms;
 import dev.engine_room.flywheel.backend.compile.PipelineCompiler;
 import dev.engine_room.flywheel.backend.compile.component.InstanceStructComponent;
-import dev.engine_room.flywheel.backend.compile.core.Compilation;
 import dev.engine_room.flywheel.backend.compile.core.CompilationHarness;
 import dev.engine_room.flywheel.backend.compile.core.Compile;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
@@ -36,9 +32,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ClrwlIndirectPrograms
 {

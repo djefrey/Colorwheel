@@ -1,8 +1,6 @@
 package dev.djefrey.colorwheel.engine;
 
-import dev.djefrey.colorwheel.Colorwheel;
 import dev.engine_room.flywheel.api.model.Mesh;
-import dev.engine_room.flywheel.api.vertex.MutableVertexList;
 import dev.engine_room.flywheel.backend.engine.IndexPool;
 import dev.engine_room.flywheel.backend.gl.GlPrimitive;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;

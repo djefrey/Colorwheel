@@ -5,7 +5,8 @@ import net.createmod.ponder.ForgePonderClient;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ForgePonderClient.ClientEvents.class)
 public class ForgePonderClientMixin

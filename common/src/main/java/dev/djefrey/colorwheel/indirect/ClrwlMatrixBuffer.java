@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.indirect;
 
-import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.engine_room.flywheel.backend.engine.indirect.ResizableStorageArray;
 import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;

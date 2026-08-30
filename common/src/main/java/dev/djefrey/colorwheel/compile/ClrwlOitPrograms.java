@@ -1,10 +1,7 @@
 package dev.djefrey.colorwheel.compile;
 
 import dev.djefrey.colorwheel.ClrwlSamplers;
-import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.compile.component.OitCompositeComponent;
-import dev.djefrey.colorwheel.compile.core.ClrwlCompilation;
-import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
 import dev.engine_room.flywheel.backend.compile.core.Compilation;

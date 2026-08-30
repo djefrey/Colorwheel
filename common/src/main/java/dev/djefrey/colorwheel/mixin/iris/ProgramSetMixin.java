@@ -1,10 +1,10 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.accessors.iris.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
+import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;

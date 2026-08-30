@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.compile.core;
 
-import dev.engine_room.flywheel.backend.compile.core.LinkResult;
 import dev.engine_room.flywheel.backend.compile.core.ShaderException;
 import dev.engine_room.flywheel.backend.gl.shader.GlProgram;
 import org.jetbrains.annotations.NotNull;

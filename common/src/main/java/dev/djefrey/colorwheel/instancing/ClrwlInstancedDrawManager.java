@@ -1,16 +1,16 @@
 package dev.djefrey.colorwheel.instancing;
 
-import dev.djefrey.colorwheel.compile.*;
-import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
-import dev.djefrey.colorwheel.engine.ClrwlMeshPool;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
+import dev.djefrey.colorwheel.compile.ClrwlInstancedPrograms;
+import dev.djefrey.colorwheel.compile.ClrwlProgram;
+import dev.djefrey.colorwheel.compile.ClrwlPrograms;
+import dev.djefrey.colorwheel.compile.ClrwlShaderKey;
 import dev.djefrey.colorwheel.engine.*;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.util.GlCompat;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.instance.Instance;
@@ -30,10 +30,6 @@ import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
 
 import java.util.*;
 

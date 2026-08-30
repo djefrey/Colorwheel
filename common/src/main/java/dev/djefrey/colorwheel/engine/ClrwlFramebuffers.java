@@ -1,20 +1,17 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.BlendModeOverrideAccessor;
-import dev.djefrey.colorwheel.compile.ClrwlOitPrograms;
-import dev.djefrey.colorwheel.shaderpack.*;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
+import dev.djefrey.colorwheel.compile.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
-import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import org.jetbrains.annotations.Nullable;
 

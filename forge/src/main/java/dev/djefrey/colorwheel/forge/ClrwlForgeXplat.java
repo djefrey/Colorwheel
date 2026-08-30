@@ -5,7 +5,6 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.Version;
 import net.minecraftforge.fml.loading.LoadingModList;
 
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

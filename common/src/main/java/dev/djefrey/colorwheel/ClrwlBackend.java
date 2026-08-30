@@ -19,7 +19,6 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
-import org.apache.commons.lang3.stream.Streams;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;

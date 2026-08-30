@@ -6,11 +6,6 @@ import dev.djefrey.colorwheel.engine.ClrwlInstanceHandle;
 import dev.djefrey.colorwheel.engine.ClrwlInstancerKey;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.instance.InstanceWriter;
-import dev.engine_room.flywheel.backend.engine.AbstractInstancer;
-import dev.engine_room.flywheel.backend.engine.InstanceHandleImpl;
-import dev.engine_room.flywheel.backend.engine.InstancerKey;
-import dev.engine_room.flywheel.backend.engine.indirect.IndirectDraw;
-import dev.engine_room.flywheel.backend.engine.indirect.IndirectInstancer;
 import dev.engine_room.flywheel.backend.engine.indirect.ObjectStorage;
 import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
 import dev.engine_room.flywheel.backend.util.AtomicBitSet;
@@ -62,7 +57,7 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 	private int modelIndex = -1;
 	private int baseInstance = -1;
 
-	private int packedIds;
+	private final int packedIds;
 	private int packedClrwlData;
 
 	public ClrwlIndirectInstancer(ClrwlInstancerKey<I> key, Recreate<I> recreate)

@@ -1,10 +1,7 @@
 package dev.djefrey.colorwheel.engine;
 
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
-import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import net.irisshaders.iris.gui.option.IrisVideoSettings;
-import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.properties.ShadowCullState;

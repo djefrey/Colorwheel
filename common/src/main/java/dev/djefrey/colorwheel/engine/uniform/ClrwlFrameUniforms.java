@@ -3,15 +3,13 @@ package dev.djefrey.colorwheel.engine.uniform;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.backend.engine.uniform.UniformBuffer;
-import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
-import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.minecraft.client.Camera;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.joml.*;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 public final class ClrwlFrameUniforms extends UniformWriter
 {

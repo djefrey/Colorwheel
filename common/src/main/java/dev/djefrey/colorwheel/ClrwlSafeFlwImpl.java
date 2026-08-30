@@ -9,7 +9,6 @@ import dev.djefrey.colorwheel.engine.uniform.ClrwlOptionsUniforms;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.internal.FlwApiLink;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;

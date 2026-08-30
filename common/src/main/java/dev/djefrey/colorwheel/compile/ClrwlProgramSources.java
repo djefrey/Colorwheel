@@ -1,18 +1,16 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.compile.transform.ClrwlComputeTransformPatcher;
-import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSourceAccessor;
+import dev.djefrey.colorwheel.compile.transform.ClrwlComputeTransformPatcher;
 import dev.djefrey.colorwheel.compile.transform.ClrwlTransformOutput;
 import dev.djefrey.colorwheel.compile.transform.ClrwlTransformPatcher;
+import dev.djefrey.colorwheel.gl.ClrwlShaderType;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.pipeline.transform.TransformPatcher;
 import net.irisshaders.iris.shaderpack.programs.ComputeSource;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
-import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
 import java.util.*;
 

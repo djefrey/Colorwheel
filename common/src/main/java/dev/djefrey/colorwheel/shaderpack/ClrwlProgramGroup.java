@@ -1,10 +1,5 @@
 package dev.djefrey.colorwheel.shaderpack;
 
-import dev.djefrey.colorwheel.Colorwheel;
-import dev.engine_room.flywheel.api.material.Transparency;
-
-import java.util.Optional;
-
 public enum ClrwlProgramGroup
 {
     GBUFFERS("gbuffers"),

@@ -4,11 +4,9 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlIndirectPrograms;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
-import dev.engine_room.flywheel.backend.compile.IndirectPrograms;
 import dev.engine_room.flywheel.backend.gl.GlTextureUnit;
 import dev.engine_room.flywheel.lib.math.MoreMath;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL46;
 

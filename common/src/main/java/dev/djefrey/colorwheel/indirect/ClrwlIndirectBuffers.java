@@ -1,19 +1,17 @@
 package dev.djefrey.colorwheel.indirect;
 
-import static org.lwjgl.opengl.GL30.glBindBufferBase;
-import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
-import static org.lwjgl.opengl.GL44.nglBindBuffersRange;
-
 import dev.engine_room.flywheel.backend.engine.indirect.ObjectStorage;
 import dev.engine_room.flywheel.backend.engine.indirect.ResizableStorageArray;
 import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
-import org.jetbrains.annotations.Nullable;
+import dev.engine_room.flywheel.backend.gl.buffer.GlBufferType;
+import dev.engine_room.flywheel.lib.memory.MemoryBlock;
 import org.lwjgl.opengl.GL46;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Pointer;
 
-import dev.engine_room.flywheel.backend.gl.buffer.GlBufferType;
-import dev.engine_room.flywheel.lib.memory.MemoryBlock;
+import static org.lwjgl.opengl.GL30.glBindBufferBase;
+import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
+import static org.lwjgl.opengl.GL44.nglBindBuffersRange;
 
 public class ClrwlIndirectBuffers
 {

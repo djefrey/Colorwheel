@@ -4,13 +4,9 @@ import dev.djefrey.colorwheel.ExtendedEngine;
 import dev.djefrey.colorwheel.accessors.LateInitAccessor;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 

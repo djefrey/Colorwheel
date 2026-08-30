@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import net.irisshaders.iris.shaderpack.include.ShaderPackSourceNames;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

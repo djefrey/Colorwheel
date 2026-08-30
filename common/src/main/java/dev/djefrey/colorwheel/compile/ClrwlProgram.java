@@ -1,18 +1,15 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.blaze3d.shaders.ProgramManager;
-import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
-import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
-import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
 import dev.djefrey.colorwheel.ClrwlSamplers;
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
-import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
-import dev.djefrey.colorwheel.Colorwheel;
+import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlInstanceVisual;
 import dev.djefrey.colorwheel.engine.ClrwlMaterialEncoder;
+import dev.djefrey.colorwheel.engine.ClrwlRenderingPhase;
 import dev.djefrey.colorwheel.engine.uniform.ClrwlUniforms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.api.material.Material;
 import dev.engine_room.flywheel.api.material.Transparency;
@@ -22,8 +19,6 @@ import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.program.ProgramImages;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
-import net.irisshaders.iris.gl.shader.GlShader;
-import net.irisshaders.iris.gl.shader.ShaderType;
 import net.irisshaders.iris.gl.state.FogMode;
 import net.irisshaders.iris.mixin.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -31,19 +26,16 @@ import net.irisshaders.iris.uniforms.CommonUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL31;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
-import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL20.glUniform2i;
+import static org.lwjgl.opengl.GL20.glUniform4i;
 
 public class ClrwlProgram extends GlProgram
 {

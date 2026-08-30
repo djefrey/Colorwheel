@@ -3,8 +3,6 @@ package dev.djefrey.colorwheel.compile.core;
 
 import dev.djefrey.colorwheel.gl.ClrwlGlShader;
 import dev.djefrey.colorwheel.gl.ClrwlShaderType;
-import dev.engine_room.flywheel.backend.compile.core.ShaderResult;
-import dev.engine_room.flywheel.backend.gl.shader.GlShader;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.SourceComponent;
 

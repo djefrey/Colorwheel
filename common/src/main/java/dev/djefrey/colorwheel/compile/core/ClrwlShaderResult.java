@@ -3,8 +3,6 @@ package dev.djefrey.colorwheel.compile.core;
 import dev.djefrey.colorwheel.gl.ClrwlGlShader;
 import dev.engine_room.flywheel.backend.compile.core.FailedCompilation;
 import dev.engine_room.flywheel.backend.compile.core.ShaderException;
-import dev.engine_room.flywheel.backend.compile.core.ShaderResult;
-import dev.engine_room.flywheel.backend.gl.shader.GlShader;
 
 public sealed interface ClrwlShaderResult
 {

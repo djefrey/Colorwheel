@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel.gl;
 
 import dev.engine_room.flywheel.backend.gl.GlObject;
-import dev.engine_room.flywheel.backend.gl.shader.ShaderType;
 import org.lwjgl.opengl.GL20;
 
 public class ClrwlGlShader extends GlObject

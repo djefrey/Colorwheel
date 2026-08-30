@@ -8,17 +8,14 @@ import dev.engine_room.flywheel.backend.mixin.LevelRendererAccessor;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
-import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.minecraft.Util;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.joml.*;
 import org.joml.Math;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryUtil;
 
 public final class ClrwlGbuffersPassUniforms extends UniformWriter

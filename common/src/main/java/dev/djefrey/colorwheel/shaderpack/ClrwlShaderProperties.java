@@ -1,11 +1,9 @@
 package dev.djefrey.colorwheel.shaderpack;
 
-import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.util.Utils;
+import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
-import net.irisshaders.iris.Iris;
+import dev.djefrey.colorwheel.util.Utils;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.blending.BlendModeFunction;
@@ -17,7 +15,6 @@ import net.irisshaders.iris.shaderpack.option.OrderBackedProperties;
 import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
 import net.irisshaders.iris.shaderpack.preprocessor.PropertiesPreprocessor;
 import net.irisshaders.iris.shaderpack.properties.ShadowCullState;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;

@@ -2,13 +2,12 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.djefrey.colorwheel.*;
+import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.ClrwlOitPrograms;
 import dev.djefrey.colorwheel.shaderpack.ClrwlOitConfig;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
-import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.backend.NoiseTextures;
 import dev.engine_room.flywheel.backend.gl.GlCompat;

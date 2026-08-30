@@ -8,7 +8,10 @@ import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.properties.ShadowCullState;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class ClrwlPackDirectives
 {
