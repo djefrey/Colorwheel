@@ -5,7 +5,8 @@ import net.createmod.ponder.NeoForgePonderClient;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(NeoForgePonderClient.ClientEvents.class)
 public class NeoForgePonderClientMixin

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public class ClrwlSableModCompat implements ClrwlModCompat
 {
     private static final ImmutableList<StringPair> DEFINES = ImmutableList.of(
-            new StringPair("HAS_SABLE", "")
+            new StringPair("_CLRWL_HAS_SABLE", "")
     );
 
     @Override

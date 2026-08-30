@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel.engine;
 
 import com.mojang.datafixers.util.Pair;
-import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.engine.embed.EnvironmentStorage;
 import dev.engine_room.flywheel.api.backend.Engine;
 import dev.engine_room.flywheel.api.backend.RenderContext;
@@ -10,9 +9,7 @@ import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.backend.FlwBackend;
-import dev.engine_room.flywheel.backend.engine.AbstractInstancer;
 import dev.engine_room.flywheel.backend.engine.GroupKey;
-import dev.engine_room.flywheel.backend.engine.InstancerKey;
 import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.embed.Environment;
 import dev.engine_room.flywheel.lib.task.ForEachPlan;
@@ -21,7 +18,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
-import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.minecraft.client.resources.model.ModelBakery;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -92,10 +88,11 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 		initializationQueue.clear();
 	}
 
-	public abstract void renderSolid(boolean isShadow);
-	public abstract void renderTranslucent(boolean isShadow);
+	public abstract void preparePass(IrisRenderingPipeline pipeline, boolean isShadow);
+	public abstract void renderSolid(IrisRenderingPipeline pipeline, boolean isShadow);
+	public abstract void renderTranslucent(IrisRenderingPipeline pipeline, boolean isShadow);
 
-	public abstract void renderCrumbling(List<Engine.CrumblingBlock> crumblingBlocks);
+	public abstract void renderCrumbling(IrisRenderingPipeline pipeline, List<Engine.CrumblingBlock> crumblingBlocks);
 
 	public abstract void onIrisPipelineDestroy(IrisRenderingPipeline pipeline);
 
@@ -185,21 +182,6 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 			}
 		}
 		return byType;
-	}
-
-	protected boolean alreadyGotInvalidPipeline = false;
-
-	protected void handleInvalidPipeline(WorldRenderingPipeline worldPipeline)
-	{
-		if (alreadyGotInvalidPipeline)
-		{
-			return;
-		}
-
-		Colorwheel.LOGGER.warn("Got unexpected rendering pipeline, rendering issues may occur.");
-		Colorwheel.LOGGER.warn("Got pipeline: {}", worldPipeline);
-
-		alreadyGotInvalidPipeline = true;
 	}
 
 	public void delete()

@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "[4,)"
 issueTrackerURL = "https://github.com/djefrey/Colorwheel/issues"
-license = "MIT"
+license = "LGPLv3"
 
 [[mods]]
 modId = "colorwheel"

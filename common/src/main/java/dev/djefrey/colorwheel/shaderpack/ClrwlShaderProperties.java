@@ -1,38 +1,45 @@
 package dev.djefrey.colorwheel.shaderpack;
 
-import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.Colorwheel;
-import dev.djefrey.colorwheel.util.Utils;
+import dev.djefrey.colorwheel.engine.ClrwlBlendModeOverride;
 import dev.djefrey.colorwheel.engine.ClrwlOitAccumulateOverride;
+import dev.djefrey.colorwheel.util.Utils;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.blending.BlendModeFunction;
 import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
+import net.irisshaders.iris.helpers.OptionalBoolean;
 import net.irisshaders.iris.helpers.StringPair;
 import net.irisshaders.iris.shaderpack.option.OrderBackedProperties;
 import net.irisshaders.iris.shaderpack.option.ShaderPackOptions;
 import net.irisshaders.iris.shaderpack.preprocessor.PropertiesPreprocessor;
+import net.irisshaders.iris.shaderpack.properties.ShadowCullState;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class ClrwlShaderProperties
 {
-    private final Map<ClrwlProgramId, ClrwlBlendModeOverride> programBlendOverrides = new HashMap<>();
-    private final Map<ClrwlProgramId, ArrayList<BufferBlendInformation>> bufferBlendOverrides = new HashMap<>();
+    private final Map<ClrwlProgramId, ClrwlBlendModeOverride> programBlendOverrides = new EnumMap<>(ClrwlProgramId.class);
+    private final Map<ClrwlProgramId, List<BufferBlendInformation>> bufferBlendOverrides = new EnumMap<>(ClrwlProgramId.class);
 
-    private boolean shadowEnabled = true;
+    private OptionalBoolean shadowEnabled = OptionalBoolean.DEFAULT;
 
-    private boolean gbuffersOitEnabled = false;
+    private OptionalBoolean gbuffersOitEnabled = OptionalBoolean.DEFAULT;
     private int[] gbuffersOitCoeffRanks = new int[0];
     private final List<ClrwlOitAccumulateOverride> gbuffersOitAccumulateOverrides = new ArrayList<>();
 
-    private boolean shadowOitEnabled = false;
+    private OptionalBoolean shadowOitEnabled = OptionalBoolean.DEFAULT;
     private int[] shadowOitCoeffRanks = new int[0];
     private final List<ClrwlOitAccumulateOverride> shadowOitAccumulateOverrides = new ArrayList<>();
+
+    private ShadowCullState shadowCulling = ShadowCullState.DEFAULT;
+    private OptionalBoolean shadowOcclusionCulling = OptionalBoolean.DEFAULT;
+    private OptionalBoolean frustumCulling = OptionalBoolean.DEFAULT;
+    private OptionalBoolean occlusionCulling = OptionalBoolean.DEFAULT;
 
     public ClrwlShaderProperties()
     {
@@ -66,9 +73,46 @@ public class ClrwlShaderProperties
 
             if (path[0].equals("shadow"))
             {
-                if (path.length == 2 && path[1].equals("enabled"))
+                if (path.length == 2)
                 {
-                    shadowEnabled = value.equalsIgnoreCase("true");
+                    if (path[1].equals("enabled"))
+                    {
+                        parseBoolean(value, bool -> shadowEnabled = bool);
+                    }
+                    else if (path[1].equals("culling"))
+                    {
+                        if ("false".equals(value)) {
+                            shadowCulling = ShadowCullState.DISTANCE;
+                        } else if ("true".equals(value)) {
+                            shadowCulling = ShadowCullState.ADVANCED;
+                        } else if ("reversed".equals(value)) {
+                            shadowCulling = ShadowCullState.REVERSED;
+                        } else {
+                            Colorwheel.LOGGER.error("Unrecognized shadow culling setting: " + value);
+                            continue;
+                        }
+                    }
+                }
+                else if (path.length == 3)
+                {
+                    if (path[1].equals("occlusion") && path[2].equals("culling"))
+                    {
+                        parseBoolean(value, bool -> shadowOcclusionCulling = bool);
+                    }
+                }
+            }
+            else if (path[0].equals("frustum"))
+            {
+                if (path.length == 2 && path[1].equals("culling"))
+                {
+                    parseBoolean(value, bool -> frustumCulling = bool);
+                }
+            }
+            else if (path[0].equals("occlusion"))
+            {
+                if (path.length == 2 && path[1].equals("culling"))
+                {
+                    parseBoolean(value, bool -> occlusionCulling = bool);
                 }
             }
             else if (path[0].equals("blend"))
@@ -169,10 +213,11 @@ public class ClrwlShaderProperties
             {
                 if (path.length == 1)
                 {
-                    var on = value.trim().equalsIgnoreCase("true");
-
-                    gbuffersOitEnabled = on;
-                    shadowOitEnabled = on;
+                    parseBoolean(value, bool ->
+                    {
+                        gbuffersOitEnabled = bool;
+                        shadowOitEnabled = bool;
+                    });
                     continue;
                 }
 
@@ -180,7 +225,7 @@ public class ClrwlShaderProperties
                 {
                     if (path.length == 2)
                     {
-                        gbuffersOitEnabled = value.trim().equalsIgnoreCase("true");
+                        parseBoolean(value, bool -> gbuffersOitEnabled = bool);
                         continue;
                     }
                     else if (path[2].equals("coefficientRanks") && path.length == 3)
@@ -260,7 +305,7 @@ public class ClrwlShaderProperties
                 {
                     if (path.length == 2)
                     {
-                        shadowOitEnabled = value.trim().equalsIgnoreCase("true");
+                        parseBoolean(value, bool -> shadowOitEnabled = bool);
                         continue;
                     }
                     else if (path[2].equals("coefficientRanks") && path.length == 3)
@@ -345,6 +390,22 @@ public class ClrwlShaderProperties
         }
     }
 
+    private void parseBoolean(String value, Consumer<OptionalBoolean> block)
+    {
+        if (value.equalsIgnoreCase("true"))
+        {
+            block.accept(OptionalBoolean.TRUE);
+        }
+        else if (value.equalsIgnoreCase("false"))
+        {
+            block.accept(OptionalBoolean.FALSE);
+        }
+        else
+        {
+            Colorwheel.LOGGER.error("Could not parse boolean: {}", value);
+        }
+    }
+
     private Optional<BlendMode> parseBlendMode(String value)
     {
         String[] modeStrs = value.split(" ");
@@ -404,26 +465,19 @@ public class ClrwlShaderProperties
         return Optional.of(ranks);
     }
 
-    public Optional<ClrwlBlendModeOverride> getBlendModeOverride(ClrwlProgramId programId)
+    public Map<ClrwlProgramId, ClrwlBlendModeOverride> getBlendModeOverride()
     {
-        return Optional.ofNullable(programBlendOverrides.get(programId));
+        return programBlendOverrides;
     }
 
-    public List<BufferBlendInformation> getBufferBlendModeOverrides(ClrwlProgramId programId)
+    public Map<ClrwlProgramId, List<BufferBlendInformation>> getBufferBlendModeOverrides()
     {
-        var list = bufferBlendOverrides.get(programId);
-
-        if (list == null)
-        {
-            return Collections.emptyList();
-        }
-
-        return ImmutableList.copyOf(list);
+        return bufferBlendOverrides;
     }
 
     public boolean shouldRenderShadow()
     {
-        return shadowEnabled;
+        return shadowEnabled.orElse(true);
     }
 
     public boolean isOitEnabled(ClrwlProgramGroup group)
@@ -432,11 +486,11 @@ public class ClrwlShaderProperties
         {
             case GBUFFERS ->
             {
-                return gbuffersOitEnabled;
+                return gbuffersOitEnabled.orElse(false);
             }
             case SHADOW ->
             {
-                return shadowOitEnabled;
+                return shadowOitEnabled.orElse(false);
             }
         }
 
@@ -475,5 +529,25 @@ public class ClrwlShaderProperties
         }
 
         throw new RuntimeException("Unknown program group: " + group);
+    }
+
+    public ShadowCullState getShadowCullState()
+    {
+        return shadowCulling;
+    }
+
+    public OptionalBoolean getShadowOcclusionCulling()
+    {
+        return shadowOcclusionCulling;
+    }
+
+    public OptionalBoolean getFrustumCulling()
+    {
+        return frustumCulling;
+    }
+
+    public OptionalBoolean getOcclusionCulling()
+    {
+        return occlusionCulling;
     }
 }

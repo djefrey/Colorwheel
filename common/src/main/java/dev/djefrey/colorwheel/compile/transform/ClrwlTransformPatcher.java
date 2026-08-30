@@ -7,9 +7,15 @@ import io.github.douira.glsl_transformer.ast.node.declaration.DeclarationMember;
 import io.github.douira.glsl_transformer.ast.node.declaration.TypeAndInitDeclaration;
 import io.github.douira.glsl_transformer.ast.node.expression.LiteralExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.ReferenceExpression;
+import io.github.douira.glsl_transformer.ast.node.expression.binary.AdditionExpression;
 import io.github.douira.glsl_transformer.ast.node.expression.binary.ArrayAccessExpression;
+import io.github.douira.glsl_transformer.ast.node.expression.unary.GroupingExpression;
 import io.github.douira.glsl_transformer.ast.node.external_declaration.DeclarationExternalDeclaration;
 import io.github.douira.glsl_transformer.ast.node.external_declaration.ExternalDeclaration;
+import io.github.douira.glsl_transformer.ast.node.type.qualifier.LayoutQualifier;
+import io.github.douira.glsl_transformer.ast.node.type.qualifier.NamedLayoutQualifierPart;
+import io.github.douira.glsl_transformer.ast.node.type.qualifier.StorageQualifier;
+import io.github.douira.glsl_transformer.ast.node.type.qualifier.TypeQualifier;
 import io.github.douira.glsl_transformer.ast.node.type.specifier.BuiltinNumericTypeSpecifier;
 import io.github.douira.glsl_transformer.ast.print.PrintType;
 import io.github.douira.glsl_transformer.ast.query.Root;
@@ -18,15 +24,18 @@ import io.github.douira.glsl_transformer.ast.query.match.AutoHintedMatcher;
 import io.github.douira.glsl_transformer.ast.transform.ASTInjectionPoint;
 import io.github.douira.glsl_transformer.ast.transform.Template;
 import io.github.douira.glsl_transformer.parser.ParseShape;
+import io.github.douira.glsl_transformer.util.Type;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.helpers.Tri;
 import net.irisshaders.iris.pipeline.transform.PatchShaderType;
 import net.irisshaders.iris.pipeline.transform.transformer.CommonTransformer;
-import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class ClrwlTransformPatcher
@@ -126,8 +135,8 @@ public class ClrwlTransformPatcher
 				root.rename("renderStage", "_clrwl_renderPhase");
 				root.rename("blendFunc", "_clrwl_blendFunc");
 				root.rename("atlasSize", "_clrwl_atlasSize");
-				root.rename("blockEntityId", "_clrwl_blockEntityId");
-				root.rename("entityId", "_clrwl_entityId");
+				root.replaceReferenceExpressions(transformer, "blockEntityId", "_clrwl_blockEntityId");
+				root.replaceReferenceExpressions(transformer, "entityId", "_clrwl_entityId");
 				root.replaceReferenceExpressions(transformer, "entityColor", "clrwl_overlayColor");
 
 				root.replaceReferenceExpressions(transformer, "gl_ModelViewMatrix", "flw_view");
@@ -176,7 +185,48 @@ public class ClrwlTransformPatcher
 				root.replaceReferenceExpressions(transformer, "clrwl_materialFragment", "_clrwl_materialFragment_hook");
 				root.replaceReferenceExpressions(transformer, "clrwl_shaderLight", "_clrwl_shaderLight_hook");
 
-				// TODO: remove duplicated uniforms
+				if (parameters.getSSBOOffset() > 0)
+				{
+					for (var storageQualifier : root.nodeIndex.get(StorageQualifier.class))
+					{
+						if (storageQualifier.storageType != StorageQualifier.StorageType.BUFFER)
+						{
+							continue;
+						}
+
+						if (storageQualifier.getParent() instanceof TypeQualifier typeQualifier)
+						{
+							LayoutQualifier layoutQualifier = null;
+
+							for (var qualifier : typeQualifier.getParts())
+							{
+								if (qualifier instanceof LayoutQualifier lq)
+								{
+									layoutQualifier = lq;
+									break;
+								}
+							}
+
+							if (layoutQualifier != null)
+							{
+								for (var part : layoutQualifier.getParts())
+								{
+									if (part instanceof NamedLayoutQualifierPart namedPart)
+									{
+										if (namedPart.getName().getName().equals("binding"))
+										{
+											var left = new GroupingExpression(namedPart.getExpression());
+											var right = new LiteralExpression(Type.INT32, parameters.getSSBOOffset());
+											var addExp = new AdditionExpression(left, right);
+											namedPart.setExpression(addExp);
+											break;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 
 				if (parameters.type == PatchShaderType.FRAGMENT)
 				{
@@ -391,23 +441,23 @@ public class ClrwlTransformPatcher
 		}
 	}
 
-	public static String patchVertex(String vertex, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchVertex(String vertex, boolean isCrumbling, int ssboOffset, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, isCrumbling, false, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.VERTEX, isCrumbling, false, ssboOffset, textureMap);
 
 		return transformer.transform(vertex, parameters).code();
 	}
 
-	public static String patchGeometry(String vertex, boolean isCrumbling, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static String patchGeometry(String vertex, boolean isCrumbling, int ssboOffset, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, isCrumbling, false, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.GEOMETRY, isCrumbling, false, ssboOffset, textureMap);
 
 		return transformer.transform(vertex, parameters).code();
 	}
 
-	public static ClrwlTransformOutput patchFragment(String fragment, boolean isCrumbling, boolean customOutputs, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
+	public static ClrwlTransformOutput patchFragment(String fragment, boolean isCrumbling, boolean customOutputs, int ssboOffset, Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap)
 	{
-		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, isCrumbling, customOutputs, textureMap);
+		var parameters = new ClrwlTransformParameters(PatchShaderType.FRAGMENT, isCrumbling, customOutputs, ssboOffset, textureMap);
 
 		return transformer.transform(fragment, parameters);
 	}

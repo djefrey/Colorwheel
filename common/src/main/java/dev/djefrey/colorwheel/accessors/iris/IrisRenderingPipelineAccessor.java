@@ -1,11 +1,12 @@
 package dev.djefrey.colorwheel.accessors.iris;
 
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
+import net.irisshaders.iris.gl.buffer.ShaderStorageBufferHolder;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
-import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.targets.RenderTargets;
+import org.jetbrains.annotations.Nullable;
 
 public interface IrisRenderingPipelineAccessor
 {
@@ -19,6 +20,9 @@ public interface IrisRenderingPipelineAccessor
 	boolean colorwheel$consumeFramebufferChanged();
 	void colorwheel$destroyGbuffersFramebuffer(GlFramebuffer framebuffer);
 	void colorwheel$destroyShadowFramebuffer(GlFramebuffer framebuffer);
+
+	@Nullable
+	ShaderStorageBufferHolder colorwheel$getSSBOHolder();
 
 	record ProgramGroupDepthInfo(int textureId, int width, int height)
 	{

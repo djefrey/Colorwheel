@@ -1,17 +1,3 @@
-#ifdef CLRWL_IS_FALLBACK
-in ClrwlFallbackVertexData
-{
-    vec4 clrwl_overlayColor;
-} clrwl_in[3];
-
-out ClrwlFallbackVertexData
-{
-    vec4 clrwl_overlayColor;
-} clrwl_out;
-#endif
-
-vec4 clrwl_overlayColor = vec4(0.0);
-
 void clrwl_setVertexOut(int i)
 {
     clrwl_out.flw_vertexPos = clrwl_in[i].flw_vertexPos;
@@ -22,8 +8,14 @@ void clrwl_setVertexOut(int i)
     clrwl_out.flw_vertexNormal = clrwl_in[i].flw_vertexNormal;
     clrwl_out.clrwl_vertexTangent = clrwl_in[i].clrwl_vertexTangent;
 
+#ifdef CLRWL_IS_INDIRECT
+    clrwl_out._clrwl_packedMaterial = clrwl_in[i]._clrwl_packedMaterial;
+    clrwl_out._clrwl_entityId = clrwl_in[i]._clrwl_entityId;
+    clrwl_out._clrwl_blockEntityId = clrwl_in[i]._clrwl_blockEntityId;
+#endif
+
 #ifdef FLW_EMBEDDED
-    #ifdef HAS_SABLE
+    #ifdef _CLRWL_HAS_SABLE
         clrwl_out.flw_vertexLightingSceneId = clrwl_in[i].flw_vertexLightingSceneId;
         clrwl_out.flw_skyLightScale = clrwl_in[i].flw_skyLightScale;
         clrwl_out.flw_vertexLightingPos = clrwl_in[i].flw_vertexLightingPos;

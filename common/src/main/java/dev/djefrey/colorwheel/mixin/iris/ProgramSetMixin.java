@@ -1,14 +1,17 @@
 package dev.djefrey.colorwheel.mixin.iris;
 
-import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
 import dev.djefrey.colorwheel.accessors.iris.PackShadowDirectivesAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
+import dev.djefrey.colorwheel.shaderpack.ClrwlPackDirectives;
+import dev.djefrey.colorwheel.shaderpack.ClrwlProgramId;
+import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import net.irisshaders.iris.shaderpack.ShaderPack;
 import net.irisshaders.iris.shaderpack.include.AbsolutePackPath;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.parsing.ConstDirectiveParser;
 import net.irisshaders.iris.shaderpack.parsing.DispatchingDirectiveHolder;
+import net.irisshaders.iris.shaderpack.programs.ComputeSource;
 import net.irisshaders.iris.shaderpack.programs.ProgramSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
@@ -43,9 +46,21 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		throw new RuntimeException();
 	}
 
-    @Unique
+	@Shadow
+	private static ComputeSource readComputeSource(AbsolutePackPath directory, Function<AbsolutePackPath, String> sourceProvider, String program, ProgramSet programSet, ShaderProperties properties) {
+		throw new UnsupportedOperationException("Implemented via mixin");
+	}
+
+	@Unique
+	private ClrwlPackDirectives colorwheel$clrwlDirectives;
+
+	@Unique
 	@Final
 	private Map<ClrwlProgramId, ProgramSource> colorwheel$programSrcs = new HashMap<>();
+
+	@Unique
+	@Nullable
+	private ComputeSource colorwheel$shadowDistortSrc;
 
 	@Unique
 	private boolean colorwheel$isFallbackMode = false;
@@ -72,6 +87,13 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 						.requireValid()
 						.ifPresent(programSource -> colorwheel$programSrcs.put(program, programSource));
 			}
+
+			var shadowTransform = readComputeSource(directory, sourceProvider, "clrwl_shadow_distort", (ProgramSet) (Object) this, shaderProperties);
+
+			if (shadowTransform != null && shadowTransform.isValid())
+			{
+				this.colorwheel$shadowDistortSrc = shadowTransform;
+			}
 		}
 		else
 		{
@@ -90,9 +112,19 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 
 		if (clrwlProperties != null)
 		{
-			// Handle ProgramSet overrides
-			((PackShadowDirectivesAccessor) this.packDirectives.getShadowDirectives()).colorwheel$setFlywheelShadowRendering(clrwlProperties.shouldRenderShadow());
+			colorwheel$setupClrwlDirectives(clrwlProperties);
 		}
+	}
+
+	public void colorwheel$setupClrwlDirectives(ClrwlShaderProperties properties)
+	{
+		this.colorwheel$clrwlDirectives = new ClrwlPackDirectives((ProgramSet) (Object) this, properties);
+		((PackShadowDirectivesAccessor) this.packDirectives.getShadowDirectives()).colorwheel$setFlywheelShadowRendering(properties.shouldRenderShadow());
+	}
+
+	public ClrwlPackDirectives colorwheel$getClrwlDirectives()
+	{
+		return colorwheel$clrwlDirectives;
 	}
 
 	@Unique
@@ -200,6 +232,11 @@ public abstract class ProgramSetMixin implements ProgramSetAccessor
 		}
 
 		return Optional.empty();
+	}
+
+	public Optional<ComputeSource> colorwheel$getShadowDistortSource()
+	{
+		return Optional.ofNullable(colorwheel$shadowDistortSrc);
 	}
 
 	@Unique

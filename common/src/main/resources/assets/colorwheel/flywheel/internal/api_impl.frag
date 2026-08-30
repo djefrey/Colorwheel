@@ -2,7 +2,7 @@
 #include "flywheel:internal/api_impl.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
-#ifndef CLRWL_IS_FALLBACK
+#ifndef _CLRWL_IS_FALLBACK
 in ClrwlVertexData
 {
     vec4 flw_vertexPos;
@@ -13,8 +13,14 @@ in ClrwlVertexData
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
+#endif
+
 #ifdef FLW_EMBEDDED
-    #ifdef HAS_SABLE
+    #ifdef _CLRWL_HAS_SABLE
         flat uint flw_vertexLightingSceneId;
         flat float flw_skyLightScale;
         vec4 flw_vertexLightingPos;
@@ -36,6 +42,26 @@ bool flw_fragDiffuse;
 vec4 flw_fragColor;
 ivec2 flw_fragOverlay;
 vec2 flw_fragLight;
+
+vec4 clrwl_overlayColor = vec4(0.0);
+
+#else // _CLRWL_IS_FALLBACK
+
+in ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
+#endif
+};
+#endif
+
+#ifndef CLRWL_IS_INDIRECT
+int _clrwl_entityId;
+int _clrwl_blockEntityId;
 #endif
 
 FlwMaterial flw_material;

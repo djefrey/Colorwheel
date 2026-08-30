@@ -16,6 +16,9 @@ public abstract class ShaderPackSourceNamesMixin
 	@Invoker
 	private static void callAddStarts(ImmutableList.Builder<String> potentialFileNames, String baseName) {}
 
+	@Invoker
+	private static void callAddComputeStarts(ImmutableList.Builder<String> potentialFileNames, String baseName) {}
+
 	@Inject(method = "findPotentialStarts",
 			at = @At(value = "INVOKE", target = "com/google/common/collect/ImmutableList$Builder.build ()Lcom/google/common/collect/ImmutableList;"),
 			locals = LocalCapture.CAPTURE_FAILHARD,
@@ -26,5 +29,7 @@ public abstract class ShaderPackSourceNamesMixin
 		{
 			callAddStarts(builder, programId.programName());
 		}
+
+		callAddComputeStarts(builder, "clrwl_shadow_distort");
 	}
 }

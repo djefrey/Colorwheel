@@ -9,9 +9,9 @@ import dev.djefrey.colorwheel.engine.uniform.ClrwlOptionsUniforms;
 import dev.engine_room.flywheel.api.backend.RenderContext;
 import dev.engine_room.flywheel.api.internal.FlwApiLink;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shadows.ShadowRenderer;
+import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -24,7 +24,8 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
     @Override
     public boolean isColorwheelCurrentBackend()
     {
-        return FlwApiLink.INSTANCE.getCurrentBackend() == ClrwlBackend.IRIS_INSTANCING;
+        var backend = FlwApiLink.INSTANCE.getCurrentBackend();
+        return backend == ClrwlBackend.IRIS_INSTANCING || backend == ClrwlBackend.IRIS_INDIRECT;
     }
 
     @Override
@@ -55,6 +56,8 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
                     Minecraft.getInstance().renderBuffers(),
                     ShadowRenderer.MODELVIEW,
                     ShadowRenderer.PROJECTION,
+                    CapturedRenderingState.INSTANCE.getGbufferModelView(),
+                    CapturedRenderingState.INSTANCE.getGbufferProjection(),
                     playerCamera,
                     (float) cameraPos.x(), (float) cameraPos.y(), (float) cameraPos.z(),
                     tickDelta,
