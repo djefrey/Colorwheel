@@ -23,7 +23,7 @@ public class LevelRendererMixin
     private ClientLevel level;
 
     @Inject(method = "renderLevel",
-            at = @At(value = "CONSTANT", args = "stringValue=translucent"),
+            at = @At(value = "CONSTANT", args = "stringValue=string"),
             order = 2000) // After Iris
     public void colorwheel$injectRenderTranslucents(PoseStack poseStack, float tickDelta, long finishNanoTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci)
     {
