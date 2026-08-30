@@ -162,7 +162,7 @@ void _clrwl_main(FlwInstance instance, uint stableInstanceID, uint baseVertex)
 
     flw_vertexNormal = normalize(flw_vertexNormal);
 
-    #ifdef CLRWL_IS_FALLBACK
+    #ifdef _CLRWL_IS_FALLBACK
         FlwLightAo light;
         if (flw_light(flw_vertexPos.xyz, flw_vertexNormal, light))
         {
