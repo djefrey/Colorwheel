@@ -89,17 +89,20 @@ bool _clrwl_testOcclusionCull(vec3 center, float radius, sampler2D _flw_depthPyr
     vec2 p10 = _clrwl_clipToUV(clrwl_distortShadowClipXY(aabb.zy));
     vec2 p00 = _clrwl_clipToUV(clrwl_distortShadowClipXY(aabb.xy));
 
-    float width  = max(abs(p10.x - p00.x), abs(p11.x - p01.x)) * _flw_cullData.pyramidWidth;
-    float height = max(abs(p01.y - p00.y), abs(p11.y - p10.y)) * _flw_cullData.pyramidHeight;
+    vec2 pMin = min(min(p00, p01), min(p10, p11));
+    vec2 pMax = max(max(p00, p01), max(p10, p11));
 
-    int level = clamp(int(ceil(log2(max(width, height)))), 0, _flw_cullData.pyramidLevels);
+    float width  = (pMax.x - pMin.x) * _flw_cullData.pyramidWidth;
+    float height = (pMax.y - pMin.y) * _flw_cullData.pyramidHeight;
+
+    int level = clamp(int(floor(log2(max(width, height)))), 0, _flw_cullData.pyramidLevels);
 
     ivec2 levelSize = textureSize(_flw_depthPyramid, level);
 
-    ivec2 ip01 = ivec2(p01 * levelSize);
-    ivec2 ip11 = ivec2(p11 * levelSize);
-    ivec2 ip10 = ivec2(p10 * levelSize);
-    ivec2 ip00 = ivec2(p00 * levelSize);
+    ivec2 ip00 = ivec2(pMin * levelSize);
+    ivec2 ip11 = ivec2(pMax * levelSize);
+    ivec2 ip01 = ivec2(ip11.x, ip00.y);
+    ivec2 ip10 = ivec2(ip00.x, ip11.y);
 
     // Clamp to the texture bounds.
     // Since we're not going through a sampler out of bounds texel fetches will return 0.
