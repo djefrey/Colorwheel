@@ -89,7 +89,7 @@ public class ShadowCulling
 
             if (distance < 0.0f)
             {
-                distance = IrisVideoSettings.shadowDistance;
+                distance = IrisVideoSettings.shadowDistance * 16;
             }
 
             reversedCullDist = 0.0f;

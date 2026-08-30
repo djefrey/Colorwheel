@@ -33,7 +33,12 @@ bool _clrwl_isVisible(uint instanceIndex, uint modelIndex)
     float radius;
     _flw_unpackBoundingSphere(_flw_boundingSpheres[instanceIndex], center, radius);
 
-    bool isVisible = _clrwl_testSphere(center, radius);
+    bool isVisible = true;
+
+    if (_clrwl_testSphereDistance(center, radius, isVisible))
+    {
+        return isVisible;
+    }
 
     #ifdef _CLRWL_FRUSTUM_CULLING
     if (isVisible)

@@ -8,22 +8,25 @@ bool _clrwl_isSphereInCube(vec3 center, float radius, vec3 origin, float halfLen
     return maxD <= halfLength - radius;
 }
 
-bool _clrwl_testSphere(vec3 center, float radius)
+bool _clrwl_testSphereDistance(vec3 center, float radius, out bool isVisible)
 {
     float reversedCullDist = clrwl_shadowFrustumPlanes.groups[2].X.w;
     float cullDist = clrwl_shadowFrustumPlanes.groups[2].Y.w;
 
     if (_clrwl_isSphereInCube(center, radius, flw_cameraPos, reversedCullDist))
     {
+        isVisible = true;
         return true;
     }
 
     if (!_clrwl_isSphereInCube(center, radius, flw_cameraPos, cullDist))
     {
-        return false;
+        isVisible = false;
+        return true;
     }
 
-    return true;
+    isVisible = true;
+    return false;
 }
 
 #ifdef _CLRWL_FRUSTUM_CULLING

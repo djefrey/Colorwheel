@@ -20,13 +20,13 @@ public class ClrwlPackDirectives
     private final ClrwlOitConfig gbuffersOit;
     private final ClrwlOitConfig shadowOit;
 
-    private ShadowCullState shadowCullState;
+    private final  ShadowCullState shadowCullState;
 
-    private boolean gbuffersOcclusionCulling;
-    private boolean gbuffersFrustumCulling;
+    private final boolean gbuffersOcclusionCulling;
+    private final boolean gbuffersFrustumCulling;
 
-    private boolean shadowOcclusionCulling;
-    private boolean shadowFrustumCulling;
+    private final boolean shadowOcclusionCulling;
+    private final boolean shadowFrustumCulling;
 
     public ClrwlPackDirectives(ProgramSet programSet, ClrwlShaderProperties clrwlProperties)
     {
@@ -45,14 +45,16 @@ public class ClrwlPackDirectives
                                        clrwlProperties.getOitCoeffRanks(ClrwlProgramGroup.SHADOW),
                                        clrwlProperties.getOitAccumulateOverrides(ClrwlProgramGroup.SHADOW));
 
-        shadowCullState = clrwlProperties.getShadowCullState();
+        var shadowCullState = clrwlProperties.getShadowCullState();
 
         if (shadowCullState == ShadowCullState.DEFAULT)
         {
             shadowCullState = directives.getShadowDirectives().getCullingState();
         }
 
-        gbuffersOcclusionCulling = clrwlProperties.getShadowOcclusionCulling().orElse(directives.shouldUseOcclusionCulling());
+        this.shadowCullState = shadowCullState;
+
+        gbuffersOcclusionCulling = clrwlProperties.getOcclusionCulling().orElse(directives.shouldUseOcclusionCulling());
         gbuffersFrustumCulling = clrwlProperties.getFrustumCulling().orElse(directives.shouldUseFrustumCulling());
 
         shadowOcclusionCulling = clrwlProperties.getShadowOcclusionCulling().orElse(false)
