@@ -27,6 +27,8 @@ Internal shaders are now much more complex (from 10 lines to over 1000 lines) an
 
 Colorwheel, instead, implements an extension to the Iris shader standard. This means shaderpacks must include specific programs that will be used by Colorwheel.
 
+Colorwheel also implements an indirect backend. This backend is able to improve the FPS by +30% compared to the instancing backend in areas with lots of instances.
+
 ### How to use
 
 To use this mod, you need to install Iris and a mod that includes Flywheel (like Create or Vanillin).  
