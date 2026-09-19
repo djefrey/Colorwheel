@@ -62,7 +62,7 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
                     phase
             );
 
-            manager.renderDispatcher().afterEntities(ctx);
+            manager.renderDispatcher().afterSubmitEntities(ctx);
         }
     }
 
@@ -84,7 +84,7 @@ public class ClrwlSafeFlwImpl implements ClrwlSafeFlw
                     tickDelta
             );
 
-            manager.renderDispatcher().afterEntities(ctx);
+            manager.renderDispatcher().afterSubmitEntities(ctx);
         }
     }
 }
