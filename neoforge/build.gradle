@@ -6,15 +6,15 @@ plugins {
 dependencies {
     implementation "io.github.douira:glsl-transformer:3.0.0-pre3"
 
-    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-26.1:${flywheel_version}"
+    compileOnly "dev.engine-room.flywheel:flywheel-neoforge:${flywheel_version}"
 
     //compileOnly("com.simibubi.create:create-${minecraft_version}:${create_neoforge_version}:slim") { transitive = false }
     //compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
 
     //compileOnly("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
 
-    runtimeOnly "dev.engine-room.flywheel:flywheel-neoforge-26.1:${flywheel_version}"
-    runtimeOnly "dev.engine-room.vanillin:vanillin-neoforge-26.1:${vanillin_version}"
+    runtimeOnly "dev.engine-room.flywheel:flywheel-neoforge:${flywheel_version}"
+    runtimeOnly "dev.engine-room.vanillin:vanillin-neoforge:${vanillin_version}"
 
     compileOnly "maven.modrinth:iris:${iris_version}-neoforge"
 
