@@ -116,8 +116,11 @@ public class ClrwlPrograms
                 .nameMapper(k ->
                 {
                     var program = getProgram(k);
+                    var instance = ResourceUtil.toDebugFileNameNoExtension(k.instanceType().vertexShader());
+                    var material = ResourceUtil.toDebugFileNameNoExtension(k.material().vertexSource());
+                    var context = k.context().nameLowerCase();
                     var debug = k.isDebugEnabled() ? "_debug" : "";
-                    return "pipeline/" + pipeline.id() + "/geom/" + program + debug;
+                    return "pipeline/" + pipeline.id() + "/" + program.programName() + "/geom/" + instance + "/" + material + "_" + context + debug;
                 })
                 .condition(ClrwlPrograms::hasGeometryShader)
                 .onCompile((k, c) -> setDefines(k, c, sources, pipeline, ClrwlShaderType.GEOMETRY))
