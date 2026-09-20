@@ -187,7 +187,7 @@ public class ClrwlPrograms
 
     private static void setDefines(ClrwlShaderKey k, ClrwlCompilation c, ClrwlShaderSources sources, Pipeline pipeline, ClrwlShaderType type)
     {
-        c.define("CLRWL_IS_" + pipeline.id().toUpperCase());
+        c.define("CLRWL_IS_" + pipeline.id().toUpperCase(Locale.ROOT));
 
         defineClrwlPass(k.isShadow(), c);
         defineFmaFallback(c, pipeline.extensions());
