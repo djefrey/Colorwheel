@@ -1,3 +1,12 @@
+### 1.3.0
+
+- Added the colorwheel:indirect backend. This new backend is able to cull geometry not visible on screen.  
+  In Create heavy areas, this backend can increase the FPS by +30% compared to the instancing backend.
+- Translucent geometry are now rendered after translucent terrain.  
+  Water is now visible through train windows. However, train windows won't be visible when underwater.
+- Fixed at_midBlock value for non-terrain-like geometry.
+- Fixed rendering issue with Create: Pocket Factory.
+
 ### 1.2.9
 
 - Fixed IncompatibleClassChangeError crash on 1.20.1

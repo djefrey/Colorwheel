@@ -12,8 +12,9 @@ struct FlwModelDescriptor
     uint baseInstance;
     uint matrixIndex;
     FlwBoundingSphere boundingSphere;
-    uint irisIds; // entityId + blockEntityId
-    uint clrwlData; // only needs 4 bits (0 -> 15 range)
+    int entityId;
+    int blockEntityId;
+    uint clrwlData; // unused: 26 bits | material: 2 bits | light emission: 4 bits
 };
 
 void _flw_unpackBoundingSphere(in FlwBoundingSphere sphere, out vec3 center, out float radius)
@@ -29,8 +30,8 @@ FlwBoundingSphere _flw_packBoundingSphere(vec3 center, float radius)
 
 void _clrwl_unpackData(in FlwModelDescriptor desc, out int entityId, out int blockEntityId, out int lightEmission)
 {
-    entityId      = int((desc.irisIds & 0xFFFF0000u) >> 16);
-    blockEntityId = int((desc.irisIds & 0x0000FFFFu) >> 0);
+    entityId      = desc.entityId;
+    blockEntityId = desc.blockEntityId;
     lightEmission = int((desc.clrwlData & 0x00000008u) >> 0);
 }
 

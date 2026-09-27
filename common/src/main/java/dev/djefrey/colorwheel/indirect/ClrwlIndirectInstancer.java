@@ -57,8 +57,9 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 	private int modelIndex = -1;
 	private int baseInstance = -1;
 
-	private final int packedIds;
-	private int packedClrwlData;
+	private final int entityId;
+	private final int blockEntityId;
+	private final int packedClrwlData;
 
 	public ClrwlIndirectInstancer(ClrwlInstancerKey<I> key, Recreate<I> recreate)
 	{
@@ -81,8 +82,10 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
             }
 		}
 
-		packedIds = ((visual.getEntity() & 0x0000FFFF) << 16) | (visual.getBlockEntity() & 0x0000FFFF);
-		packedClrwlData = visual.lightEmission() & 0xF;
+		entityId = visual.getEntity();
+		blockEntityId = visual.getBlockEntity();
+
+		int packedClrwlData = visual.lightEmission() & 0b1111;
 
 		if (hasSolidMesh)
 		{
@@ -93,6 +96,8 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 		{
 			packedClrwlData |= ClrwlIndirectPrograms.Culling.MaterialFilter.TRANSLUCENT << 4;
 		}
+
+		this.packedClrwlData = packedClrwlData;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -392,8 +397,9 @@ public class ClrwlIndirectInstancer<I extends Instance> extends ClrwlAbstractIns
 		MemoryUtil.memPutFloat(ptr + 20, boundingSphere.z());
 		MemoryUtil.memPutFloat(ptr + 24, boundingSphere.w());
 
-		MemoryUtil.memPutInt(ptr + 28, packedIds);
-		MemoryUtil.memPutInt(ptr + 32, packedClrwlData);
+		MemoryUtil.memPutInt(ptr + 28, entityId);
+		MemoryUtil.memPutInt(ptr + 32, blockEntityId);
+		MemoryUtil.memPutInt(ptr + 36, packedClrwlData);
 	}
 
 	public void uploadInstances(StagingBuffer stagingBuffer, int instanceVbo)

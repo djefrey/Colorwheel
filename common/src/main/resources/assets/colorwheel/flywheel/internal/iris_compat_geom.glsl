@@ -1,3 +1,4 @@
+#ifndef _CLRWL_IS_FALLBACK
 void clrwl_setVertexOut(int i)
 {
     clrwl_out.flw_vertexPos = clrwl_in[i].flw_vertexPos;
@@ -29,3 +30,4 @@ void clrwl_setVertexOut(int i)
     clrwl_out.clrwl_debugIds = clrwl_in[i].clrwl_debugIds;
 #endif
 }
+#endif

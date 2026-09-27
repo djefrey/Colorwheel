@@ -66,8 +66,6 @@ out ClrwlVertexData
 #endif
 } clrwl_out;
 
-vec4 clrwl_overlayColor = vec4(0.0);
-
 #else // _CLRWL_IS_FALLBACK
 
 in ClrwlFallbackVertexData
@@ -76,6 +74,8 @@ in ClrwlFallbackVertexData
 
 #ifdef CLRWL_IS_INDIRECT
     flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
 #endif
 } clrwl_in[3];
 
@@ -91,10 +91,9 @@ out ClrwlFallbackVertexData
 } clrwl_out;
 #endif
 
-#ifndef CLRWL_IS_INDIRECT
 int _clrwl_entityId;
 int _clrwl_blockEntityId;
-#endif
+vec4 clrwl_overlayColor = vec4(0.0);
 
 uniform sampler2D flw_diffuseTex;
 uniform sampler2D flw_overlayTex;
