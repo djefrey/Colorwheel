@@ -120,6 +120,7 @@ unifiedPublishing {
             curseforge {
                 token = System.getenv("CF_TOKEN")
                 id = "1254143"
+                gameVersions = ["1.20.1", "Client"]
             }
         }
 
