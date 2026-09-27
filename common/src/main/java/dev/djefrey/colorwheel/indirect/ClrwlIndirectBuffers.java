@@ -22,7 +22,7 @@ public class ClrwlIndirectBuffers
     public static final long PTR_SIZE = Pointer.POINTER_SIZE;
     public static final long SPHERE_SIZE = Float.BYTES * 4L;
 
-    public static final long MODEL_STRIDE = 28 + 8;
+    public static final long MODEL_STRIDE = 28 + 12;
 
     // Byte size of a draw command, plus our added mesh data.
     public static final long DRAW_COMMAND_STRIDE = 36 + 12;
