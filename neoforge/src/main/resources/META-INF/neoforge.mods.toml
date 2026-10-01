@@ -19,42 +19,42 @@ modId = "neoforge"
 type = "required"
 versionRange = "[21.1,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "minecraft"
 type = "required"
 versionRange = "[1.21.1,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "flywheel"
 type = "optional"
 versionRange = "[1.0.0,2.0.0)"
 ordering = "BEFORE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "iris"
 type = "required"
 versionRange = "[1.8.0,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "colorwheel_patcher"
 type = "optional"
 versionRange = "[1.0.0,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "sable"
 type = "optional"
 versionRange = "[1.1.1,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "irisflw"
