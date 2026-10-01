@@ -19,35 +19,35 @@ modId = "forge"
 mandatory = true
 versionRange = "[47,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "minecraft"
 mandatory = true
 versionRange = "[1.20.1,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "flywheel"
 mandatory = false
 versionRange = "[1.0.0,2.0.0)"
 ordering = "BEFORE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "oculus"
 mandatory = true
 versionRange = "[1.7.0,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "colorwheel_patcher"
 mandatory = false
 versionRange = "[1.0.0,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.colorwheel]]
 modId = "irisflw"
