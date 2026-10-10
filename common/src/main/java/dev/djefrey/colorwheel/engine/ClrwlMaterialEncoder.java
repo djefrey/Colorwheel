@@ -74,7 +74,7 @@ public final class ClrwlMaterialEncoder
                 .ordinal() << CARDINAL_LIGHTING_MODE_OFFSET) & CARDINAL_LIGHTING_MODE_MASK;
 
         // TODO: could improve check
-        if (ClrwlXplat.INSTANCE.getFlywheelVersion().compareTo(FLW_V10006) >= 0)
+        if (ClrwlXplat.INSTANCE.getFlywheelLibVersion().compareTo(FLW_V10006) >= 0)
         {
             // Exists since Flywheel 1.0.6
             if (material.ambientOcclusion()) bits |= AMBIENT_OCCLUSION_MASK;

@@ -11,7 +11,9 @@ public interface ClrwlXplat
     String getFormattedVersion();
     boolean doesHaveFlywheel();
     @Nullable
-    Version getFlywheelVersion();
+    Version getFlywheelBackendVersion();
+    @Nullable
+    Version getFlywheelLibVersion();
     boolean doesHaveCreate();
     boolean doesHavePonder();
 }

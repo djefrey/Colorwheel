@@ -4,6 +4,7 @@ import dev.djefrey.colorwheel.ClrwlXplat;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.Version;
 import net.minecraftforge.fml.loading.LoadingModList;
+import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,14 +44,15 @@ public class ClrwlForgeXplat implements ClrwlXplat
         return hasFlywheel;
     }
 
-    private Version flwVersion;
+    private Version flwBackendVersion;
+    private Version flwLibVersion;
 
     @Override
-    public Version getFlywheelVersion()
+    public Version getFlywheelBackendVersion()
     {
-        if (flwVersion != null)
+        if (flwBackendVersion != null)
         {
-            return flwVersion;
+            return flwBackendVersion;
         }
 
         var modInfo = LoadingModList.get().getModFileById("flywheel");
@@ -71,8 +73,59 @@ public class ClrwlForgeXplat implements ClrwlXplat
         int minor = Integer.parseInt(matcher.group(2));
         int patch = Integer.parseInt(matcher.group(3));
 
-        flwVersion = new Version(major, minor, patch);
-        return flwVersion;
+        flwBackendVersion = new Version(major, minor, patch);
+        return flwBackendVersion;
+    }
+
+    @Override
+    public Version getFlywheelLibVersion()
+    {
+        if (flwLibVersion != null)
+        {
+            return flwLibVersion;
+        }
+
+        var flwBackendVersion = getFlywheelBackendVersion();
+
+        if (flwBackendVersion == null)
+        {
+            return null;
+        }
+
+        ModFileInfo apiModInfo = null;
+
+        for (var mod : LoadingModList.get().getMods())
+        {
+            if (mod.getModId().startsWith("dev_engine-room_flywheel_flywheel-forge-api"))
+            {
+                apiModInfo = mod.getOwningFile();
+                break;
+            }
+        }
+
+        if (apiModInfo == null)
+        {
+            flwLibVersion = flwBackendVersion;
+            return flwLibVersion;
+        }
+
+        Matcher matcher = VERSION_REGEX.matcher(apiModInfo.versionString());
+
+        if (!matcher.matches())
+        {
+            throw new IllegalStateException("Could not parse Flywheel API mod version");
+        }
+
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        int patch = Integer.parseInt(matcher.group(3));
+
+        var apiVersion = new Version(major, minor, patch);
+
+        flwLibVersion = apiVersion.compareTo(flwBackendVersion) >= 0
+                ? apiVersion
+                : flwBackendVersion;
+        return flwLibVersion;
     }
 
     @Override
