@@ -819,6 +819,8 @@ top: 		if (hasOit)
 				.forEach(ClrwlIndirectCullingGroup::delete);
 		cullingGroups.clear();
 
+		stagingBuffer.delete();
+
 		meshPool.delete();
 		vao.delete();
 
