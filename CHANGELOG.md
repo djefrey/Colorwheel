@@ -1,3 +1,11 @@
+### 1.3.1
+
+- Fixed crash when installed on a server
+- Fixed crash with Create:Connected on Fabric
+- Fixed shader compilation bug on Bliss with light floodfill enabled
+- Fixed issues with OIT on old graphics cards not supporting Direct State Access
+- Fixed memory leak on the indirect backend
+
 ### 1.3.0
 
 - Added the colorwheel:indirect backend. This new backend is able to cull geometry not visible on screen.  
