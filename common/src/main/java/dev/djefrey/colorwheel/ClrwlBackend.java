@@ -141,13 +141,13 @@ public class ClrwlBackend
         var irisBufferObjects = pack.get().getBufferObjects();
 
         int clrwlBuffers = ClrwlBufferBindings.TOTAL_BINDING_COUNT;
-        int maxIrisBinding = irisBufferObjects.keySet().stream().max(Integer::compareTo).orElse(0);
+        int irisBuffers = irisBufferObjects.keySet().stream().max(Integer::compareTo).map(binding -> binding + 1).orElse(0);
         int maxUnits = SamplerLimits.get().getMaxShaderStorageUnits();
-        boolean hasEnoughUnits = clrwlBuffers + maxIrisBinding <= maxUnits;
+        boolean hasEnoughUnits = clrwlBuffers + irisBuffers <= maxUnits;
 
         if (!hasEnoughUnits)
         {
-            Colorwheel.LOGGER.error("Graphics card doesn't have enough storage units: {} + {} > {}", clrwlBuffers, maxIrisBinding, maxUnits);
+            Colorwheel.LOGGER.error("Graphics card doesn't have enough storage units: {} + {} > {}", clrwlBuffers, irisBuffers, maxUnits);
         }
 
         return hasEnoughUnits;

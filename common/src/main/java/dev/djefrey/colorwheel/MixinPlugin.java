@@ -16,7 +16,7 @@ public class MixinPlugin implements IMixinConfigPlugin
     @Override
     public void onLoad(String mixinPackage)
     {
-         FLW_VERSION = ClrwlXplat.INSTANCE.getFlywheelVersion();
+         FLW_VERSION = ClrwlXplat.INSTANCE.getFlywheelLibVersion();
          FLW_V10006 = new Version(1, 0, 6);
     }
 

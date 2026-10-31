@@ -42,7 +42,7 @@ public class ClrwlTransformPatcher
 {
 	private static final ClrwlASTTransformer<ClrwlTransformParameters> transformer;
 	public static final Pattern versionPattern = Pattern.compile("^.*#version\\h+(\\d+)\\V*", Pattern.DOTALL);
-	public static final Pattern extensionPattern = Pattern.compile("^.*#extension\\s+([a-zA-Z0-9_]+)\\s+:\\s+([a-zA-Z0-9_]+)", Pattern.DOTALL);
+	public static final Pattern extensionPattern = Pattern.compile("^.*#extension\\h+([a-zA-Z0-9_]+)\\h*:\\h*([a-zA-Z0-9_]+)", Pattern.DOTALL);
 
 	private static final String LIGHTMAP_SCALE = "1.0 / 240.0";
 	private static final String LIGHTMAP_OFFSET = "0.03125";
