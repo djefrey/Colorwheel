@@ -428,7 +428,7 @@ public class ClrwlOitFramebuffers
         var overrides = config.accumulateOverrides();
         var accumulateCnt = programDrawBuffers.length;
 
-        mainFbo = GL46.glCreateFramebuffers();
+        mainFbo = GlCompat.SUPPORTS_DSA ? GL46.glCreateFramebuffers() : GL32.glGenFramebuffers();
         accumulate = new int[accumulateCnt];
         accumulateDrawBuffers = new int[accumulateCnt];
 
@@ -494,7 +494,7 @@ public class ClrwlOitFramebuffers
                 int buffer = GL32.glGenTextures();
 
                 GL32.glBindTexture(GL32.GL_TEXTURE_2D, buffer);
-                GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, format.getGlFormat(), width, height, 0, format.getPixelFormat().getGlFormat(), GL32.GL_BACK, 0);
+                GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, format.getGlFormat(), width, height, 0, format.getPixelFormat().getGlFormat(), GL32.GL_UNSIGNED_BYTE, 0);
 
                 GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_NEAREST);
                 GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_NEAREST);

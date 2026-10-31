@@ -53,10 +53,10 @@ public class ClrwlIndirectCullingGroup<I extends Instance>
 	{
 		this.instanceType = instanceType;
 		instanceStride = MoreMath.align4(instanceType.layout().byteSize());
+		transformSphereProgram = programs.getTransformProgram(instanceType);
 		buffers = new ClrwlIndirectBuffers(instanceStride);
 
 		this.programSet = programSet;
-		transformSphereProgram = programs.getTransformProgram(instanceType);
 	}
 
 	public boolean flushInstancers()
