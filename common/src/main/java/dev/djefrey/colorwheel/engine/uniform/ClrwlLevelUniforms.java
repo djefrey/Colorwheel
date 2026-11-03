@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class ClrwlLevelUniforms extends UniformWriter
 {
-	private static final int SIZE = 16 * 4 + 4 * 15;
+	private static final int SIZE = 16 * 4 + 4 * 16;
 	static final UniformBuffer BUFFER = new UniformBuffer(ClrwlUniforms.LEVEL_INDEX, SIZE);
 
 	private ClrwlLevelUniforms()
