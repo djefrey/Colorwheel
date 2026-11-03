@@ -1,3 +1,8 @@
+### 1.3.2
+
+- Fixed buffer overflow   
+This may fix issues with other mods, like Voxy
+
 ### 1.3.1
 
 - Fixed crash when installed on a server
