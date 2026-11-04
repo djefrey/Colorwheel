@@ -19,7 +19,6 @@ import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.minecraft.client.resources.model.ModelBakery;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -201,7 +200,7 @@ public abstract class ClrwlDrawManager<N extends ClrwlAbstractInstancer<?>>
 
 	protected void setPhase(ClrwlRenderingPhase phase, boolean shadow)
 	{
-		var name = "Clrwl " + (shadow ? "Shadow " : "") + StringUtils.capitalize(phase.name().toLowerCase(Locale.ROOT).replace("_", " "));
+		var name = phase.getDebugName(shadow);
 
 		GLDebug.popGroup();
 		GLDebug.pushGroup(phase.getValue(), name);
