@@ -1,8 +1,6 @@
 package dev.djefrey.colorwheel.engine;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import dev.engine_room.flywheel.api.backend.RenderContext;
-import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderBuffers;

@@ -1,18 +1,12 @@
 package dev.djefrey.colorwheel.mixin.flw;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.ColorwheelBufferBuilder;
 import dev.djefrey.colorwheel.accessors.flw.MeshEmitterAccessor;
 import dev.engine_room.flywheel.lib.model.baked.MeshEmitter;
-import dev.engine_room.flywheel.lib.vertex.FlywheelVertexFormats;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
-import net.irisshaders.iris.vertices.IrisVertexFormats;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(MeshEmitter.class)
 public abstract class MeshEmitterMixin implements MeshEmitterAccessor

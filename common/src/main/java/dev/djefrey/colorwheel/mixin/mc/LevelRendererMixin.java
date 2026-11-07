@@ -1,20 +1,14 @@
 package dev.djefrey.colorwheel.mixin.mc;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.resource.ResourceHandle;
 import dev.djefrey.colorwheel.Colorwheel;
 import net.irisshaders.iris.MojLambdas;
 import net.irisshaders.iris.NeoLambdas;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
-import net.minecraft.util.profiling.ProfilerFiller;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

@@ -1,7 +1,6 @@
 package dev.djefrey.colorwheel;
 
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
-import dev.djefrey.colorwheel.accessors.iris.ShaderPackAccessor;
 import dev.djefrey.colorwheel.engine.ClrwlEngine;
 import dev.djefrey.colorwheel.indirect.ClrwlBufferBindings;
 import dev.djefrey.colorwheel.indirect.ClrwlIndirectDrawManager;

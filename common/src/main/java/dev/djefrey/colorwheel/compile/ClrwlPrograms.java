@@ -1,6 +1,5 @@
 package dev.djefrey.colorwheel.compile;
 
-import dev.djefrey.colorwheel.ClrwlSafeFlw;
 import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
 import dev.djefrey.colorwheel.compile.component.*;

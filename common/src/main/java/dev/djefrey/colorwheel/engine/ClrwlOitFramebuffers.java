@@ -4,7 +4,6 @@ import com.mojang.blaze3d.opengl.GlConst;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;

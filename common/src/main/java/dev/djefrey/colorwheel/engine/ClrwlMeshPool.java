@@ -2,7 +2,6 @@ package dev.djefrey.colorwheel.engine;
 
 import com.mojang.blaze3d.opengl.GlConst;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import dev.djefrey.colorwheel.Colorwheel;
 import dev.engine_room.flywheel.api.model.Mesh;
 import dev.engine_room.flywheel.backend.engine.IndexPool;
 import dev.engine_room.flywheel.backend.gl.array.GlVertexArray;
