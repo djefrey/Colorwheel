@@ -31,7 +31,7 @@ side = "CLIENT"
 [[dependencies.${mod_id}]]
 modId = "flywheel"
 type = "optional"
-versionRange = "[1.0.0,2.0.0)"
+versionRange = "[1.0.6,2.0.0)"
 ordering = "BEFORE"
 side = "CLIENT"
 
