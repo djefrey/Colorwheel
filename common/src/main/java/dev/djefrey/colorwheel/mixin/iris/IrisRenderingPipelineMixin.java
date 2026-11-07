@@ -6,12 +6,14 @@ import dev.djefrey.colorwheel.Colorwheel;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShadowRenderTargetsAccessor;
 import dev.djefrey.colorwheel.accessors.iris.ShadowRendererAccessor;
+import net.irisshaders.iris.gl.buffer.ShaderStorageBufferHolder;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.targets.RenderTargets;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,6 +40,9 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 	@Shadow
 	@Final
 	private ShadowRenderer shadowRenderer;
+
+	@Shadow
+	private ShaderStorageBufferHolder shaderStorageBufferHolder;
 
 	public GlFramebuffer colorwheel$createSolidGbuffersFramebuffer(ProgramSource sources)
 	{
@@ -111,5 +116,11 @@ public abstract class IrisRenderingPipelineMixin implements IrisRenderingPipelin
 	public void colorwheel$onDelete(CallbackInfo ci)
 	{
 		Colorwheel.getSafeFlw().onIrisPipelineDestroy((IrisRenderingPipeline) (Object) this);
+	}
+
+	@Nullable
+	public ShaderStorageBufferHolder colorwheel$getSSBOHolder()
+	{
+		return shaderStorageBufferHolder;
 	}
 }

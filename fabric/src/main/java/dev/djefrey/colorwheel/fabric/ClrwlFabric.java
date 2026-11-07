@@ -1,8 +1,7 @@
 package dev.djefrey.colorwheel.fabric;
 
-import net.fabricmc.api.ModInitializer;
-
 import dev.djefrey.colorwheel.Colorwheel;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 
 public final class ClrwlFabric implements ModInitializer

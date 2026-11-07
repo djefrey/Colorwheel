@@ -5,11 +5,12 @@ import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.djefrey.colorwheel.*;
+import dev.djefrey.colorwheel.ClrwlSamplers;
 import dev.djefrey.colorwheel.accessors.iris.IrisRenderingPipelineAccessor;
-import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.accessors.iris.ProgramSetAccessor;
+import dev.djefrey.colorwheel.compile.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.shaderpack.ClrwlOitConfig;
 import dev.djefrey.colorwheel.shaderpack.ClrwlProgramGroup;
-import dev.djefrey.colorwheel.shaderpack.ClrwlShaderProperties;
 import dev.djefrey.colorwheel.util.Utils;
 import dev.engine_room.flywheel.backend.NoiseTextures;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
@@ -22,9 +23,10 @@ import net.irisshaders.iris.gl.blending.BufferBlendInformation;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.ProgramDirectives;
-import net.irisshaders.iris.shadows.ShadowRenderTargets;
-import net.irisshaders.iris.targets.RenderTargets;
+import net.irisshaders.iris.shadows.ShadowMatrices;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
@@ -46,7 +48,9 @@ public class ClrwlOitFramebuffers
     private final ClrwlProgramGroup programGroup;
     private final ClrwlOitPrograms programs;
     private final IrisRenderingPipeline irisPipeline;
-    private final ClrwlShaderProperties properties;
+    private final ClrwlOitConfig config;
+
+    private final float passZFar;
 
     private final int vao;
 
@@ -60,12 +64,15 @@ public class ClrwlOitFramebuffers
     private int lastWidth = -1;
     private int lastHeight = -1;
 
-    public ClrwlOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, ClrwlShaderProperties properties, ProgramDirectives directives)
+    public ClrwlOitFramebuffers(ClrwlProgramGroup programGroup, ClrwlOitPrograms programs, IrisRenderingPipeline irisPipeline, ProgramSet programSet, ProgramDirectives directives)
     {
+        ClrwlOitConfig config = ((ProgramSetAccessor) programSet).colorwheel$getClrwlDirectives().getOitConfig(programGroup);
+        PackDirectives packDirectives = programSet.getPackDirectives();
+
         this.programGroup = programGroup;
         this.programs = programs;
         this.irisPipeline = irisPipeline;
-        this.properties = properties;
+        this.config = config;
         this.programDrawBuffers = directives.getDrawBuffers();
 
         if (GlCompat.SUPPORTS_DSA)
@@ -75,6 +82,33 @@ public class ClrwlOitFramebuffers
         else
         {
             vao = GL32.glGenVertexArrays();
+        }
+
+        switch (programGroup)
+        {
+            case GBUFFERS ->
+            {
+                passZFar = Minecraft.getInstance().gameRenderer.getGameRenderState().levelRenderState.cameraRenderState.depthFar;
+            }
+
+            case SHADOW ->
+            {
+                var shadowDirectives = packDirectives.getShadowDirectives();
+
+                if (shadowDirectives.getFov() != null)
+                {
+                    passZFar = ShadowMatrices.FAR;
+                }
+                else
+                {
+                    passZFar = shadowDirectives.getFarPlane();
+                }
+            }
+
+            default ->
+            {
+                passZFar = 4242.0f;
+            }
         }
     }
 
@@ -186,7 +220,7 @@ public class ClrwlOitFramebuffers
         if (GlCompat.SUPPORTS_DSA)
         {
             GL46.glNamedFramebufferDrawBuffers(mainFbo, DEPTH_RANGE_DRAW_BUFFERS);
-            GL46.glClearNamedFramebufferfv(mainFbo, GL46.GL_COLOR, 0, new float[]{-far, -far, 0, 0});
+            GL46.glClearNamedFramebufferfv(mainFbo, GL46.GL_COLOR, 0, new float[]{-passZFar, -passZFar, 0, 0});
         }
         else
         {
@@ -300,7 +334,7 @@ public class ClrwlOitFramebuffers
     /**
      * Composite the accumulated luminance onto the main framebuffer.
      */
-    public void composite(GlFramebuffer target, @Nullable ClrwlBlendModeOverride blendModeOverride, List<BufferBlendInformation> bufferBlendOverrides)
+    public void composite(GlFramebuffer target, @Nullable ClrwlBlendModeOverride blendModeOverride, List<BufferBlendInformation> bufferBlendOverrides, boolean isShadow)
     {
         target.bind();
 
@@ -366,10 +400,7 @@ public class ClrwlOitFramebuffers
             GlStateManager._bindTexture(accumulate[i]);
         }
 
-        var ranks = properties.getOitCoeffRanks(programGroup);
-        var overrides = properties.getOitAccumulateOverrides(programGroup);
-
-        programs.getOitCompositeProgram(programDrawBuffers, ranks, overrides)
+        programs.getOitCompositeProgram(programDrawBuffers, config.coeffRanks(), config.accumulateOverrides(), isShadow)
                 .bind();
 
         drawFullscreenQuad();
@@ -400,10 +431,10 @@ public class ClrwlOitFramebuffers
 
     private void resizeMainFBO(int width, int height)
     {
-        var overrides = properties.getOitAccumulateOverrides(programGroup);
+        var overrides = config.accumulateOverrides();
         var accumulateCnt = programDrawBuffers.length;
 
-        mainFbo = GL46.glCreateFramebuffers();
+        mainFbo = GlCompat.SUPPORTS_DSA ? GL46.glCreateFramebuffers() : GL32.glGenFramebuffers();
         accumulate = new int[accumulateCnt];
         accumulateDrawBuffers = new int[accumulateCnt];
 
@@ -469,7 +500,7 @@ public class ClrwlOitFramebuffers
                 int buffer = GL32.glGenTextures();
 
                 GL32.glBindTexture(GL32.GL_TEXTURE_2D, buffer);
-                GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, format.getGlFormat(), width, height, 0, format.getPixelFormat().getGlFormat(), GL32.GL_BACK, 0);
+                GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, format.getGlFormat(), width, height, 0, format.getPixelFormat().getGlFormat(), GL32.GL_UNSIGNED_BYTE, 0);
 
                 GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_NEAREST);
                 GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_NEAREST);
@@ -493,7 +524,7 @@ public class ClrwlOitFramebuffers
 
     private void resizeCoeffsFBO(int width, int height)
     {
-        var coeffRanks = properties.getOitCoeffRanks(programGroup);
+        var coeffRanks = config.coeffRanks();
         var coeffCnt = coeffRanks.length;
 
         if (coeffCnt == 0) // Only opaques

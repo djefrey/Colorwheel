@@ -1,3 +1,25 @@
+### 1.3.2
+
+- Fixed buffer overflow   
+This may fix issues with other mods, like Voxy
+
+### 1.3.1
+
+- Fixed crash when installed on a server
+- Fixed crash with Create:Connected on Fabric
+- Fixed shader compilation bug on Bliss with light floodfill enabled
+- Fixed issues with OIT on old graphics cards not supporting Direct State Access
+- Fixed memory leak on the indirect backend
+
+### 1.3.0
+
+- Added the colorwheel:indirect backend. This new backend is able to cull geometry not visible on screen.  
+  In Create heavy areas, this backend can increase the FPS by +30% compared to the instancing backend.
+- Translucent geometry are now rendered after translucent terrain.  
+  Water is now visible through train windows. However, train windows won't be visible when underwater.
+- Fixed at_midBlock value for non-terrain-like geometry.
+- Fixed rendering issue with Create: Pocket Factory.
+
 ### 1.2.9
 
 - Fixed IncompatibleClassChangeError crash on 1.20.1
@@ -5,7 +27,7 @@
 - Fixed shader compilation error on AMD Windows (thanks to Luracasmus)
 - Fixed atlasSize incorrect height
 - Use correct value for undefined blockEntityId and entityId
-- Underlined text is now explicitly stated as clickable in alert messages
+- Underlined text is now clearly indicated as clickable in alert messages
 
 ### 1.2.8
 

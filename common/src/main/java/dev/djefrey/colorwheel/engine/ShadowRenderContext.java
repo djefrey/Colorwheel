@@ -13,19 +13,27 @@ import org.joml.Matrix4fc;
 
 public record ShadowRenderContext(LevelRenderer renderer, ClientLevel level, RenderBuffers buffers,
                                   Matrix4fc modelView, Matrix4fc projection, Matrix4fc viewProjection,
+                                  Matrix4fc playerModelView, Matrix4fc playerProjection, Matrix4fc playerViewProjection,
                                   CameraRenderState cameraRenderState, LevelRenderState levelRenderState,
                                   float camX, float camY, float camZ,
                                   float partialTick, ShadowRenderingPhase phase) implements RenderContext
 {
     public static ShadowRenderContext create(LevelRenderer renderer, ClientLevel level, RenderBuffers buffers,
                                              Matrix4fc modelView, Matrix4f projection,
+                                             Matrix4fc playerModelView, Matrix4fc playerProjection,
                                              CameraRenderState cameraRenderState, LevelRenderState levelRenderState,
                                              float camX, float camY, float camZ,
                                              float partialTick, ShadowRenderingPhase phase)
     {
         Matrix4f viewProjection = new Matrix4f(projection);
         viewProjection.mul(modelView);
+        Matrix4f playerViewProjection = new Matrix4f(playerProjection);
+        playerViewProjection.mul(playerModelView);
 
-        return new ShadowRenderContext(renderer, level, buffers, modelView, projection, viewProjection, cameraRenderState, levelRenderState, camX, camY, camZ, partialTick, phase);
+        return new ShadowRenderContext(renderer, level, buffers,
+                                       modelView, projection, viewProjection,
+                                       playerModelView, playerProjection, playerViewProjection,
+                                       cameraRenderState, levelRenderState,
+                                       camX, camY, camZ, partialTick, phase);
     }
 }

@@ -2,48 +2,86 @@
 #include "flywheel:internal/api_impl.glsl"
 #include "colorwheel:internal/uniforms.glsl"
 
-#ifndef CLRWL_IS_FALLBACK
-    #define CLRWL_FLAT_OUT flat
-#else
-    #define CLRWL_FLAT_OUT
-#endif
-
-#ifndef CLRWL_IS_FALLBACK
+#ifndef _CLRWL_IS_FALLBACK
 out ClrwlVertexData
 {
-#endif
     vec4 flw_vertexPos;
     vec4 flw_vertexColor;
     vec2 flw_vertexTexCoord;
-    CLRWL_FLAT_OUT ivec2 flw_vertexOverlay;
+    flat ivec2 flw_vertexOverlay;
     vec2 flw_vertexLight;
     vec3 flw_vertexNormal;
     vec4 clrwl_vertexTangent;
 
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
+#endif
+
 #ifdef FLW_EMBEDDED
-    #ifdef HAS_SABLE
-        CLRWL_FLAT_OUT uint flw_vertexLightingSceneId;
-        CLRWL_FLAT_OUT float flw_skyLightScale;
+    #ifdef _CLRWL_HAS_SABLE
+        flat uint flw_vertexLightingSceneId;
+        flat float flw_skyLightScale;
         vec4 flw_vertexLightingPos;
     #endif
 #endif
-
+    
 #ifdef _FLW_DEBUG
     vec2 clrwl_vertexEntity;
     vec2 clrwl_vertexMidTexCoord;
     vec4 clrwl_vertexMidMesh;
-    CLRWL_FLAT_OUT uvec2 clrwl_debugIds;
+    flat uvec2 clrwl_debugIds;
 #endif
-
-#ifndef CLRWL_IS_FALLBACK
 };
-#endif
 
 #ifndef _FLW_DEBUG
 vec2 clrwl_vertexEntity;
 vec2 clrwl_vertexMidTexCoord;
 vec4 clrwl_vertexMidMesh;
 uvec2 clrwl_debugIds;
+#endif
+
+vec4 clrwl_overlayColor = vec4(0.0);
+
+#else // _CLRWL_IS_FALLBACK
+
+vec4 flw_vertexPos;
+vec4 flw_vertexColor;
+vec2 flw_vertexTexCoord;
+ivec2 flw_vertexOverlay;
+vec2 flw_vertexLight;
+vec3 flw_vertexNormal;
+vec4 clrwl_vertexTangent;
+
+vec2 clrwl_vertexEntity;
+vec2 clrwl_vertexMidTexCoord;
+vec4 clrwl_vertexMidMesh;
+uvec2 clrwl_debugIds;
+
+#ifdef FLW_EMBEDDED
+    #ifdef _CLRWL_HAS_SABLE
+        uint flw_vertexLightingSceneId;
+        float flw_skyLightScale;
+        vec4 flw_vertexLightingPos;
+    #endif
+#endif
+
+out ClrwlFallbackVertexData
+{
+    vec4 clrwl_overlayColor;
+
+#ifdef CLRWL_IS_INDIRECT
+    flat uint _clrwl_packedMaterial;
+    flat int _clrwl_entityId;
+    flat int _clrwl_blockEntityId;
+#endif
+};
+#endif
+
+#ifndef CLRWL_IS_INDIRECT
+int _clrwl_entityId;
+int _clrwl_blockEntityId;
 #endif
 
 FlwMaterial flw_material;

@@ -48,14 +48,15 @@ public class ClrwlFabricXplat implements ClrwlXplat
         return hasFlywheel;
     }
 
-    private Version flwVersion = null;
+    private Version flwBackendVersion = null;
+    private Version flwLibVersion = null;
 
     @Override
-    public Version getFlywheelVersion()
+    public Version getFlywheelBackendVersion()
     {
-        if (flwVersion != null)
+        if (flwBackendVersion != null)
         {
-            return flwVersion;
+            return flwBackendVersion;
         }
 
         var modContainer = FabricLoader.getInstance().getModContainer("flywheel");
@@ -77,8 +78,59 @@ public class ClrwlFabricXplat implements ClrwlXplat
         int minor = Integer.parseInt(matcher.group(2));
         int patch = Integer.parseInt(matcher.group(3));
 
-        flwVersion = new Version(major, minor, patch);
-        return flwVersion;
+        flwBackendVersion = new Version(major, minor, patch);
+        return flwBackendVersion;
+    }
+    @Override
+    public Version getFlywheelLibVersion()
+    {
+        if (flwLibVersion != null)
+        {
+            return flwLibVersion;
+        }
+
+        var flwBackendVersion = getFlywheelBackendVersion();
+
+        if (flwBackendVersion == null)
+        {
+            return null;
+        }
+
+        ModContainer apiModContainer = null;
+
+        for (var mod : FabricLoader.getInstance().getAllMods())
+        {
+            if (mod.getMetadata().getId().startsWith("dev_engine-room_flywheel_flywheel-fabric-api"))
+            {
+                apiModContainer = mod;
+                break;
+            }
+        }
+
+        if (apiModContainer == null)
+        {
+            flwLibVersion = flwBackendVersion;
+            return flwLibVersion;
+        }
+
+        String version = apiModContainer.getMetadata().getVersion().getFriendlyString();
+        Matcher matcher = VERSION_REGEX.matcher(version);
+
+        if (!matcher.matches())
+        {
+            throw new IllegalStateException("Could not parse Flywheel API mod version");
+        }
+
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        int patch = Integer.parseInt(matcher.group(3));
+
+        var apiVersion = new Version(major, minor, patch);
+
+        flwLibVersion = apiVersion.compareTo(flwBackendVersion) >= 0
+                    ? apiVersion
+                    : flwBackendVersion;
+        return flwLibVersion;
     }
 
     @Override

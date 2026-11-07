@@ -1,8 +1,10 @@
 <div align="center">
 <img src=".github/logo.png" alt="Original logo by jnix, edited by djefrey" width="250">
 <h1>Colorwheel</h1>
+<a href="https://discord.gg/J6vfuzZeU2"><img src="https://img.shields.io/discord/841464837406195712?color=5865f2&label=Discord&style=flat" alt="Discord"></a>
+<a href="https://www.curseforge.com/minecraft/mc-mods/colorwheel"><img src="https://cf.way2muchnoise.eu/1254143.svg" alt="Curseforge Downloads"></a>
+<a href="https://modrinth.com/mod/flywhcolorwheeleel"><img src="https://img.shields.io/modrinth/dt/colorwheel?logo=modrinth&label=&suffix=%20&style=flat&color=242629&labelColor=5ca424&logoColor=1c1c1c" alt="Modrinth"></a>
 </div>
-<br>
 
 ### About
 
@@ -25,6 +27,8 @@ Internal shaders are now much more complex (from 10 lines to over 1000 lines) an
 
 Colorwheel, instead, implements an extension to the Iris shader standard. This means shaderpacks must include specific programs that will be used by Colorwheel.
 
+Colorwheel also implements an indirect backend. This backend is able to improve the FPS by +30% compared to the instancing backend in areas with lots of instances.
+
 ### How to use
 
 To use this mod, you need to install Iris and a mod that includes Flywheel (like Create or Vanillin).  
@@ -42,7 +46,7 @@ The [Colorwheel Patcher](https://github.com/djefrey/Colorwheel-Patcher) mod can 
 
 ### License
 
-All code in this repository is licensed under the **MIT** license. You are free to read, distribute and modify the code.  
+All code in this (Colorwheel) repository is completely free and open source, and you are free to read, distribute, and modify the code as long as you abide by the (fairly reasonable) terms of the GNU LGPLv3 license.  
 This does **not** apply to the shaderpack patches provided in the Releases section.
 
 This project is partially based on code from Flywheel, licensed under the MIT license.  

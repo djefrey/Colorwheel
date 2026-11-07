@@ -34,7 +34,7 @@ void _clrwl_post_shader();
 
 void _clrwl_main()
 {
-    #ifndef CLRWL_IS_FALLBACK
+    #ifndef _CLRWL_IS_FALLBACK
         vec3 screenPos = vec3(gl_FragCoord.xy / flw_viewportSize, gl_FragCoord.z);
         vec3 ndc = screenPos * 2.0 - 1.0;
         vec4 viewPos = flw_projectionInverse * vec4(ndc, 1.0);

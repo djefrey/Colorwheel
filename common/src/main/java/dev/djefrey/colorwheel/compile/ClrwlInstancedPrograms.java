@@ -1,28 +1,33 @@
 package dev.djefrey.colorwheel.compile;
 
 import com.google.common.collect.ImmutableList;
-import dev.djefrey.colorwheel.compile.oit.ClrwlOitPrograms;
+import dev.djefrey.colorwheel.compile.core.ClrwlShaderSources;
 import dev.engine_room.flywheel.backend.gl.GlCompat;
 import dev.engine_room.flywheel.backend.glsl.GlslVersion;
 import dev.engine_room.flywheel.backend.glsl.ShaderSources;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.ShaderPack;
-import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
+import net.irisshaders.iris.shaderpack.programs.ProgramSet;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ClrwlInstancedPrograms
 {
+	private interface PipelineProgramsFactory
+	{
+		PipelinePrograms build(IrisRenderingPipeline irisPipeline);
+	}
+
 	public static final List<String> EXTENSIONS = getExtensions(GlCompat.MAX_GLSL_VERSION);
 
-	private final ClrwlPipelineCompiler compiler;
 	private final ClrwlOitPrograms oitPrograms;
+	private final PipelineProgramsFactory programsFactory;
 
-	private ClrwlInstancedPrograms(ClrwlPipelineCompiler compiler, ClrwlOitPrograms oitPrograms)
+	private ClrwlInstancedPrograms(ClrwlOitPrograms oitPrograms, PipelineProgramsFactory programsFactory)
 	{
-		this.compiler = compiler;
 		this.oitPrograms = oitPrograms;
+		this.programsFactory = programsFactory;
 	}
 
 	private static List<String> getExtensions(GlslVersion glslVersion)
@@ -37,7 +42,7 @@ public class ClrwlInstancedPrograms
 		return extensions.build();
 	}
 
-	public static ClrwlInstancedPrograms build(ShaderSources sources, ShaderPack pack, NamespacedId dimension, boolean fallback)
+	public static ClrwlInstancedPrograms build(ShaderSources sources, ShaderPack pack, ProgramSet programSet, boolean fallback)
 	{
 		if (!GlCompat.SUPPORTS_INSTANCING)
 		{
@@ -48,15 +53,19 @@ public class ClrwlInstancedPrograms
 				? ClrwlPipelines.INSTANCING_FALLBACK
 				: ClrwlPipelines.INSTANCING;
 
-		var compiler = new ClrwlPipelineCompiler(sources, pipeline, pack, dimension);
-		var oitPrograms = new ClrwlOitPrograms(sources);
+		var oitPrograms = new ClrwlOitPrograms(sources, pipeline);
+		PipelineProgramsFactory programsFactory = (irisPipeline) ->
+		{
+			var clrwlSources = new ClrwlShaderSources(sources, programSet, irisPipeline);
+			return new PipelinePrograms(clrwlSources, pipeline);
+		};
 
-        return new ClrwlInstancedPrograms(compiler, oitPrograms);
+		return new ClrwlInstancedPrograms(oitPrograms, programsFactory);
 	}
 
-	public PipelineProgramCache createPipelineProgramsCache()
+	public PipelinePrograms createPipelinePrograms(IrisRenderingPipeline irisPipeline)
 	{
-		return new PipelineProgramCache();
+		return programsFactory.build(irisPipeline);
 	}
 
 	public ClrwlOitPrograms getOitPrograms()
@@ -69,31 +78,24 @@ public class ClrwlInstancedPrograms
 		oitPrograms.delete();
 	}
 
-	public class PipelineProgramCache
+	public static class PipelinePrograms
 	{
-		private final Map<ClrwlShaderKey, ClrwlProgram> programCache = new HashMap<>();
+		private final ClrwlPrograms clrwlPrograms;
 
+		private PipelinePrograms(ClrwlShaderSources sources, ClrwlPrograms.Pipeline pipeline)
+		{
+			this.clrwlPrograms = new ClrwlPrograms(sources, pipeline);
+		}
+
+		@Nullable
 		public ClrwlProgram get(ClrwlShaderKey key)
 		{
-			ClrwlProgram program = programCache.get(key);
-
-			if (program == null)
-			{
-				program = ClrwlInstancedPrograms.this.compiler.get(key);
-				programCache.put(key, program);
-			}
-
-			return program;
+			return clrwlPrograms.get(key);
 		}
 
 		public void delete()
 		{
-			for (ClrwlProgram program : programCache.values())
-			{
-				program.free();
-			}
-
-			programCache.clear();
+			clrwlPrograms.delete();
 		}
 	}
 }

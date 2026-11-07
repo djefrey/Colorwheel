@@ -2,7 +2,7 @@ FlwMaterial flw_material;
 
 void _clrwl_main()
 {
-    #ifndef CLRWL_IS_FALLBACK
+    #ifndef _CLRWL_IS_FALLBACK
         if (flw_material.useOverlay)
         {
             clrwl_overlayColor = texelFetch(flw_overlayTex, clrwl_in[0].flw_vertexOverlay, 0);
